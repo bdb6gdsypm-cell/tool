@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全能二维码生成器</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: system-ui, -apple-system, sans-serif;
+        }
+body {
+background: linear-gradient(90deg, #407bff, #9d78ff);
+padding: 24px 16px;
+position: relative;
+min-height: 100vh;
+        }
+.back-btn {
+width: 40px;
+height: 40px;
+border-radius: 50%;
+border: none;
+background: #fff;
+box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 20px;
+color: #4080ff;
+text-decoration: none;
+transition: 0.2s;
+position: absolute;
+top: 16px;
+left: 16px;
+z-index: 99;
+}
+.back-btn:hover {
+background: #407bff;
+color: #fff;
+}
+.container {
+max-width: 960px;
+margin: 0 auto;
+background: #ffffff;
+padding: 32px;
+border-radius: 24px;
+box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+position: relative;
+overflow-x: visible;
+        }
+h1 {
+text-align: center;font-size: 24px;color: #222;margin-bottom: 24px;
+        }
+.tab-wrap {
+display: flex;gap: 4px;margin-bottom: 16px;border-bottom: 1px solid #eee;
+flex-wrap: wrap;
+        }
+.tab {
+padding: 10px 16px;border: none;background: transparent;cursor: pointer;font-size: 15px;border-bottom: 2px solid transparent;color:#444;transition:0.2s;
+        }
+.tab.active {
+border-bottom-color: #407bff;color: #407bff;font-weight: 500;
+        }
+.panel {display: none;}
+.panel.active {display: block;}
+.single-row {
+display: grid;
+grid-template-columns: 1fr 320px;
+gap:24px;
+align-items: start;
+}
+textarea {
+width: 100%;max-width:100%;height: 110px;padding: 12px 14px;border: 1px solid #ddd;border-radius: 12px;font-size: 16px;resize: vertical;outline: none;background:#fff;color:#222;
+}
+textarea:focus {border-color: #407bff;}
+.form-grid {
+display: grid;grid-template-columns: 1fr 1fr;gap: 14px;margin-top: 16px;
+        }
+.form-item {
+display: flex;flex-direction: column;gap: 6px;
+        }
+label {font-size: 14px;color: #444;}
+input, select {
+width:100%;
+padding: 10px 12px;border: 1px solid #ddd;border-radius: 12px;font-size: 15px;outline: none;height: 42px;background:#fff;color:#222;
+}
+input[type="color"] {padding: 2px;}
+.grad-preview {width: 100%;height:42px;border-radius:12px;display:none;}
+input:focus, select:focus {border-color: #407bff;}
+input[type="range"]{height: 8px;padding:0;}
+.btn-row {
+display: flex;flex-wrap: wrap;gap: 10px;margin-top: 20px;
+        }
+button {
+padding: 11px 16px;border: none;border-radius: 12px;font-size: 15px;cursor: pointer;transition: 0.2s;
+        }
+.btn-blue {background-color: #407bff;color: white;}
+.btn-blue:hover {background-color: #2b6ed9;}
+.btn-green {background-color: #36c668;color: white;}
+.btn-green:hover:not(:disabled) {background-color: #28a854;}
+.btn-orange {background-color: #ff9500;color: white;}
+.btn-red {background-color: #ee4455;color: white;}
+button:disabled {opacity: 0.5;cursor: not-allowed;}
+.preview-box {
+position:sticky;top:20px;
+text-align: center;
+padding:16px;
+border:1px solid #eee;
+border-radius:16px;
+background:#fafafa;
+width: fit-content;
+max-width: 100%;
+margin-left: auto;
+margin-right: auto;
+}
+.preview-box h4{margin-bottom:12px;color:#333;}
+#qrcodePreview {
+display: inline-block;
+}
+@media (min-width:769px) {
+#qrcodePreview canvas {
+display: block;
+max-width: 280px;
+max-height: 280px;
+width: auto;
+height: auto;
+object-fit: contain;
+}
+}
+
+.history-list {
+margin-top:16px;max-height: 280px;overflow-y:auto;border:1px solid #eee;border-radius:12px;padding:12px;background:#fafafa;
+        }
+.history-item {
+display:flex;justify-content: space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0;gap:8px;
+        }
+.history-text {
+flex:1;white-space: nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;color:#222;
+        }
+.tip {margin-top:16px;font-size:13px;color:#777;line-height:1.5;}
+.logo-row {display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+#delLogoBtn {padding: 0 10px;height:42px;}
+.grad-select-wrap {
+display: flex;gap:8px;flex-wrap: wrap;
+}
+.grad-option {
+width: 48px;height:42px;border-radius:10px;cursor:pointer;border:2px solid transparent;transition:0.2s;
+}
+.grad-option.active {
+border-color:#407bff;box-shadow:0 0 0 2px rgba(64,123,255,0.2);
+}
+.grad-option:hover {transform: scale(1.05);}
+.grad-select-wrap.disabled .grad-option{
+opacity:0.4;
+pointer-events:none;
+transform:none;
+cursor:not-allowed;
+}
+@media (max-width:768px) {
+.single-row {grid-template-columns:1fr;}
+.preview-box{margin-top:20px;position:static; width: fit-content;}
+#qrcodePreview canvas {
+display:block;
+max-width: 280px;
+height: auto;
+}
+.form-grid {grid-template-columns:1fr;}
+.grad-select-wrap {gap:6px;}
+.grad-option {width: 44px;height:38px;}
+.container{
+padding:20px 16px;
+}
+        }
+/* ========== 自定义码眼下拉样式 ========== */
+.eye-select-wrap{
+position:relative;
+width:100%;
+height:42px;
+}
+.eye-select-trigger{
+width:100%;
+height:42px;
+border:1px solid #ddd;
+border-radius:12px;
+background:#fff;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 12px;
+cursor:pointer;
+}
+.eye-select-trigger:hover{
+border-color:#407bff;
+}
+.eye-select-current-canvas{
+width:28px;
+height:28px;
+}
+.eye-select-arrow{
+color:#666;
+}
+.eye-select-dropdown{
+position:absolute;
+top:calc(100% + 4px);
+left:0;
+right:0;
+background:#fff;
+border:1px solid #ddd;
+border-radius:12px;
+box-shadow:0 4px 14px rgba(0,0,0,0.12);
+padding:10px;
+z-index:999;
+display:none;
+}
+.eye-select-dropdown.open{
+display:block;
+}
+.eye-grid{
+display:grid;
+grid-template-columns: repeat(5, 1fr);
+gap:8px;
+}
+.eye-item{
+padding:6px;
+border-radius:8px;
+text-align:center;
+cursor:pointer;
+border:1px solid transparent;
+}
+.eye-item.active{
+border-color:#407bff;
+background:#f0f6ff;
+}
+.eye-item:hover{
+background:#f6f7f9;
+}
+.eye-item canvas{
+width:32px;
+height:32px;
+}
+
+/* ========== 外壳模版下拉样式（和码眼结构对齐） ========== */
+.shell-select-wrap{
+position:relative;
+width:100%;
+height:42px;
+}
+.shell-select-trigger{
+width:100%;
+height:42px;
+border:1px solid #ddd;
+border-radius:12px;
+background:#fff;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 12px;
+cursor:pointer;
+}
+.shell-select-trigger:hover{
+border-color:#407bff;
+}
+.shell-select-current-canvas{
+width:28px;
+height:28px;
+}
+.shell-select-arrow{
+color:#666;
+}
+.shell-select-dropdown{
+position:absolute;
+top:calc(100% + 4px);
+left:0;
+right:0;
+background:#fff;
+border:1px solid #ddd;
+border-radius:12px;
+box-shadow:0 4px 14px rgba(0,0,0,0.12);
+padding:10px;
+z-index:999;
+display:none;
+}
+.shell-select-dropdown.open{
+display:block;
+}
+.shell-grid{
+display:grid;
+grid-template-columns: repeat(5, 1fr);
+gap:8px;
+}
+.shell-item{
+padding:6px;
+border-radius:8px;
+text-align:center;
+cursor:pointer;
+border:1px solid transparent;
+}
+.shell-item.active{
+border-color:#407bff;
+background:#f0f6ff;
+}
+.shell-item:hover{
+background:#f6f7f9;
+}
+.shell-item canvas{
+width:32px;
+height:32px;
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+<a href="../首页/首页.html" class="back-btn">←</a>
+<h1>全能二维码生成器</h1>
+<div class="tab-wrap">
+<button class="tab active" data-tab="single">单个生成</button>
+<button class="tab" data-tab="batch">批量生成</button>
+<button class="tab" data-tab="history">历史记录</button>
+</div>
+<div class="panel active" id="single">
+<div class="single-row">
+<div class="config-col">
+<textarea id="content" placeholder="输入网址、文字等内容"></textarea>
+<div class="form-grid">
+<div class="form-item">
+<label>尺寸(px)</label>
+<input type="number" id="size" value="320" min="100" max="1000">
+</div>
+<div class="form-item">
+<label>容错等级</label>
+<select id="ecLevel">
+<option value="L">L 7%</option>
+<option value="M" selected>M 15%</option>
+<option value="Q">Q 25%</option>
+<option value="H">H 30%（推荐加Logo/渐变）</option>
+</select>
+</div>
+<div class="form-item">
+<label>前景色</label>
+<input type="color" id="fgColor" value="#000000">
+<div class="grad-preview" id="gradSample"></div>
+</div>
+<div class="form-item">
+<label>码眼外圈颜色</label>
+<input type="color" id="eyeOuterColor" value="#000000">
+</div>
+<div class="form-item">
+<label>码眼内圈颜色</label>
+<input type="color" id="eyeInnerColor" value="#000000">
+</div>
+<div class="form-item">
+<label>背景色</label>
+<input type="color" id="bgColor" value="#ffffff">
+</div>
+
+<div class="form-item">
+<label>外壳模版</label>
+<div class="shell-select-wrap" id="shellSelectWrap">
+<div class="shell-select-trigger" id="shellTrigger">
+<canvas class="shell-select-current-canvas" id="shellCurrentCanvas" width="28" height="28"></canvas>
+<span class="shell-select-arrow">▼</span>
+</div>
+<div class="shell-select-dropdown" id="shellDropdown">
+<div class="shell-grid" id="shellGrid"></div>
+</div>
+</div>
+<input type="hidden" id="shellStyle" value="0">
+</div>
+
+
+<div class="form-item">
+<label>外壳底色</label>
+<input type="color" id="shellBg" value="#000000">
+</div>
+<div class="form-item">
+<label>外壳文字色</label>
+<input type="color" id="shellTextColor" value="#ffffff">
+</div>
+<div class="form-item">
+<label>小点样式</label>
+<select id="qrStyle">
+<option value="square">方块</option>
+<option value="rounded">圆角方块</option>
+<option value="dot">圆点</option>
+</select>
+</div>
+<div class="form-item">
+<label>小点圆角比例 <span id="roundVal">0.30</span></label>
+<input type="range" id="roundRatio" min="0" max="0.5" step="0.01" value="0.3">
+</div>
+<div class="form-item">
+<label>码眼样式</label>
+<div class="eye-select-wrap" id="eyeSelectWrap">
+<div class="eye-select-trigger" id="eyeTrigger">
+<canvas class="eye-select-current-canvas" id="eyeCurrentCanvas" width="28" height="28"></canvas>
+<span class="eye-select-arrow">▼</span>
+</div>
+<div class="eye-select-dropdown" id="eyeDropdown">
+<div class="eye-grid" id="eyeGrid"></div>
+</div>
+</div>
+<input type="hidden" id="eyeStyle" value="5">
+</div>
+<div class="form-item">
+<label>上传Logo</label>
+<div class="logo-row">
+<input type="file" id="logoFile" accept="image/*">
+<button class="btn-red" id="delLogoBtn" disabled>删除Logo</button>
+</div>
+</div>
+<div class="form-item">
+<label>Logo占比(0.1~0.3)</label>
+<input type="number" id="logoRatio" value="0.2" min="0.1" max="0.3" step="0.05">
+</div>
+<div class="form-item">
+<label>启用渐变前景</label>
+<select id="useGradient">
+<option value="0">关闭</option>
+<option value="1">开启</option>
+</select>
+</div>
+<div class="form-item" id="gradWrapBox">
+<label>渐变模版</label>
+<div class="grad-select-wrap" id="gradWrap">
+<div class="grad-option active" data-key="bluepink" style="background:linear-gradient(90deg,#407bff,#ff4499);"></div>
+<div class="grad-option" data-key="purple" style="background:linear-gradient(90deg,#7b2cdd,#d160ff);"></div>
+<div class="grad-option" data-key="blue" style="background:linear-gradient(90deg,#2563eb,#60a5fa);"></div>
+<div class="grad-option" data-key="orange" style="background:linear-gradient(90deg,#f59e0b,#fbbf24);"></div>
+<div class="grad-option" data-key="green" style="background:linear-gradient(90deg,#22c55e,#86efac);"></div>
+<div class="grad-option" data-key="warm" style="background:linear-gradient(90deg,#fb7185,#fdba74);"></div>
+<div class="grad-option" data-key="redpink" style="background:linear-gradient(90deg,#e11d48,#fb7185);"></div>
+<div class="grad-option" data-key="lightblue" style="background:linear-gradient(90deg,#0ea5e9,#7dd3fc);"></div>
+<div class="grad-option" data-key="violet" style="background:linear-gradient(90deg,#7c3aed,#c084fc);"></div>
+</div>
+</div>
+<div class="form-item">
+<label>外边框</label>
+<select id="hasBorder">
+<option value="0">关闭</option>
+<option value="1">开启</option>
+</select>
+</div>
+<div class="form-item">
+<label>边框颜色</label>
+<input type="color" id="borderColor" value="#4080ff">
+</div>
+</div>
+<div class="btn-row">
+<button class="btn-blue" id="genBtn">生成</button>
+<button class="btn-green" id="downloadPng" disabled>下载PNG</button>
+<button class="btn-orange" id="downloadSvg" disabled>下载SVG矢量</button>
+<button class="btn-red" id="clearCfg">清空配置</button>
+</div>
+</div>
+<div class="preview-box" id="previewBox">
+<h4>预览</h4>
+<div id="qrcodePreview"></div>
+</div>
+</div>
+</div>
+<div class="panel" id="batch">
+<textarea id="batchTextarea" placeholder="每行一条内容，批量生成二维码"></textarea>
+<div class="btn-row">
+<button class="btn-blue" id="batchGen">批量生成并打包</button>
+</div>
+<div class="tip">批量生成后自动打包为ZIP压缩包，包含PNG文件</div>
+</div>
+<div class="panel" id="history">
+<div class="btn-row">
+<button class="btn-red" id="clearHistory">清空全部历史</button>
+</div>
+<div class="history-list" id="historyWrap"></div>
+</div>
+<div class="tip">全部本地运算，不上传服务器；SVG矢量仅支持基础方块码眼；自定义码眼、外壳模版、渐变、圆角、点阵仅PNG生效；渐变二维码建议选择H容错等级，识别更稳</div>
+</div>
+<script>
+const gradConfig = {
+bluepink: {s:"#407bff", e:"#ff4499"},
+purple: {s:"#7b2cdd", e:"#d160ff"},
+blue: {s:"#2563eb", e:"#60a5fa"},
+orange: {s:"#f59e0b", e:"#fbbf24"},
+green: {s:"#22c55e", e:"#86efac"},
+warm: {s:"#fb7185", e:"#fdba74"},
+redpink: {s:"#e11d48", e:"#fb7185"},
+lightblue: {s:"#0ea5e9", e:"#7dd3fc"},
+violet: {s:"#7c3aed", e:"#c084fc"}
+};
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+tabs.forEach(tab=>{
+tab.onclick = ()=>{
+const target = tab.dataset.tab;
+tabs.forEach(t=>t.classList.remove('active'));
+panels.forEach(p=>p.classList.remove('active'));
+tab.classList.add('active');
+document.getElementById(target).classList.add('active');
+if(target === 'history') renderHistory();
+    }
+})
+const contentEl = document.getElementById('content');
+const genBtn = document.getElementById('genBtn');
+const previewWrap = document.getElementById('qrcodePreview');
+const previewBox = document.getElementById('previewBox');
+const downloadPng = document.getElementById('downloadPng');
+const downloadSvg = document.getElementById('downloadSvg');
+const clearCfg = document.getElementById('clearCfg');
+const logoFileEl = document.getElementById('logoFile');
+const delLogoBtn = document.getElementById('delLogoBtn');
+const batchTextarea = document.getElementById('batchTextarea');
+const batchGen = document.getElementById('batchGen');
+const clearHistoryBtn = document.getElementById('clearHistory');
+const useGradientEl = document.getElementById('useGradient');
+const fgColorEl = document.getElementById('fgColor');
+const eyeOuterColorEl = document.getElementById('eyeOuterColor');
+const eyeInnerColorEl = document.getElementById('eyeInnerColor');
+const gradSampleEl = document.getElementById('gradSample');
+const gradWrap = document.getElementById('gradWrap');
+const gradWrapBox = document.getElementById('gradWrapBox');
+const gradOptions = gradWrap.querySelectorAll('.grad-option');
+const borderColorEl = document.getElementById('borderColor');
+const hasBorderEl = document.getElementById('hasBorder');
+const roundRatioEl = document.getElementById('roundRatio');
+const roundValEl = document.getElementById('roundVal');
+const qrStyleEl = document.getElementById('qrStyle');
+const logoRatioEl = document.getElementById('logoRatio');
+
+// ========== 外壳模版缩略图选择逻辑 ==========
+const shellStyleInput = document.getElementById('shellStyle');
+const shellTrigger = document.getElementById('shellTrigger');
+const shellDropdown = document.getElementById('shellDropdown');
+const shellGrid = document.getElementById('shellGrid');
+const shellCurrentCanvas = document.getElementById('shellCurrentCanvas');
+const shellStyleList = ["0","1","2","3","4","5","6","7","8"];
+let selectedShellStyle = "0";
+
+function drawShellMini(ctx, styleId, size=32){
+ctx.clearRect(0,0,size,size);
+if(styleId === "0"){
+    // 无外壳：白底 + 灰色叉号
+    ctx.fillStyle="#ffffff";
+    ctx.fillRect(0,0,size,size);
+    ctx.strokeStyle="#999999";
+    ctx.lineWidth=3;
+    ctx.lineCap="round";
+    const pad = size * 0.25;
+    ctx.beginPath();
+    ctx.moveTo(pad, pad);
+    ctx.lineTo(size-pad, size-pad);
+    ctx.moveTo(size-pad, pad);
+    ctx.lineTo(pad, size-pad);
+    ctx.stroke();
+}else{
+    // 其他模版正常绘制
+    drawShell(ctx, size, size, styleId, "#000000", "#ffffff");
+}
+}
+
+
+function initShellGrid(){
+shellGrid.innerHTML = "";
+shellStyleList.forEach(id=>{
+const wrap = document.createElement("div");
+wrap.className = "shell-item";
+wrap.dataset.id = id;
+const c = document.createElement("canvas");
+c.width=32; c.height=32;
+drawShellMini(c.getContext("2d"), id, 32);
+wrap.appendChild(c);
+if(id === selectedShellStyle) wrap.classList.add("active");
+wrap.onclick = ()=>{
+selectedShellStyle = id;
+shellStyleInput.value = id;
+renderShellSelect();
+shellDropdown.classList.remove("open");
+tryRenderPreview();
+        }
+shellGrid.appendChild(wrap);
+    })
+}
+function renderShellSelect(){
+const ctx = shellCurrentCanvas.getContext("2d");
+drawShellMini(ctx, selectedShellStyle, 28);
+shellGrid.querySelectorAll(".shell-item").forEach(el=>{
+el.classList.toggle("active", el.dataset.id === selectedShellStyle);
+    })
+}
+shellTrigger.onclick = (e)=>{
+e.stopPropagation();
+shellDropdown.classList.toggle("open");
+}
+// 点击页面关闭下拉（和码眼共用body点击，不用额外加）
+initShellGrid();
+renderShellSelect();
+
+
+const shellBgEl = document.getElementById('shellBg');
+const shellTextColorEl = document.getElementById('shellTextColor');
+
+// === 自定义码眼下拉 ===
+const eyeStyleInput = document.getElementById('eyeStyle');
+const eyeTrigger = document.getElementById('eyeTrigger');
+const eyeDropdown = document.getElementById('eyeDropdown');
+const eyeGrid = document.getElementById('eyeGrid');
+const eyeCurrentCanvas = document.getElementById('eyeCurrentCanvas');
+const eyeStyleList = ["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"];
+let selectedEyeStyle = "5";
+function drawEyeMini(ctx, styleId, size=32){
+ctx.clearRect(0,0,size,size);
+ctx.fillStyle="#ffffff";
+ctx.fillRect(0,0,size,size);
+drawEye(ctx,0,0,size,styleId,"#000000","#000000","#ffffff");
+}
+function initEyeGrid(){
+eyeGrid.innerHTML = "";
+eyeStyleList.forEach(id=>{
+const wrap = document.createElement("div");
+wrap.className = "eye-item";
+wrap.dataset.id = id;
+const c = document.createElement("canvas");
+c.width=32; c.height=32;
+drawEyeMini(c.getContext("2d"), id, 32);
+wrap.appendChild(c);
+if(id === selectedEyeStyle) wrap.classList.add("active");
+wrap.onclick = ()=>{
+selectedEyeStyle = id;
+eyeStyleInput.value = id;
+renderEyeSelect();
+eyeDropdown.classList.remove("open");
+tryRenderPreview();
+        }
+eyeGrid.appendChild(wrap);
+    })
+}
+function renderEyeSelect(){
+const ctx = eyeCurrentCanvas.getContext("2d");
+drawEyeMini(ctx, selectedEyeStyle, 28);
+eyeGrid.querySelectorAll(".eye-item").forEach(el=>{
+el.classList.toggle("active", el.dataset.id === selectedEyeStyle);
+    })
+}
+eyeTrigger.onclick = (e)=>{
+e.stopPropagation();
+eyeDropdown.classList.toggle("open");
+}
+document.body.onclick = ()=>{
+eyeDropdown.classList.remove("open");
+}
+initEyeGrid();
+renderEyeSelect();
+let selectedGradKey = "bluepink";
+let logoImg = null;
+let hasGenerated = false;
+let lastContent = "";
+function updateGradSample(){
+const c = gradConfig[selectedGradKey];
+gradSampleEl.style.background = `linear-gradient(90deg, ${c.s}, ${c.e})`;
+}
+gradOptions.forEach(opt=>{
+opt.onclick = ()=>{
+if(gradWrap.classList.contains('disabled')) return;
+gradOptions.forEach(o=>o.classList.remove('active'));
+opt.classList.add('active');
+selectedGradKey = opt.dataset.key;
+updateGradSample();
+tryRenderPreview();
+    }
+})
+function toggleGradView(){
+if(useGradientEl.value === '1'){
+fgColorEl.style.display = 'none';
+gradSampleEl.style.display = 'block';
+gradWrap.classList.remove('disabled');
+updateGradSample();
+    }else{
+fgColorEl.style.display = 'block';
+gradSampleEl.style.display = 'none';
+gradWrap.classList.add('disabled');
+    }
+tryRenderPreview();
+}
+useGradientEl.onchange = toggleGradView;
+toggleGradView();
+function toggleBorderColor(){
+borderColorEl.disabled = hasBorderEl.value !== '1';
+tryRenderPreview();
+}
+hasBorderEl.onchange = toggleBorderColor;
+toggleBorderColor();
+function toggleRoundInput(){
+roundRatioEl.disabled = qrStyleEl.value !== 'rounded';
+tryRenderPreview();
+}
+qrStyleEl.onchange = toggleRoundInput;
+toggleRoundInput();
+function toggleLogoRatio(){
+logoRatioEl.disabled = !logoImg;
+}
+roundRatioEl.oninput = ()=>{
+roundValEl.textContent = Number(roundRatioEl.value).toFixed(2);
+tryRenderPreview();
+}
+function bindLiveChange(els){
+els.forEach(sel=>{
+document.querySelector(sel).addEventListener('input', tryRenderPreview);
+document.querySelector(sel).addEventListener('change', tryRenderPreview);
+    })
+}
+
+bindLiveChange([
+'#fgColor',
+'#eyeOuterColor',
+'#eyeInnerColor',
+'#bgColor',
+'#qrStyle',
+'#logoRatio',
+'#borderColor',
+'#size',
+'#ecLevel',
+'#shellBg','#shellTextColor'
+]);
+
+
+let canvasMain = null;
+let svgStr = "";
+logoFileEl.onchange = e=>{
+const f = e.target.files[0];
+if(!f) {
+logoImg = null;
+delLogoBtn.disabled=true;
+toggleLogoRatio();
+tryRenderPreview();
+return;
+}
+const r = new FileReader();
+r.onload = ev=>{
+const img = new Image();
+img.src = ev.target.result;
+img.onload = ()=> {
+logoImg = img;
+delLogoBtn.disabled = false;
+toggleLogoRatio();
+tryRenderPreview();
+}
+    }
+r.readAsDataURL(f);
+}
+delLogoBtn.onclick = ()=>{
+logoImg = null;
+logoFileEl.value = '';
+delLogoBtn.disabled = true;
+toggleLogoRatio();
+tryRenderPreview();
+}
+toggleLogoRatio();
+function getHistory(){
+const raw = localStorage.getItem('qrHistory');
+return raw ? JSON.parse(raw) : [];
+}
+function saveHistory(text){
+const arr = getHistory();
+const idx = arr.findIndex(i=>i.text === text);
+if(idx >=0) arr.splice(idx,1);
+arr.unshift({text, time: Date.now()});
+if(arr.length>30) arr.length =30;
+localStorage.setItem('qrHistory', JSON.stringify(arr));
+}
+function renderHistory(){
+const wrap = document.getElementById('historyWrap');
+const arr = getHistory();
+if(!arr.length) { wrap.innerHTML = '<div style="text-align:center;padding:16px;color:#888">暂无记录</div>'; return; }
+wrap.innerHTML = arr.map((item,index)=>`
+        <div class="history-item">
+            <div class="history-text">${escapeHtml(item.text)}</div>
+            <div>
+                <button data-load="${item.text}" style="padding:4px 8px;font-size:12px;border-radius:6px;border:none">载入</button>
+                <button data-del="${index}" style="padding:4px 8px;font-size:12px;background:#ee5555;color:#fff;border:none;border-radius:6px;margin-left:4px">删除</button>
+            </div>
+        </div>
+    `).join('');
+wrap.querySelectorAll('[data-load]').forEach(b=>{
+b.onclick = ()=>{
+contentEl.value = b.dataset.load;
+lastContent = contentEl.value;
+tabs[0].click();
+tryRenderPreview();
+        }
+    })
+wrap.querySelectorAll('[data-del]').forEach(b=>{
+b.onclick = ()=>{
+const list = getHistory();
+list.splice(Number(b.dataset.del),1);
+localStorage.setItem('qrHistory',JSON.stringify(list));
+renderHistory();
+        }
+    })
+}
+clearHistoryBtn.onclick = ()=>{
+localStorage.removeItem('qrHistory');
+renderHistory();
+}
+function escapeHtml(str){
+return str.replace(/[&<>"']/g,m=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
+}
+function drawEye(ctx, posX, posY, eyeSize, styleId, outerColor, innerColor, bgColor){
+const c = eyeSize / 7;
+const cx = posX + eyeSize/2;
+const cy = posY + eyeSize/2;
+switch(styleId){
+case "0":{
+ctx.fillStyle = outerColor;
+ctx.fillRect(posX,posY,eyeSize,eyeSize);
+ctx.fillStyle = bgColor;
+ctx.fillRect(posX+c,posY+c,c*5,c*5);
+ctx.fillStyle = innerColor;
+ctx.fillRect(posX+c*2,posY+c*2,c*3,c*3);
+break;
+}
+case "1":{
+ctx.fillStyle = outerColor;
+ctx.fillRect(posX,posY,eyeSize,eyeSize);
+ctx.fillStyle = bgColor;
+ctx.fillRect(posX+c,posY+c,c*5,c*5);
+ctx.fillStyle = innerColor;
+ctx.beginPath();
+ctx.arc(cx,cy,c*1.5,0,Math.PI*2);ctx.fill();
+break;
+}
+case "2":{
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.arc(cx,cy,eyeSize/2,0,Math.PI*2);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.arc(cx,cy,c*2.5,0,Math.PI*2);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.fillRect(cx-c*1.5,cy-c*1.5,c*3,c*3);
+break;
+}
+case "3":{
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.arc(cx,cy,eyeSize/2,0,Math.PI*2);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.arc(cx,cy,c*2.5,0,Math.PI*2);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.arc(cx,cy,c*1.5,0,Math.PI*2);ctx.fill();
+break;
+}
+case "4":{
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize,c*1.2);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5,c*0.8);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.arc(cx,cy,c*1.5,0,Math.PI*2);ctx.fill();
+break;
+}
+case "5":{
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize,c*1.2);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5,c*0.8);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.roundRect(cx-c*1.5,cy-c*1.5,c*3,c*3,c*0.6);ctx.fill();
+break;
+}
+case "6":{
+const outerR = c*1.6;
+const innerR = c*1.0;
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize, [outerR, outerR, outerR, 0]);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5, [innerR, innerR, innerR, 0]);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.roundRect(cx-c*1.5,cy-c*1.5,c*3,c*3, [c*0.7, c*0.7, c*0.7, 0]);ctx.fill();
+break;
+}
+case "7":{
+const outerR = c*2.0;
+const innerR = c*1.2;
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize, [outerR, outerR, 0, outerR]);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5, [innerR, innerR, 0, innerR]);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.roundRect(cx-c*1.5,cy-c*1.5,c*3,c*3, [c*0.8, c*0.8, 0, c*0.8]);ctx.fill();
+break;
+}
+case "8":{
+const outerR = c*2.6;
+const innerR = c*1.4;
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize, [outerR, 0, outerR, outerR]);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5, [innerR, 0, innerR, innerR]);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.roundRect(cx-c*1.5,cy-c*1.5,c*3,c*3, [c*0.9, 0, c*0.9, c*0.9]);ctx.fill();
+break;
+}
+case "9":{
+const outerR = c*3.2;
+const innerR = c*1.6;
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize, [0, outerR, outerR, outerR]);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5, [0, innerR, innerR, innerR]);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.roundRect(cx-c*1.5,cy-c*1.5,c*3,c*3, [0, c*1.0, c*1.0, c*1.0]);ctx.fill();
+break;
+}
+case "10":{
+const outerR = c*1.2;
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize, [outerR, 0, outerR, 0]);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5, [c*0.8, 0, c*0.8, 0]);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.arc(cx,cy,c*1.5,0,Math.PI*2);ctx.fill();
+break;
+}
+case "11":{
+const outerR = c*1.2;
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize, [outerR, 0, outerR, 0]);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5, [c*0.8, 0, c*0.8, 0]);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.roundRect(cx-c*1.2,cy-c*1.2,c*2.4,c*2.4, [c*0.4,0,c*0.4,0]);ctx.fill();
+break;
+}
+case "12":{
+const outerR = c*1.4;
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize, [0, outerR, 0, outerR]);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5, [0, c*0.9, 0, c*0.9]);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.arc(cx,cy,c*1.4,0,Math.PI*2);ctx.fill();
+break;
+}
+case "13":{
+const outerR = c*0.8;
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize, [0, outerR, 0, outerR]);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5, [0, c*0.6, 0, c*0.6]);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.roundRect(cx-c*1.4,cy-c*1.4,c*2.8,c*2.8, [0, c*0.5, 0, c*0.5]);ctx.fill();
+break;
+}
+
+case "14":{
+ctx.fillStyle = outerColor;
+ctx.beginPath();ctx.roundRect(posX,posY,eyeSize,eyeSize,c*1.0);ctx.fill();
+ctx.fillStyle = bgColor;
+ctx.beginPath();ctx.roundRect(posX+c,posY+c,c*5,c*5,c*0.7);ctx.fill();
+ctx.fillStyle = innerColor;
+ctx.beginPath();ctx.arc(cx,cy,c*1.5,0,Math.PI*2);ctx.fill();
+const dotR = c*0.45;
+const dotPos = [
+[posX+c*0.5,posY+c*0.5], [posX+eyeSize-c*0.5,posY+c*0.5],
+[posX+c*0.5,posY+eyeSize-c*0.5], [posX+eyeSize-c*0.5,posY+eyeSize-c*0.5],
+[posX+c*0.5,cy], [posX+eyeSize-c*0.5,cy],
+[cx,posY+c*0.5], [cx,posY+eyeSize-c*0.5]
+];
+dotPos.forEach(p=>{
+ctx.beginPath();ctx.arc(p[0],p[1],dotR,0,Math.PI*2);ctx.fill();
+})
+break;
+}
+case "15":{
+// 中心大圆点 + 外圈点阵装饰
+ctx.fillStyle = outerColor;
+// 中心大圆点
+ctx.beginPath();
+ctx.arc(cx, cy, c*1.6, 0, Math.PI*2);
+ctx.fill();
+// 外圈点阵：4个角大圆点 + 上下左右中点圆点 + 边角小圆点
+const outerDotR = c*0.75;
+const midDotR = c*0.55;
+const smallDotR = c*0.4;
+// 四角大圆点
+ctx.beginPath(); ctx.arc(posX+c*0.6, posY+c*0.6, outerDotR, 0, Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.arc(posX+eyeSize-c*0.6, posY+c*0.6, outerDotR, 0, Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.arc(posX+c*0.6, posY+eyeSize-c*0.6, outerDotR, 0, Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.arc(posX+eyeSize-c*0.6, posY+eyeSize-c*0.6, outerDotR, 0, Math.PI*2); ctx.fill();
+// 上下左右中点
+ctx.beginPath(); ctx.arc(cx, posY+c*0.6, midDotR, 0, Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.arc(cx, posY+eyeSize-c*0.6, midDotR, 0, Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.arc(posX+c*0.6, cy, midDotR, 0, Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.arc(posX+eyeSize-c*0.6, cy, midDotR, 0, Math.PI*2); ctx.fill();
+// 边角小圆点
+ctx.beginPath(); ctx.arc(posX+c*1.4, posY+c*1.4, smallDotR, 0, Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.arc(posX+eyeSize-c*1.4, posY+c*1.4, smallDotR, 0, Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.arc(posX+c*1.4, posY+eyeSize-c*1.4, smallDotR, 0, Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.arc(posX+eyeSize-c*1.4, posY+eyeSize-c*1.4, smallDotR, 0, Math.PI*2); ctx.fill();
+break;
+}
+}
+}
+
+function drawShell(ctx, w, h, styleId, shellBg, textColor){
+const pad = w*0.08;
+const qrW = w - pad*2;
+ctx.save();
+ctx.fillStyle = shellBg;
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+ctx.font = `bold ${w*0.06}px system-ui`;
+switch(styleId){
+case "1":
+ctx.beginPath();ctx.roundRect(0,0,w,h,w*0.08);ctx.fill();
+ctx.fillStyle="#fff";ctx.fillRect(pad,pad,qrW,qrW);
+ctx.fillStyle=textColor;ctx.fillText("SCAN ME", w/2, h-pad/2);
+break;
+
+case "2":
+ctx.beginPath();ctx.roundRect(0,0,w,h,[w*0.08,w*0.08,w*0.08,0]);ctx.fill();
+ctx.fillStyle="#fff";ctx.fillRect(pad,pad,qrW,qrW);
+ctx.fillStyle=textColor;ctx.fillText("SCAN ME", w/2, h-pad/2);
+break;
+
+case "3":
+ctx.beginPath();ctx.roundRect(0,0,w,h,[w*0.07,w*0.07,0,w*0.07]);ctx.fill();
+ctx.fillStyle="#fff";ctx.fillRect(pad,pad,qrW,qrW);
+ctx.fillStyle=textColor;ctx.fillText("SCAN ME", w/2, h-pad/2);
+break;
+
+case "4":
+ctx.beginPath();
+ctx.moveTo(0,0);
+for(let i=0;i<=w;i+=w/12) ctx.lineTo(i, Math.sin(i*0.22)*h*0.03);
+ctx.lineTo(w,h);
+for(let i=w;i>=0;i-=w/12) ctx.lineTo(i, h+Math.sin(i*0.22)*h*0.03);
+ctx.closePath();ctx.fill();
+ctx.fillStyle="#fff";ctx.fillRect(pad,pad,qrW,qrW);
+ctx.fillStyle=textColor;ctx.fillText("SCAN ME", w/2, h-pad/2);
+break;
+
+case "5":
+ctx.beginPath();
+const r = w/2;
+for(let a=0;a<=Math.PI*2;a+=0.14){
+let rr = r * (0.87 + Math.sin(a*4)*0.12);
+let x = w/2 + Math.cos(a)*rr;
+let y = h/2 + Math.sin(a)*rr;
+a===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+}
+ctx.closePath();ctx.fill();
+ctx.fillStyle="#fff";ctx.fillRect(pad,pad,qrW,qrW);
+ctx.fillStyle=textColor;ctx.fillText("SCAN ME", w/2, h-pad/2);
+break;
+
+case "6":
+ctx.beginPath();ctx.arc(w/2,h/2,w/2,0,Math.PI*2);ctx.fill();
+ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(w/2,h/2,w*0.42,0,Math.PI*2);ctx.fill();
+ctx.fillStyle="#888888";ctx.beginPath();ctx.arc(w/2,h/2,w*0.36,0,Math.PI*2);ctx.lineWidth=w*0.04;ctx.stroke();
+ctx.fillStyle="#fff";ctx.fillRect(pad,pad,qrW,qrW);
+ctx.fillStyle=textColor;ctx.fillText("SCAN ME", w/2, h-pad/2);
+break;
+case "7":
+ctx.beginPath();ctx.arc(w/2,h/2,w/2,0,Math.PI*2);ctx.fill();
+ctx.fillStyle="#888888";ctx.beginPath();ctx.arc(w*0.62,h*0.4,w*0.32,0,Math.PI*2);ctx.fill();
+ctx.fillStyle="#fff";ctx.fillRect(pad,pad,qrW,qrW);
+ctx.fillStyle=textColor;ctx.fillText("SCAN ME", w/2, h-pad/2);
+break;
+
+case "8":
+ctx.beginPath();ctx.arc(w/2,h/2,w/2,0,Math.PI*2);ctx.fill();
+ctx.strokeStyle="#fff";ctx.lineWidth=w*0.032;
+ctx.beginPath();ctx.arc(w/2,h/2,w*0.44,0,Math.PI*2);ctx.stroke();
+ctx.beginPath();ctx.arc(w/2,h/2,w*0.36,0,Math.PI*2);ctx.stroke();
+ctx.fillStyle="#fff";ctx.fillRect(pad,pad,qrW,qrW);
+ctx.fillStyle=textColor;ctx.fillText("SCAN ME", w/2, h-pad/2);
+break;
+}
+ctx.restore();
+}
+
+function tryRenderPreview(){
+if(!hasGenerated) return;
+if(!contentEl.value.trim()) return;
+generateQR();
+}
+contentEl.addEventListener('input', ()=>{
+if(contentEl.value.trim() && contentEl.value !== lastContent){
+hasGenerated = false;
+downloadPng.disabled = true;
+downloadSvg.disabled = true;
+    }
+});
+
+
+
+async function generateQR(){
+const text = contentEl.value.trim();
+if(!text){ alert('请输入内容'); return; }
+// 【导出原图尺寸，保留用户输入】
+const exportSize = Number(document.getElementById('size').value);
+// 预览最大限制280
+const previewMax = 280;
+const ec = document.getElementById('ecLevel').value;
+const fg = document.getElementById('fgColor').value;
+const eyeOuterColor = eyeOuterColorEl.value;
+const eyeInnerColor = eyeInnerColorEl.value;
+const bg = document.getElementById('bgColor').value;
+const qrStyle = qrStyleEl.value;
+const eyeStyleId = selectedEyeStyle;
+const ratio = Number(logoRatioEl.value);
+const roundR = Number(roundRatioEl.value);
+const gradient = useGradientEl.value === '1';
+const border = hasBorderEl.value === '1';
+const borderColor = borderColorEl.value;
+
+const shellId = selectedShellStyle;
+const shellBg = shellBgEl.value;
+const shellTextColor = shellTextColorEl.value;
+
+previewWrap.innerHTML = '';
+const qrData = await QRCode.create(text, {errorCorrectionLevel:ec});
+const moduleCount = qrData.modules.size;
+
+// ========== 预览画布计算：外壳开启时自动适配 ==========
+let drawSize;
+if(shellId === "0"){
+    // 无外壳：预览直接按用户尺寸，但不超280
+    drawSize = Math.min(exportSize, previewMax);
+}else{
+    // 有外壳：外壳自带padding（原代码shellPadding = size*0.14）
+    // 外壳画布总宽 = 二维码绘图区 + 两边shellPadding
+    // 我们希望【外壳整体画布】不超过previewMax=280
+    // shellPadding = drawSize * 0.14
+    // totalShellW = drawSize + drawSize*0.14*2 = drawSize * 1.28
+    // totalShellW <= 280
+    drawSize = previewMax / 1.28;
+}
+drawSize = Math.floor(drawSize);
+const cellSize = drawSize / moduleCount;
+
+let cvs;
+let offsetX=0,offsetY=0;
+let shellPadding = drawSize * 0.14;
+if(shellId !== "0"){
+cvs = document.createElement('canvas');
+cvs.width = drawSize + shellPadding*2;
+cvs.height = drawSize + shellPadding*2;
+const shellCtx = cvs.getContext('2d');
+drawShell(shellCtx, cvs.width, cvs.height, shellId, shellBg, shellTextColor);
+offsetX = shellPadding;
+offsetY = shellPadding;
+}else{
+cvs = document.createElement('canvas');
+cvs.width = drawSize;
+cvs.height = drawSize;
+}
+const ctx = cvs.getContext('2d');
+if(shellId === "0"){
+ctx.fillStyle = bg;
+ctx.fillRect(0,0,drawSize,drawSize);
+}
+
+let fillGrad = null;
+if(gradient){
+const gColor = gradConfig[selectedGradKey];
+fillGrad = ctx.createLinearGradient(offsetX,offsetY,offsetX+drawSize,offsetY+drawSize);
+fillGrad.addColorStop(0, gColor.s);
+fillGrad.addColorStop(1, gColor.e);
+}
+
+const eyeAreas = [
+{x:0,y:0},
+{x:moduleCount-7,y:0},
+{x:0,y:moduleCount-7}
+];
+function isEyeCell(x,y){
+for(let a of eyeAreas){
+if(x >= a.x && x < a.x+7 && y >= a.y && y < a.y+7) return true;
+}
+return false;
+}
+
+for(let y=0;y<moduleCount;y++){
+for(let x=0;x<moduleCount;x++){
+if(isEyeCell(x,y)) continue;
+if(!qrData.modules.get(x,y)) continue;
+const px = offsetX + x * cellSize;
+const py = offsetY + y * cellSize;
+ctx.fillStyle = gradient ? fillGrad : fg;
+if(qrStyle === 'dot'){
+ctx.beginPath();
+ctx.arc(px+cellSize/2, py+cellSize/2, cellSize/2, 0, Math.PI*2);
+ctx.fill();
+}else if(qrStyle === 'rounded'){
+ctx.beginPath();
+ctx.roundRect(px, py, cellSize, cellSize, cellSize * roundR);
+ctx.fill();
+}else{
+ctx.fillRect(px, py, cellSize, cellSize);
+}
+}
+}
+
+for(let a of eyeAreas){
+const px = offsetX + a.x * cellSize;
+const py = offsetY + a.y * cellSize;
+drawEye(ctx, px, py, cellSize*7, eyeStyleId, eyeOuterColor, eyeInnerColor, bg);
+}
+
+if(border){
+ctx.strokeStyle = borderColor;
+ctx.lineWidth=6;
+ctx.strokeRect(offsetX+3,offsetY+3,drawSize-6,drawSize-6);
+}
+
+if(logoImg){
+const ls = drawSize * ratio;
+const x = offsetX + (drawSize - ls)/2;
+const y = offsetY + (drawSize - ls)/2;
+ctx.drawImage(logoImg,x,y,ls,ls);
+}
+
+canvasMain = cvs;
+previewWrap.appendChild(canvasMain);
+downloadPng.disabled = false;
+downloadSvg.disabled = false;
+hasGenerated = true;
+lastContent = contentEl.value;
+saveHistory(text);
+
+// SVG导出仍然使用用户输入的原始尺寸，不受预览缩放影响
+svgStr = await QRCode.toString(text,{
+type:'svg', width:exportSize, margin:2,
+color:{dark:fg, light:bg},
+errorCorrectionLevel:ec
+})
+}
+
+
+
+
+genBtn.onclick = generateQR;
+contentEl.onkeydown = e=>{
+if(e.key === 'Enter' && !e.shiftKey){
+e.preventDefault(); generateQR();
+    }
+}
+downloadPng.onclick = ()=>{
+if(!canvasMain) return;
+const a = document.createElement('a');
+a.href = canvasMain.toDataURL('image/png');
+a.download = 'qrcode.png';
+a.click();
+}
+downloadSvg.onclick = ()=>{
+if(!svgStr) return;
+const blob = new Blob([svgStr],{type:'image/svg+xml'});
+saveAs(blob,'qrcode.svg');
+}
+clearCfg.onclick = ()=>{
+contentEl.value = '';
+logoFileEl.value = '';
+logoImg = null;
+delLogoBtn.disabled = true;
+toggleLogoRatio();
+previewWrap.innerHTML = '';
+downloadPng.disabled = true;
+downloadSvg.disabled = true;
+canvasMain=null; svgStr='';
+hasGenerated = false;
+lastContent = '';
+}
+batchGen.onclick = async ()=>{
+const lines = batchTextarea.value.split('\n').map(s=>s.trim()).filter(s=>s);
+if(!lines.length){ alert('请输入内容，一行一条'); return; }
+const zip = new JSZip();
+for(let i=0;i<lines.length;i++){
+const t = lines[i];
+const c = await QRCode.toCanvas(t,{width:300, margin:2, errorCorrectionLevel:'H'});
+const dataUrl = c.toDataURL('image/png');
+const base64 = dataUrl.split(',')[1];
+zip.file(`qr_${i+1}.png`, base64, {base64:true});
+    }
+const zipBlob = await zip.generateAsync({type:'blob'});
+saveAs(zipBlob, '批量二维码.zip');
+}
+</script>
+</body>
+</html>
