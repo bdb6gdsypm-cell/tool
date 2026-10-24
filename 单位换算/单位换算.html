@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单位换算器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{
+background: linear-gradient(90deg, #b87eff, #7b42e8);
+padding: max(8px, 2vw);
+min-height:100vh;
+display:flex;
+align-items:flex-start;
+justify-content:center;
+}
+.wrap{
+width: min(100%, 1100px);
+background:#ffffff;
+border-radius:18px;
+overflow:hidden;
+box-shadow:0 2px 12px rgba(0,80,200,0.08);
+position:relative;
+}
+/* 返回按钮：圆形、左上角定位 */
+.back-btn{
+position:absolute;
+top: max(12px, 1.2vw);
+left: max(12px, 1.2vw);
+width: clamp(32px, 6vw, 36px);
+height: clamp(32px, 6vw, 36px);
+border-radius:50%;
+background:#edf4ff;
+color:#3478e8;
+border:none;
+font-size: clamp(16px, 4vw, 20px);
+cursor:pointer;
+z-index:10;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+.back-btn:hover{
+background:#dbeaff;
+}
+.head-title{
+padding: clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px);
+font-size: clamp(20px, 5vw, 28px);
+color:#222;
+font-weight:600;
+border-bottom:1px solid #edf2fa;
+padding-left: clamp(56px, 12vw, 70px);
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+.tab-wrap{
+display:flex;
+align-items:center;
+border-bottom:1px solid #edf2fa;
+position:relative;
+}
+.tab-viewport{
+flex:1;
+overflow:hidden;
+}
+.tabs{
+display:flex;
+gap:4px;
+white-space:nowrap;
+transition: transform 0.25s ease-out;
+}
+.tabs>div{
+padding: clamp(10px, 2vw, 14px) clamp(8px, 2vw, 12px);
+font-size: clamp(13px, 3vw, 16px);
+color:#666;
+cursor:pointer;
+white-space:nowrap;
+border-bottom:2px solid transparent
+}
+.tabs>div.active{
+color:#3478e8;
+border-bottom-color:#3478e8;
+font-weight:500
+}
+.tab-arrow-group{
+display:flex;
+gap:6px;
+padding:0 12px;
+flex-shrink:0;
+}
+.tab-arrow{
+width:32px;
+height:32px;
+border-radius:50%;
+border:none;
+background:#edf4ff;
+color:#3478e8;
+cursor:pointer;
+font-size:16px;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+.tab-arrow:hover:not(:disabled){
+background:#dbeaff;
+}
+.tab-arrow:disabled{
+opacity:0.4;
+cursor:not-allowed;
+}
+.swap-row{
+display:flex;
+align-items:center;
+gap: clamp(8px, 2vw, 12px);
+padding: clamp(16px, 3vw, 24px);
+flex-wrap:wrap;
+}
+.input-item{
+flex:1;
+display:flex;
+border:1px solid #dde4f0;
+border-radius:12px;
+overflow:hidden;
+background:#f8fafc;
+min-width: 0;
+}
+.swap-btn{
+width: clamp(34px, 7vw, 40px);
+height: clamp(34px, 7vw, 40px);
+border-radius:50%;
+background:#edf4ff;
+color:#3478e8;
+border:none;
+font-size: clamp(16px, 4vw, 20px);
+cursor:pointer;
+flex-shrink:0
+}
+.num-input{
+flex:1;
+border:none;
+outline:none;
+padding: clamp(10px, 2vw, 14px) clamp(12px, 2vw, 16px);
+font-size: clamp(16px, 4vw, 20px);
+background:transparent;
+min-width: 60px;
+}
+.unit-select{
+flex: 0 0 auto;
+border:none;
+border-left:1px solid #dde4f0;
+padding:0 clamp(8px, 2vw, 12px);
+font-size: clamp(13px, 3vw, 16px);
+background:transparent;
+min-width: 84px;
+outline:none;
+}
+.all-result{
+padding:0 clamp(16px, 3vw, 24px) clamp(16px, 3vw, 24px);
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:0;
+}
+.result-item{
+font-size: clamp(12px, 3vw, 15px);
+padding: clamp(6px, 1.5vw, 8px) clamp(4px, 1vw, 6px);
+}
+.result-item .num{
+color:#000000;
+}
+.result-item .unit{
+color:#888888;
+}
+.result-item:nth-child(6n+1),
+.result-item:nth-child(6n+2),
+.result-item:nth-child(6n+3){
+background:#ffffff;
+}
+.result-item:nth-child(6n+4),
+.result-item:nth-child(6n+5),
+.result-item:nth-child(6n+6){
+background:#f5f7fa;
+}
+
+@media(max-width:768px){
+.all-result{
+grid-template-columns:repeat(2,1fr)
+  }
+.result-item:nth-child(4n+1),
+.result-item:nth-child(4n+2){
+background:#ffffff;
+  }
+.result-item:nth-child(4n+3),
+.result-item:nth-child(4n+4){
+background:#f5f7fa;
+  }
+.input-item{
+flex: 1 1 calc(50% - clamp(8px,2vw,12px));
+}
+}
+
+@media(max-width:480px){
+.all-result{
+grid-template-columns:1fr
+  }
+.result-item:nth-child(odd){
+background:#ffffff;
+  }
+.result-item:nth-child(even){
+background:#f5f7fa;
+  }
+.swap-row{
+flex-direction:column;
+align-items:stretch;
+gap: 12px;
+}
+/* 输入框占满整行 */
+.input-item{
+flex: 1 1 100%;
+width:100%;
+}
+/* 交换按钮居中单独一行 */
+.swap-btn{
+align-self:center;
+transform:rotate(90deg);
+}
+/* 删掉小屏箭头纵向样式，箭头组保持横向 */
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<button class="back-btn" onclick="location.href='../首页/首页.html'">←</button>
+<div class="head-title" id="mainTitle">1千米=1米</div>
+
+<div class="tab-wrap">
+<div class="tab-viewport">
+<div class="tabs" id="tabInner">
+<div data-type="length" class="active">长度</div>
+<div data-type="mass">质量</div>
+<div data-type="area">面积</div>
+<div data-type="volume">体积</div>
+<div data-type="energy">功/能/热</div>
+<div data-type="speed">速度</div>
+<div data-type="density">密度</div>
+<div data-type="force">力</div>
+<div data-type="pressure">压强</div>
+<div data-type="power">功率</div>
+<div data-type="temperature">温度</div>
+<div data-type="time">时间</div>
+<div data-type="storage">存储</div>
+<div data-type="angle">角度</div>
+<div data-type="currency">人民币</div>
+<div data-type="illuminance">光照度</div>
+<div data-type="torque">力矩</div>
+<div data-type="resistance">电阻</div>
+<div data-type="voltage">电压</div>
+<div data-type="current">电流</div>
+</div>
+</div>
+<div class="tab-arrow-group">
+<button class="tab-arrow" id="tabLeftBtn">&lt;</button>
+<button class="tab-arrow" id="tabRightBtn">&gt;</button>
+</div>
+</div>
+
+<div class="swap-row">
+<div class="input-item">
+<input class="num-input" id="leftVal" value="1">
+<select class="unit-select" id="leftUnit"></select>
+</div>
+<button class="swap-btn" id="swapBtn">⇆</button>
+<div class="input-item">
+<input class="num-input" id="rightVal" value="1000">
+<select class="unit-select" id="rightUnit"></select>
+</div>
+</div>
+<div class="all-result" id="resultGrid"></div>
+</div>
+
+<script>
+const unitData = {
+length:{
+base:"m",
+list:[
+      {name:"千米 (km)",rate:1000},
+      {name:"米 (m)",rate:1},
+      {name:"分米 (dm)",rate:0.1},
+      {name:"厘米 (cm)",rate:0.01},
+      {name:"毫米 (mm)",rate:0.001},
+      {name:"微米 (um)",rate:1e-6},
+      {name:"纳米 (nm)",rate:1e-9},
+      {name:"皮米 (pm)",rate:1e-12},
+      {name:"光年 (ly)",rate:9.4607304725808e15},
+      {name:"天文单位 (AU)",rate:149597870700},
+      {name:"公里 (km)",rate:1000},
+      {name:"公尺 (m)",rate:1},
+      {name:"公分 (cm)",rate:0.01},
+      {name:"英寸 (in)",rate:0.0254},
+      {name:"inch (in)",rate:0.0254},
+      {name:"英尺 (ft)",rate:0.3048},
+      {name:"码 (yd)" ,rate:0.9144},
+      {name:"英里 (mi)",rate:1609.344},
+      {name:"海里 (nmi)",rate:1852},
+      {name:"英寻 (fm)",rate:1.8288},
+      {name:"弗隆 (fur)",rate:201.168},
+      {name:"密耳 (mil)",rate:2.54e-5},
+      {name:"里",rate:500},
+      {name:"丈",rate:10/3},
+      {name:"尺",rate:1/3},
+      {name:"寸",rate:1/30},
+      {name:"分",rate:1/300},
+      {name:"厘",rate:1/3000},
+      {name:"毫",rate:1/30000}
+    ]
+  },
+
+mass:{
+base:"kg",
+list:[
+      {name:"千克(kg)",rate:1},
+      {name:"克(g)",rate:0.001},
+      {name:"毫克(mg)",rate:1e-6},
+      {name:"微克(μg)",rate:1e-9},
+      {name:"吨(t)",rate:1000},
+      {name:"公担(q)",rate:100},
+      {name:"纳克(ng)",rate:1e-12},
+      {name:"皮克(pg)",rate:1e-15},
+      {name:"飞克(fg)",rate:1e-18},
+      {name:"阿克(ag)",rate:1e-21},
+      {name:"介克(zg)",rate:1e-24},
+      {name:"仄克(zg)",rate:1e-24},
+      {name:"攸克(yg)",rate:1e-27},
+      {name:"幺克(yg)",rate:1e-27},
+      {name:"洛克(rg)",rate:1e27},
+      {name:"夸克(qq)",rate:1e30},
+      {name:"奎克(Qg)",rate:1e30},
+      {name:"罗克(Rg)",rate:1e27},
+      {name:"佑克(Yg)",rate:1e24},
+      {name:"尧克(Yg)",rate:1e24},
+      {name:"皆克(Zg)",rate:1e21},
+      {name:"泽克(Zg)",rate:1e21},
+      {name:"艾克(Eg)",rate:1e18},
+      {name:"拍克(Pg)",rate:1e15},
+      {name:"兆克(Tg)",rate:1e12},
+      {name:"太克(Tg)",rate:1e12},
+      {name:"吉克(Gg)",rate:1e9},
+      {name:"公吨(Mg)",rate:1000},
+      {name:"百万克(Mg)",rate:1000},
+      {name:"公斤(kg)",rate:1},
+      {name:"磅(lb)",rate:0.45359237},
+      {name:"盎司(oz)",rate:0.0283495231},
+      {name:"克拉(ct)",rate:0.0002},
+      {name:"格令(gr)",rate:0.00006479891},
+      {name:"长吨(lt)",rate:1016.0469088},
+      {name:"短吨(st)",rate:907.18474},
+      {name:"英担",rate:50.80234544},
+      {name:"美担",rate:45.359237},
+      {name:"英石(st)",rate:6.35029318},
+      {name:"打兰(dr)",rate:0.0017718451953125},
+      {name:"担",rate:50},
+      {name:"斤",rate:0.5},
+      {name:"两",rate:0.05},
+      {name:"钱",rate:0.005},
+      {name:"分",rate:0.0005}
+    ]
+},
+
+area:{
+base:"m²",
+list:[
+      {name:"平方千米(km²)",rate:1000000},
+      {name:"公顷(ha)",rate:10000},
+      {name:"公亩(are)",rate:100},
+      {name:"平方米(m²)",rate:1},
+      {name:"平方分米(dm²)",rate:0.01},
+      {name:"平方厘米(cm²)",rate:0.0001},
+      {name:"平方毫米(mm²)",rate:1e-6},
+      {name:"平方公里(km²)",rate:1000000},
+      {name:"平方百米(hm²)",rate:10000},
+      {name:"英亩(acre)",rate:4046.8564224},
+      {name:"平方英里(sq.mi)",rate:2589988.110336},
+      {name:"平方码(sq.yd)",rate:0.83612736},
+      {name:"平方英尺(sq.ft)",rate:0.09290304},
+      {name:"平方英寸(sq.in)",rate:0.00064516},
+      {name:"平方竿(sq.rd)",rate:25.29285264},
+      {name:"顷",rate:66666.6666667},
+      {name:"亩",rate:2000/3},
+      {name:"分",rate:200/3},
+      {name:"平方尺",rate:1/9},
+      {name:"平方寸",rate:1/900}
+    ]
+  },
+
+volume:{
+base:"L",
+list:[
+      {name:"立方千米(km³)",rate:1e12},
+      {name:"立方米(m³)",rate:1000},
+      {name:"立方分米(dm³)",rate:1},
+      {name:"立方厘米(cm³)",rate:0.001},
+      {name:"立方毫米(mm³)",rate:1e-6},
+      {name:"升(l)",rate:1},
+      {name:"分升(dl)",rate:0.1},
+      {name:"毫升(ml)",rate:0.001},
+      {name:"厘升(cl)",rate:0.01},
+      {name:"公石(hl)",rate:100},
+      {name:"立方英尺(cu ft)",rate:28.316846592},
+      {name:"立方英寸(cu in)",rate:0.016387064},
+      {name:"立方码(cu yd)",rate:764.554857984},
+      {name:"亩英尺",rate:1233481.83754752},
+      {name:"英制加仑(uk gal)",rate:4.54609},
+      {name:"美制加仑(us gal)",rate:3.785411784},
+      {name:"微升(ul)",rate:1e-6},
+      {name:"英制液体盎司(oz)",rate:0.0284130625},
+      {name:"美制液体盎司(oz)",rate:0.0295735295625},
+      {name:"桶(bbl)",rate:158.987294928},
+      {name:"品脱(pt)",rate:0.473176473}
+    ]
+},
+
+energy:{
+base:"J",
+list:[
+      {name:"度(kW·h)",rate:3600000},
+      {name:"千瓦·时(kW·h)",rate:3600000},
+      {name:"焦耳(J)",rate:1},
+      {name:"千焦(kJ)",rate:1000},
+      {name:"卡(cal)",rate:4.184},
+      {name:"千卡(kcal)",rate:4184},
+      {name:"大卡(kcal)",rate:4184},
+      {name:"米制马力·时(ps·h)",rate:2647795.5},
+      {name:"公斤·米(kg·m)",rate:9.80665},
+      {name:"瓦·秒(W·s)",rate:1},
+      {name:"瓦·时(W·h)",rate:3600},
+      {name:"卡路里(cal)",rate:4.184},
+      {name:"兆卡(th)",rate:4184000},
+      {name:"尔格(erg)",rate:1e-7},
+      {name:"电子伏特(eV)",rate:1.602176634e-19},
+      {name:"英热单位(btu)",rate:1055.05585262},
+      {name:"英制马力·时(hp·h)",rate:2684519.5368855},
+      {name:"英尺·磅(ft·lb)",rate:1.3558179483314004}
+    ]
+},
+
+speed:{
+base:"m/s",
+list:[
+      {name:"米/秒 (m/s)",rate:1},
+      {name:"千米/秒(km/s)",rate:1000},
+      {name:"千米/时(km/h)",rate:1000/3600},
+      {name:"光速(c)",rate:299792458},
+      {name:"毫米/秒(mm/s)",rate:0.001},
+      {name:"微米/秒(um/s)",rate:1e-6},
+      {name:"音速(AU)",rate:340.29},
+      {name:"公里/时(km/h)",rate:1000/3600},
+      {name:"马赫(mach)",rate:340.29},
+      {name:"英里/时(mile/h)",rate:1609.344/3600},
+      {name:"英寸/秒(in/s)",rate:0.0254},
+      {name:"英里/秒(mi/s)",rate:1609.344},
+      {name:"英尺/秒(ft/s)",rate:0.3048},
+      {name:"英尺/分(ft/m)",rate:0.3048/60},
+      {name:"海里/时(Nm/h)",rate:1852/3600},
+      {name:"节(kt)",rate:1852/3600},
+      {name:"海里/秒(Nm/s)",rate:1852}
+    ]
+  },
+
+density:{
+base:"kg/m³",
+list:[
+      {name:"千克/立方厘米(kg/cm³)",rate:1000000},
+      {name:"千克/立方分米(kg/dm³)",rate:1000},
+      {name:"千克/立方米(kg/m³)",rate:1},
+      {name:"克/立方厘米(g/cm³)",rate:1000},
+      {name:"克/立方分米(g/dm³)",rate:1},
+      {name:"克/立方米(g/m³)",rate:0.001},
+      {name:"毫克/立方厘米(mg/cm³)",rate:1},
+      {name:"毫克/立方分米(mg/dm³)",rate:0.001},
+      {name:"毫克/立方米(mg/m³)",rate:1e-6},
+      {name:"磅/立方英寸(lb/in3)",rate:27679.90471},
+      {name:"磅/立方英尺(lb/ft3)",rate:16.0184633739601},
+      {name:"磅/美加仑(lb/gal)",rate:119.8264273},
+      {name:"磅/英加仑(lb/gal)",rate:99.77637266},
+      {name:"磅/桶(lb/bbl)",rate:2.85286},
+      {name:"盎司/加仑(oz/gal)",rate:6.2360}
+    ]
+},
+
+force:{
+base:"N",
+list:[
+      {name:"牛(N)",rate:1},
+      {name:"千牛(kN)",rate:1000},
+      {name:"千克力(kgf)",rate:9.80665},
+      {name:"克力(gf)",rate:0.00980665},
+      {name:"公吨力(tf)",rate:9806.65},
+      {name:"毫牛(mN)",rate:0.001},
+      {name:"纳牛(nN)",rate:1e-9},
+      {name:"微牛(μN)",rate:1e-6},
+      {name:"百万牛顿(MN)",rate:1000000},
+      {name:"吉牛顿(GN)",rate:1e9},
+      {name:"公斤力(kgf)",rate:9.80665},
+      {name:"毫克力(mgf)",rate:9.80665e-6},
+      {name:"米制吨力",rate:9806.65},
+      {name:"磅力",rate:4.448221615},
+      {name:"千磅力(kip)",rate:4448.221615},
+      {name:"达因(dyn)",rate:1e-5},
+      {name:"美制吨力",rate:8896.4432},
+      {name:"英制吨力",rate:9964.016442},
+      {name:"磅达(pdl)",rate:0.1382549544}
+    ]
+},
+
+pressure:{
+base:"Pa",
+list:[
+      {name:"帕斯卡(Pa)",rate:1},
+      {name:"兆帕(MPa)",rate:1000000},
+      {name:"千帕(kpa)",rate:1000},
+      {name:"百帕(hpa)",rate:100},
+      {name:"标准大气压(atm)",rate:101325},
+      {name:"毫米汞柱(mmHg)",rate:133.3223684},
+      {name:"英寸汞柱(in Hg)",rate:3386.388667},
+      {name:"巴(bar)",rate:100000},
+      {name:"毫巴(mbar)",rate:100},
+      {name:"磅力/平方英尺(psf)",rate:47.88025898},
+      {name:"磅力/平方英寸(psi)",rate:6894.757293},
+      {name:"毫米水柱",rate:9.80665},
+      {name:"公斤力/平方厘米(kgf/cm²)",rate:98066.5},
+      {name:"公斤力/平方米(kgf/m²)",rate:9.80665}
+    ]
+},
+
+power:{
+base:"W",
+list:[
+      {name:"瓦(w)",rate:1},
+      {name:"千瓦(kW)",rate:1000},
+      {name:"米制马力(ps)",rate:735.49875},
+      {name:"公斤·米/秒(kg·m/s)",rate:9.80665},
+      {name:"千卡/秒(kcal/s)",rate:4186.8},
+      {name:"英热单位/秒(Btu/s)",rate:1055.05585},
+      {name:"英尺·磅/秒(ft·lb/s)",rate:1.3558179483314004},
+      {name:"焦耳/秒(J/s)",rate:1},
+      {name:"牛顿·米/秒(N·m/s)",rate:1},
+      {name:"分瓦(dW)",rate:0.1},
+      {name:"厘瓦(cW)",rate:0.01},
+      {name:"毫瓦(mW)",rate:0.001},
+      {name:"微瓦(μW)",rate:1e-6},
+      {name:"纳瓦(nW)",rate:1e-9},
+      {name:"皮瓦(pW)",rate:1e-12},
+      {name:"飞瓦(fW)",rate:1e-15},
+      {name:"阿瓦(aW)",rate:1e-18},
+      {name:"仄瓦(zW)",rate:1e-21},
+      {name:"幺瓦(yW)",rate:1e-24},
+      {name:"十瓦(daW)",rate:10},
+      {name:"百瓦(hW)",rate:100},
+      {name:"兆瓦(MW)",rate:1000000},
+      {name:"吉瓦(GW)",rate:1e9},
+      {name:"太瓦(TW)",rate:1e12},
+      {name:"帕瓦(PW)",rate:1e15},
+      {name:"艾瓦(EW)",rate:1e18},
+      {name:"泽瓦(ZW)",rate:1e21},
+      {name:"尧瓦(YW)",rate:1e24},
+      {name:"英制马力(hp)",rate:745.6998715822702}
+    ]
+},
+
+temperature:{
+base:"℃",
+isTemp:true,
+list:[
+      {name:"摄氏度(℃)"},
+      {name:"华氏度(℉)"},
+      {name:"开氏度(K)"},
+      {name:"兰氏度(°R)"},
+      {name:"列氏度(°Re)"}
+    ]
+},
+
+time:{
+base:"s",
+list:[
+      {name:"年 (yr)",rate:31536000},
+      {name:"月 (month)",rate:2628000},
+      {name:"周 (week)",rate:604800},
+      {name:"天 (d)",rate:86400},
+      {name:"时 (h)",rate:3600},
+      {name:"分 (min)",rate:60},
+      {name:"秒 (s)",rate:1},
+      {name:"毫秒 (ms)",rate:0.001},
+      {name:"微秒 (μs)",rate:1e-6},
+      {name:"纳秒 (ns)",rate:1e-9}
+    ]
+  },
+
+storage:{
+base:"B",
+list:[
+      {name:"比特 (bit)",rate:1/8},
+      {name:"字节 (B)",rate:1},
+      {name:"千字节(KB)",rate:1024},
+      {name:"兆字节(MB)",rate:1024*1024},
+      {name:"千兆字节(GB)",rate:1024*1024*1024},
+      {name:"太字节 (TB)",rate:1024**4},
+      {name:"拍字节 (PB)",rate:1024**5},
+      {name:"艾字节 (EB)",rate:1024**6}
+    ]
+  },
+
+angle:{
+base:"circle",
+list:[
+      {name:"圆周 (circle)",rate:1},
+      {name:"直角",rate:1/4},
+      {name:"百分度(gon)",rate:1/400},
+      {name:"度(°)",rate:1/360},
+      {name:"分(')",rate:1/(360*60)},
+      {name:"秒(″)",rate:1/(360*60*60)},
+      {name:"弧度 (rad)",rate:1/(2*Math.PI)},
+      {name:"毫弧度 (mrad)",rate:1/(2*Math.PI*1000)},
+      {name:"毫秒 (mas)",rate:1/(360*60*60*1000)},
+      {name:"微秒 (μas)",rate:1/(360*60*60*1000*1000)}
+    ]
+  },
+
+
+
+currency:{
+base:"fen",
+list:[
+    {name:"元",rate:1},
+    {name:"角",rate:0.1},
+    {name:"分",rate:0.01},
+    {name:"百",rate:100},
+    {name:"千",rate:1000},
+    {name:"万",rate:10000},
+    {name:"十万",rate:100000},
+    {name:"百万",rate:1000000},
+    {name:"千万",rate:10000000},
+    {name:"亿",rate:100000000},
+    {name:"十亿",rate:1000000000},
+    {name:"百亿",rate:10000000000},
+    {name:"千亿",rate:100000000000},
+    {name:"万亿",rate:1000000000000}
+    ]
+  },
+
+illuminance:{
+base:"lx",
+list:[
+      {name:"厘米烛光(ph)",rate:10000},
+      {name:"勒(lx)",rate:1},
+      {name:"流明/平方厘米(lm/cm²)",rate:10000},
+      {name:"流明/平方米(lm/m²)",rate:1},
+      {name:"辐透(ph)",rate:10000},
+      {name:"毫勒克斯(mlx)",rate:0.001},
+      {name:"微勒克斯(μlx)",rate:0.000001},
+      {name:"千勒克斯(klx)",rate:1000},
+      {name:"诺克斯(nox)",rate:0.001},
+      {name:"流明/平方英寸(lm/in2)",rate:1550.0031},
+      {name:"流明/平方英尺(lm/ft2)",rate:10.763910417},
+      {name:"英尺烛光(fc)",rate:10.763910417}
+    ]
+},
+
+torque:{
+base:"N·m",
+list:[
+      {name:"微牛米(μN·m)",rate:1e-6},
+      {name:"毫牛米(mN·m)",rate:1e-3},
+      {name:"牛米(N·m)",rate:1},
+      {name:"千牛米(kN·m)",rate:1000},
+      {name:"兆牛米(MN·m)",rate:1000000},
+      {name:"千克力米(kgf·m)",rate:9.80665},
+      {name:"公斤力米(kgf·m)",rate:9.80665},
+      {name:"米千克力(kgf·m)",rate:9.80665},
+      {name:"达因厘米(dyn·cm)",rate:1e-7},
+      {name:"英尺磅(lbf·ft)",rate:1.3558179483314004},
+      {name:"磅力英尺(lbf·ft)",rate:1.3558179483314004},
+      {name:"英寸磅(lbf·in)",rate:0.1129848290276167},
+      {name:"磅力英寸(lbf·in)",rate:0.1129848290276167},
+      {name:"盎司力英尺(ozf·ft)",rate:0.084738622},
+      {name:"盎司力英寸(ozf·in)",rate:0.0070615518}
+    ]
+  },
+
+
+
+resistance:{
+base:"Ω",
+list:[
+      {name:"欧(Ω)",rate:1},
+      {name:"千欧(kΩ)",rate:1000},
+      {name:"毫欧(mΩ)",rate:0.001},
+      {name:"微欧(μΩ)",rate:1e-6},
+      {name:"纳欧(nΩ)",rate:1e-9},
+      {name:"兆欧(MΩ)",rate:1e6},
+      {name:"吉欧(GΩ)",rate:1e9},
+      {name:"绝对欧姆(abΩ)",rate:1e-9}
+    ]
+  },
+voltage:{
+base:"V",
+list:[
+      {name:"伏特(V)",rate:1},
+      {name:"千伏(kV)",rate:1000},
+      {name:"毫伏(mV)",rate:0.001},
+      {name:"微伏(μV)",rate:1e-6}
+    ]
+  },
+current:{
+base:"A",
+list:[
+      {name:"安培(A)",rate:1},
+      {name:"千安(kA)",rate:1000},
+      {name:"毫安(mA)",rate:0.001},
+      {name:"微安(μA)",rate:1e-6}
+    ]
+  }
+};
+
+let currentType = "length";
+const leftValDom = document.getElementById("leftVal");
+const rightValDom = document.getElementById("rightVal");
+const leftUnitDom = document.getElementById("leftUnit");
+const rightUnitDom = document.getElementById("rightUnit");
+const titleDom = document.getElementById("mainTitle");
+const gridDom = document.getElementById("resultGrid");
+const swapBtn = document.getElementById("swapBtn");
+
+const tabInner = document.getElementById('tabInner');
+const tabLeftBtn = document.getElementById('tabLeftBtn');
+const tabRightBtn = document.getElementById('tabRightBtn');
+let tabOffset = 0;
+const scrollStep = 130;
+
+function updateTabArrowState(){
+const viewWidth = tabInner.parentElement.clientWidth;
+const contentWidth = tabInner.scrollWidth;
+const maxOffset = -(contentWidth - viewWidth);
+tabLeftBtn.disabled = tabOffset >= 0;
+tabRightBtn.disabled = tabOffset <= maxOffset;
+}
+
+tabRightBtn.onclick = () => {
+tabOffset -= scrollStep;
+const viewWidth = tabInner.parentElement.clientWidth;
+const contentWidth = tabInner.scrollWidth;
+const maxOffset = -(contentWidth - viewWidth);
+if(tabOffset < maxOffset) tabOffset = maxOffset;
+tabInner.style.transform = `translateX(${tabOffset}px)`;
+updateTabArrowState();
+};
+
+tabLeftBtn.onclick = () => {
+tabOffset += scrollStep;
+if(tabOffset > 0) tabOffset = 0;
+tabInner.style.transform = `translateX(${tabOffset}px)`;
+updateTabArrowState();
+};
+
+function formatNum(n){
+if(isNaN(n)) return "";
+const abs = Math.abs(n);
+if(abs === 0) return "0";
+if(abs < 0.00001 || abs >= 10000000){
+let str = n.toExponential(2);
+let parts = str.split("e");
+let numPart = parseFloat(parts[0]);
+let numStr = Number.isInteger(numPart) ? numPart.toString() : numPart.toFixed(2);
+let expText = parts[1].startsWith('+') ? parts[1].slice(1) : parts[1];
+return `${numStr}×10<sup>${expText}</sup>`;
+}
+if(abs < 1){
+let exp = Math.floor(Math.log10(abs));
+let fix = -(exp) + 2;
+return n.toFixed(fix);
+}
+if(Number.isInteger(n)){
+return n.toString();
+}else{
+return n.toFixed(2);
+}
+}
+
+
+
+
+
+function tempConvert(val, fromIdx, toIdx){
+const list = unitData.temperature.list;
+let c; // 统一先转成摄氏度作为中间值
+if(list[fromIdx].name === "摄氏度(℃)"){
+    c = val;
+}else if(list[fromIdx].name === "华氏度(℉)"){
+    c = (val - 32) * 5 / 9;
+}else if(list[fromIdx].name === "开氏度(K)"){
+    c = val - 273.15;
+}else if(list[fromIdx].name === "兰氏度(°R)"){
+    c = (val * 5 / 9) - 273.15;
+}else if(list[fromIdx].name === "列氏度(°Re)"){
+    c = val * 5 / 4;
+}
+
+let out;
+if(list[toIdx].name === "摄氏度(℃)"){
+    out = c;
+}else if(list[toIdx].name === "华氏度(℉)"){
+    out = c * 9 / 5 + 32;
+}else if(list[toIdx].name === "开氏度(K)"){
+    out = c + 273.15;
+}else if(list[toIdx].name === "兰氏度(°R)"){
+    out = (c + 273.15) * 9 / 5;
+}else if(list[toIdx].name === "列氏度(°Re)"){
+    out = c * 4 / 5;
+}
+return out;
+}
+
+
+function renderUnitSelect(){
+const item = unitData[currentType];
+const arr = item.list;
+leftUnitDom.innerHTML = "";
+rightUnitDom.innerHTML = "";
+arr.forEach((u,idx)=>{
+const o1 = new Option(u.name, idx);
+const o2 = new Option(u.name, idx);
+leftUnitDom.appendChild(o1);
+rightUnitDom.appendChild(o2);
+  })
+
+  if(currentType === 'mass'){
+  // 公斤(kg)在上面数组索引28，克(g)索引0
+  leftUnitDom.value = 0;
+  rightUnitDom.value = 1;
+}else{
+  leftUnitDom.value = 0;
+  rightUnitDom.value = 1;
+}
+
+leftValDom.value = "1";
+calc();
+}
+
+function calc(){
+const item = unitData[currentType];
+const arr = item.list;
+const leftIdx = Number(leftUnitDom.value);
+const rightIdx = Number(rightUnitDom.value);
+const vLeft = Number(leftValDom.value);
+if(isNaN(vLeft)) return;
+let vRight, baseVal;
+if(item.isTemp){
+vRight = tempConvert(vLeft, leftIdx, rightIdx);
+baseVal = tempConvert(vLeft, leftIdx, 0);
+}else{
+baseVal = vLeft * arr[leftIdx].rate;
+vRight = baseVal / arr[rightIdx].rate;
+}
+let leftFmt = formatNum(vLeft);
+let rightFmt = formatNum(vRight);
+titleDom.innerHTML = `${leftFmt}${arr[leftIdx].name}=${rightFmt}${arr[rightIdx].name}`;
+rightValDom.value = stripHtml(rightFmt);
+const hideName = arr[leftIdx].name;
+gridDom.innerHTML = "";
+arr.forEach((u,idx)=>{
+if(u.name === hideName) return;
+let resVal;
+if(item.isTemp){
+resVal = tempConvert(vLeft, leftIdx, idx);
+}else{
+resVal = baseVal / u.rate;
+}
+const fmt = formatNum(resVal);
+const div = document.createElement("div");
+div.className = "result-item";
+div.innerHTML = `<span class="num">${fmt}</span> <span class="unit">${u.name}</span>`;
+gridDom.appendChild(div);
+})
+}
+
+function calcFromRight(){
+const item = unitData[currentType];
+const arr = item.list;
+const leftIdx = Number(leftUnitDom.value);
+const rightIdx = Number(rightUnitDom.value);
+const vRight = Number(rightValDom.value);
+if(isNaN(vRight)) return;
+let vLeft, baseVal;
+if(item.isTemp){
+vLeft = tempConvert(vRight, rightIdx, leftIdx);
+baseVal = tempConvert(vRight, rightIdx, 0);
+}else{
+baseVal = vRight * arr[rightIdx].rate;
+vLeft = baseVal / arr[leftIdx].rate;
+}
+let leftFmt = formatNum(vLeft);
+let rightFmt = formatNum(vRight);
+titleDom.innerHTML = `${leftFmt}${arr[leftIdx].name}=${rightFmt}${arr[rightIdx].name}`;
+leftValDom.value = stripHtml(leftFmt);
+const hideName = arr[leftIdx].name;
+gridDom.innerHTML = "";
+arr.forEach((u,idx)=>{
+if(u.name === hideName) return;
+let resVal;
+if(item.isTemp){
+resVal = tempConvert(vRight, rightIdx, idx);
+}else{
+resVal = baseVal / u.rate;
+}
+const fmt = formatNum(resVal);
+const div = document.createElement("div");
+div.className = "result-item";
+div.innerHTML = `<span class="num">${fmt}</span> <span class="unit">${u.name}</span>`;
+gridDom.appendChild(div);
+})
+}
+function stripHtml(str){
+return str.replace(/<[^>]+>/g,"");
+}
+
+swapBtn.onclick = ()=>{
+const tempU = leftUnitDom.value;
+leftUnitDom.value = rightUnitDom.value;
+rightUnitDom.value = tempU;
+calc();
+}
+
+document.querySelectorAll("#tabInner>div").forEach(tab=>{
+tab.onclick = ()=>{
+document.querySelectorAll("#tabInner>div").forEach(t=>t.classList.remove("active"));
+tab.classList.add("active");
+currentType = tab.dataset.type;
+renderUnitSelect();
+  }
+})
+
+leftUnitDom.onchange = calc;
+leftValDom.oninput = calc;
+rightUnitDom.onchange = calc;
+rightValDom.oninput = calcFromRight;
+
+renderUnitSelect();
+updateTabArrowState();
+window.addEventListener('resize', updateTabArrowState);
+
+// 移除切换箭头文字的函数，固定为 < >
+</script>
+</body>
+</html>
