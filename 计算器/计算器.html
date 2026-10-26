@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>在线计算器</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+body {
+min-height: 100vh;
+background: linear-gradient(135deg, #f0f6ff, #fbfbfb);
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 30px 16px;
+}
+.title-box {
+text-align: center;
+margin-bottom:24px;
+}
+h1 {
+color: #2b74e8;
+font-size:36px;
+margin-bottom:8px;
+}
+.sub-title {
+color:#666;
+font-size:15px;
+}
+.tab-wrap {
+display:flex;
+gap:12px;
+margin-bottom:20px;
+}
+.tab-btn {
+padding:12px 40px;
+border-radius:12px;
+border:none;
+font-size:17px;
+cursor:pointer;
+transition: 0.2s;
+}
+.tab-btn.active {
+background-color:#3b82f6;
+color:white;
+box-shadow: 0 4px 12px #3b82f633;
+}
+.tab-btn:not(.active) {
+background-color:#fff;
+color:#333;
+border:1px solid #e5e7eb;
+}
+.calculator {
+width: 100%;
+max-width: 520px;
+background:#ffffff;
+padding:24px;
+border-radius:20px;
+box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+}
+.screen {
+width:100%;
+padding:14px 16px;
+text-align:right;
+border-radius:12px;
+background:#f8fbff;
+margin-bottom:16px;
+border: 1px solid #edf2fc;
+min-height:86px;
+display:flex;
+flex-direction:column;
+justify-content: space-around;
+overflow-x:auto;
+}
+.exp-text{
+font-size:18px;
+color:#444;
+min-height:24px;
+}
+.res-text{
+font-size:32px;
+color:#2b74e8;
+font-weight:500;
+min-height:40px;
+}
+/* 根号着色样式 */
+.blue-text{
+color:#2b74e8;
+}
+.gray-text{
+color:#999;
+}
+sup {
+font-size: 0.6em;
+line-height: 1;
+position: relative;
+top: -0.4em;
+color:#2b74e8;
+font-weight:500;
+}
+.keypad {
+display:none;
+grid-template-columns: repeat(4, 1fr);
+gap:10px;
+}
+.keypad.active {
+display:grid;
+}
+.keypad-sci-wrap {
+display: none;
+flex-direction: column;
+gap:10px;
+}
+.keypad-sci-wrap.active {
+display:flex;
+}
+.keypad-sci-6col {
+display: grid;
+gap:10px;
+grid-template-columns: repeat(6,1fr);
+}
+.keypad-sci-4col{
+display: grid;
+gap:10px;
+grid-template-columns: repeat(4,1fr);
+}
+button.key {
+padding:14px 0;
+border-radius:12px;
+border:none;
+font-size:15px;
+cursor:pointer;
+background:#f0f6ff;
+color:#222;
+transition: 0.15s;
+}
+button.key:hover {
+background:#e1edff;
+}
+button.key.clear {
+background:#fee;
+color:#dd4444;
+}
+button.key.clear:hover {
+background:#fdd;
+}
+button.key.equal {
+background:#3b82f6;
+color:white;
+}
+button.key.equal:hover {
+background:#2563eb;
+}
+button.key.nd2-active{
+background:#3b82f6;
+color:#fff;
+}
+.tip {
+width:100%;
+max-width:520px;
+margin-top:20px;
+padding:14px 16px;
+background:#fffbeb;
+border:1px solid #fde68a;
+border-radius:12px;
+color:#786425;
+font-size:14px;
+}
+@media (max-width:520px){
+h1 {
+font-size:28px;
+}
+.tab-btn {
+padding:10px 24px;
+font-size:15px;
+}
+button.key {
+padding:12px 0;
+font-size:13px;
+}
+.calculator {
+padding:16px;
+}
+}
+</style>
+</head>
+<body>
+<div class="title-box">
+<h1>在线计算器</h1>
+<div class="sub-title">标准计算器 + 科学计算器 免费在线使用</div>
+</div>
+<div class="tab-wrap">
+<button class="tab-btn active" data-type="std">标准计算器</button>
+<button class="tab-btn" data-type="sci">科学计算器</button>
+</div>
+<div class="calculator">
+<div class="screen" id="screen">
+<div class="exp-text" id="exp">0</div>
+<div class="res-text" id="result">0</div>
+</div>
+
+<div class="keypad keypad-std active">
+<button class="key" data-val="back">←</button>
+<button class="key clear" data-val="C">C</button>
+<button class="key" data-val="%">%</button>
+<button class="key" data-val="/">÷</button>
+
+<button class="key" data-val="7">7</button>
+<button class="key" data-val="8">8</button>
+<button class="key" data-val="9">9</button>
+<button class="key" data-val="*">×</button>
+
+<button class="key" data-val="4">4</button>
+<button class="key" data-val="5">5</button>
+<button class="key" data-val="6">6</button>
+<button class="key" data-val="-">-</button>
+
+<button class="key" data-val="1">1</button>
+<button class="key" data-val="2">2</button>
+<button class="key" data-val="3">3</button>
+<button class="key" data-val="+">+</button>
+
+<button class="key" data-fn="plusMinus">+/-</button>
+<button class="key" data-val="0">0</button>
+<button class="key" data-val=".">.</button>
+<button class="key equal" data-val="=">=</button>
+</div>
+
+<div class="keypad-sci-wrap">
+<div class="keypad-sci-6col">
+<button class="key" data-val="(">(</button>
+<button class="key" data-val=")">)</button>
+<button class="key" data-fn="mc">mc</button>
+<button class="key" data-fn="mplus">m+</button>
+<button class="key" data-fn="mminus">m-</button>
+<button class="key" data-fn="mr">mr</button>
+
+<button class="key" data-fn="nd2">2nd</button>
+<button class="key" data-fn="pow2">x²</button>
+<button class="key" data-fn="pow3">x³</button>
+<button class="key" data-fn="powy">xⁿ</button>
+<button class="key" data-fn="exp">eˣ</button>
+<button class="key" data-fn="tenpow">10ˣ</button>
+
+<button class="key" data-fn="reciprocal">1/x</button>
+<button class="key" data-fn="sqrt2">²√x</button>
+<button class="key" data-fn="sqrt3">³√x</button>
+<button class="key" data-fn="sqrty">ʸ√x</button>
+<button class="key" data-fn="ln">ln</button>
+<button class="key" data-fn="log10">log₁₀</button>
+
+<button class="key" data-fn="fact">x!</button>
+<button class="key" data-fn="sin">sin</button>
+<button class="key" data-fn="cos">cos</button>
+<button class="key" data-fn="tan">tan</button>
+<button class="key" data-fn="e">e</button>
+<button class="key" data-fn="ee">EE</button>
+
+<button class="key" data-fn="rand">Rand</button>
+<button class="key" data-fn="sinh">sinh</button>
+<button class="key" data-fn="cosh">cosh</button>
+<button class="key" data-fn="tanh">tanh</button>
+<button class="key" data-fn="pi">π</button>
+<button class="key" data-fn="rad">Rad</button>
+</div>
+
+<div class="keypad-sci-4col">
+<button class="key" data-val="back">⌫</button>
+<button class="key clear" data-val="C">AC</button>
+<button class="key" data-val="%">%</button>
+<button class="key" data-val="/">÷</button>
+
+<button class="key" data-val="7">7</button>
+<button class="key" data-val="8">8</button>
+<button class="key" data-val="9">9</button>
+<button class="key" data-val="*">×</button>
+
+<button class="key" data-val="4">4</button>
+<button class="key" data-val="5">5</button>
+<button class="key" data-val="6">6</button>
+<button class="key" data-val="-">-</button>
+
+<button class="key" data-val="1">1</button>
+<button class="key" data-val="2">2</button>
+<button class="key" data-val="3">3</button>
+<button class="key" data-val="+">+</button>
+
+<button class="key" data-fn="plusMinus">+/-</button>
+<button class="key" data-val="0">0</button>
+<button class="key" data-val=".">.</button>
+<button class="key equal" data-val="=">=</button>
+</div>
+</div>
+<div class="tip">💡 使用说明<br>MC清除内存、M+存入、M-减去、MR读取；2nd切换反三角函数；支持阶乘、幂、开方、三角函数；ʸ√x：先输入被开方数x，点击ʸ√x按钮切换输入根指数y；幂运算、根指数均显示上标，运算符后自动给数字加括号次方，多次连续次方嵌套。</div>
+
+<script>
+const expDom = document.getElementById("exp");
+const resDom = document.getElementById("result");
+let rawExpr = "";
+let showExpr = "";
+let memory = 0;
+let is2nd = false;
+let isRad = false;
+let justCalc = false;
+
+const nd2Btn = document.querySelector('[data-fn="nd2"]');
+const powyBtn = document.querySelector('[data-fn="powy"]');
+const sqrtyBtn = document.querySelector('[data-fn="sqrty"]');
+
+// 开方状态
+let waitingRoot = false;
+let rootMode = "fixed"; // fixed=²√ /³√ ; yroot=ʸ√x
+let rootYRaw = "";      // 根指数 y
+let rootYShow = "";
+let rootXRaw = "";      // 被开方数 x
+let rootXShow = "";
+let rootPrefixRaw = "";
+let rootPrefixShow = "";
+let rootClosed = false;
+let rootPhase = "x";    // x=输入被开方数，y=输入根指数
+
+// xⁿ 幂等待状态
+let waitingPow = false;
+let powBaseRaw = "";
+let powBaseShow = "";
+let powExpRaw = "";
+let powExpShow = "";
+let powIsBasePureNum = false;
+
+// 检测字符串括号是否全部闭合平衡
+function checkAllBracketLevel(s) {
+let level = 0;
+for(let c of s){
+if(c === '(') level++;
+if(c === ')') level--;
+    }
+return level;
+}
+function checkAllBracketClosed(s){
+return checkAllBracketLevel(s) === 0;
+}
+
+function getBracketLevel(s) {
+let level = 0;
+for(let c of s) {
+if(c === '(') level++;
+if(c === ')') level--;
+    }
+return level;
+}
+
+// 辅助：找到当前最内层未闭合括号里面的内容
+function getInnerBracketContent(str){
+let lastOpen = -1;
+let level = 0;
+for(let i=0;i<str.length;i++){
+if(str[i]==='('){
+level++;
+lastOpen = i;
+        }else if(str[i]===')'){
+level--;
+        }
+    }
+if(lastOpen===-1) return '';
+return str.slice(lastOpen+1);
+}
+// 判断括号内是否存在有效内容（数字、运算符、小数点等，排除纯空白）
+function bracketHasValidContent(s){
+return /[\d+\-*/.]/.test(s);
+}
+
+const tabs = document.querySelectorAll(".tab-btn");
+const keypadStd = document.querySelector(".keypad-std");
+const keypadSciWrap = document.querySelector(".keypad-sci-wrap");
+
+tabs.forEach(tab=>{
+tab.onclick = ()=>{
+tabs.forEach(t=>t.classList.remove("active"));
+tab.classList.add("active");
+const type = tab.dataset.type;
+if(type === "std"){
+keypadStd.classList.add("active");
+keypadSciWrap.classList.remove("active");
+}else{
+keypadStd.classList.remove("active");
+keypadSciWrap.classList.add("active");
+}
+}
+})
+
+// ========= 渲染根号html：闭合时不再输出灰色括号 =========
+function renderRootHtml(prefixHtml, rootNum, content, closed, phase, isYInputMode){
+const blue = `<span class="blue-text">`;
+const gray = `<span class="gray-text">`;
+let rootStr = `<sup>${rootNum}</sup>√`;
+
+if (closed) {
+// ✅ 已经闭合：只渲染蓝色括号，没有灰色备用括号
+return prefixHtml + blue + rootStr + "(" + content + ")</span>";
+}
+if(isYInputMode){
+return prefixHtml + blue + rootStr + "(" + content + ")</span>";
+}else if(phase === "y"){
+return prefixHtml + blue + rootStr + "(" + content + ")</span>";
+}else{
+// ❗未闭合的时候，才带灰色占位右括号
+return prefixHtml + blue + rootStr + "(" + content + "</span>" + gray + ")</span>";
+}
+}
+
+function renderPowHtml(){
+if(powExpShow === ""){
+if(powIsBasePureNum){
+return powBaseShow + "<sup>n</sup>";
+    }else{
+return "(" + powBaseShow + ")<sup>n</sup>";
+    }
+}else{
+if(powIsBasePureNum){
+return powBaseShow + "<sup>" + powExpShow + "</sup>";
+}else{
+return "(" + powBaseShow + ")<sup>" + powExpShow + "</sup>";
+    }
+}
+}
+
+function updateView(){
+if(waitingRoot){
+let dispY;
+if(rootPhase === "y" && rootYShow !== ""){
+dispY = rootYShow;
+}else if(rootPhase === "y"){
+dispY = "ʸ";
+}else{
+dispY = rootYShow || "ʸ";
+}
+const isYInputMode = (rootPhase === "y");
+resDom.innerHTML = renderRootHtml(rootPrefixShow, dispY, rootXShow, rootClosed, rootPhase, isYInputMode);
+}else if(waitingPow){
+resDom.innerHTML = renderPowHtml();
+}else{
+resDom.innerHTML = showExpr || "0";
+}
+}
+
+function togglePlusMinus(){
+if(rawExpr === "") return;
+const ops = /([+\-×÷])/;
+const rawParts = rawExpr.split(ops);
+const showParts = showExpr.split(ops);
+let lastRaw = rawParts.pop();
+let lastShow = showParts.pop();
+if(/^-?\d*\.?\d+$/.test(lastRaw)){
+if(lastRaw.startsWith("-")){
+lastRaw = lastRaw.slice(1);
+lastShow = lastShow.slice(1);
+}else{
+lastRaw = "-" + lastRaw;
+lastShow = "-" + lastShow;
+}
+rawParts.push(lastRaw);
+showParts.push(lastShow);
+rawExpr = rawParts.join("");
+showExpr = showParts.join("");
+updateView();
+}
+}
+
+function factorial(n){
+if(!Number.isInteger(n) || n<0) return NaN;
+if(n===0 || n===1) return 1;
+let res=1;
+for(let i=2;i<=n;i++) res*=i;
+return res;
+}
+
+function getTailSegment(str){
+let level = 0;
+for(let i = str.length - 1; i >= 0; i--){
+const c = str[i];
+if(c === ')') level++;
+if(c === '(') level--;
+if(level === 0 && /[+\-*/(]/.test(c)){
+return str.slice(i+1);
+        }
+    }
+return str;
+}
+
+// 处理隐式乘法，数字后面跟( 自动补 *
+function addImplicitMul(s){
+return s.replace(/(\d|\.)\(/g, '$1*(');
+}
+
+function buildRoot(){
+const yVal = Number(rootYRaw);
+const xVal = Number(rootXRaw);
+if(yVal === 0) {
+return {raw:null, show:renderRootHtml("",rootYShow,rootXShow,true,rootPhase,false), valid:false, msg:"根指数不能为0"};
+    }
+if(xVal < 0 && yVal % 2 === 0) {
+return {raw:null, show:renderRootHtml("",rootYShow,rootXShow,true,rootPhase,false), valid:false, msg:"负数不能开偶次根"};
+    }
+const baseRaw = `(${rootXRaw})**(1/${rootYRaw})`;
+const baseShow = `<sup>${rootYShow}</sup>√(${rootXShow})`;
+return {raw:baseRaw, show:baseShow, valid:true};
+}
+
+function finishRoot(){
+const b = buildRoot();
+if(!b.valid) {
+resDom.innerHTML = b.msg ?? "错误";
+return false;
+}
+rawExpr = rootPrefixRaw + b.raw;
+showExpr = rootPrefixShow + b.show;
+waitingRoot = false;
+rootMode = "fixed";
+rootXRaw = "";
+rootXShow = "";
+rootYRaw = "";
+rootYShow = "";
+rootPrefixRaw = "";
+rootPrefixShow = "";
+rootClosed = true;
+rootPhase = "x";
+sqrtyBtn.classList.remove("nd2-active");
+return true;
+}
+
+function finishPow(){
+if(powExpRaw === ""){
+powExpRaw = "2";
+powExpShow = "2";
+}
+if(powIsBasePureNum){
+rawExpr = powBaseRaw + "**(" + powExpRaw + ")";
+showExpr = powBaseShow + "<sup>" + powExpShow + "</sup>";
+}else{
+rawExpr = "(" + powBaseRaw + ")**(" + powExpRaw + ")";
+showExpr = "(" + powBaseShow + ")<sup>" + powExpShow + "</sup>";
+}
+waitingPow = false;
+powyBtn.classList.remove("nd2-active");
+powBaseRaw = "";
+powBaseShow = "";
+powExpRaw = "";
+powExpShow = "";
+powIsBasePureNum = false;
+return true;
+}
+
+document.querySelectorAll(".key").forEach(btn=>{
+btn.onclick = ()=>{
+const val = btn.dataset.val;
+const fn = btn.dataset.fn;
+
+// ========== 正在输入根号模式 ==========
+if(waitingRoot){
+rootClosed = false;
+
+// ===== 数字、小数点 =====
+if(!fn && /[\d.]/.test(val)){
+if(rootMode === "yroot"){
+if(rootPhase === "x"){
+rootXRaw += val;
+rootXShow += val;
+}else{
+rootYRaw += val;
+rootYShow += val;
+    }
+}else{
+rootXRaw += val;
+rootXShow += val;
+}
+updateView();
+return;
+}
+
+// ===== 左括号 ( =====
+if(val === "("){
+if(rootMode === "yroot"){
+if(rootPhase === "x"){
+rootXRaw += val;
+rootXShow += val;
+}else{
+rootYRaw += val;
+rootYShow += val;
+}
+updateView();
+return;
+    }
+}
+
+// ===== 右括号 ) 【重点修复这里】 =====
+if(val === ")"){
+if(rootMode === "yroot"){
+if(rootPhase === "x"){
+const nextLevel = checkAllBracketLevel(rootXRaw + ")");
+if(nextLevel === 0){
+rootXRaw += val;
+rootXShow += val;
+rootClosed = true;
+}else{
+rootXRaw += val;
+rootXShow += val;
+rootClosed = false;
+}
+updateView();
+return;
+}else{
+const nextLevel = checkAllBracketLevel(rootYRaw + ")");
+if(nextLevel === 0){
+rootYRaw += val;
+rootYShow += val;
+rootClosed = true;
+}else{
+rootYRaw += val;
+rootYShow += val;
+rootClosed = false;
+}
+updateView();
+return;
+}
+}else{
+const nextLevel = checkAllBracketLevel(rootXRaw + ")");
+if(nextLevel === 0){
+rootXRaw += val;
+rootXShow += val;
+rootClosed = true;
+}else{
+rootXRaw += val;
+rootXShow += val;
+rootClosed = false;
+}
+updateView();
+return;
+}
+}
+
+// ===== + - * / 运算符 =====
+if(!fn && ["+","-","*","/"].includes(val)){
+const isYAllBracketClosed = checkAllBracketClosed(rootYRaw);
+const isYPureNumber = /^\-?\d*\.?\d+$/.test(rootYRaw.trim());
+if(isYAllBracketClosed || isYPureNumber){
+const ok = finishRoot();
+if(!ok) return;
+rawExpr += val;
+if(val === "*") showExpr += "×";
+else if(val === "/") showExpr += "÷";
+else showExpr += val;
+justCalc = false;
+updateView();
+return;
+}else{
+rootYRaw += val;
+if(val === "*") rootYShow += "×";
+else if(val === "/") rootYShow += "÷";
+else rootYShow += val;
+updateView();
+return;
+}
+}
+
+if(val === "="){
+finishRoot();
+gotoCalc();
+return;
+}
+if(val === "C"){
+waitingRoot = false;
+rootMode = "fixed";
+rootXRaw = "";
+rootXShow = "";
+rootYRaw = "";
+rootYShow = "";
+rawExpr = "";
+showExpr = "";
+expDom.innerHTML = "0";
+rootClosed = false;
+rootPhase = "x";
+sqrtyBtn.classList.remove("nd2-active");
+updateView();
+justCalc = false;
+return;
+}
+if(val === "back"){
+if(rootMode === "yroot"){
+if(rootPhase === "y" && rootYShow.length > 0){
+rootYRaw = rootYRaw.slice(0,-1);
+rootYShow = rootYShow.slice(0,-1);
+rootClosed = checkAllBracketClosed(rootYRaw);
+if(rootYRaw === ""){
+rootYShow = "";
+rootPhase = "x";
+rootClosed = checkAllBracketClosed(rootXRaw);
+        }
+    }else if(rootXShow.length > 0){
+rootXRaw = rootXRaw.slice(0,-1);
+rootXShow = rootXShow.slice(0,-1);
+rootClosed = checkAllBracketClosed(rootXRaw);
+    }else{
+waitingRoot = false;
+rootXRaw = "";
+rootXShow = "";
+rootYRaw = "";
+rootYShow = "";
+rawExpr = rootPrefixRaw;
+showExpr = rootPrefixShow;
+rootPhase = "x";
+sqrtyBtn.classList.remove("nd2-active");
+    }
+}else{
+if(rootXShow.length > 0){
+rootXRaw = rootXRaw.slice(0,-1);
+rootXShow = rootXShow.slice(0,-1);
+rootClosed = checkAllBracketClosed(rootXRaw);
+    }else{
+waitingRoot = false;
+rootXRaw = "";
+rootXShow = "";
+rootYRaw = "";
+rootYShow = "";
+rawExpr = rootPrefixRaw;
+showExpr = rootPrefixShow;
+sqrtyBtn.classList.remove("nd2-active");
+    }
+}
+updateView();
+return;
+}
+// ʸ√x按钮：手动切换 x / y 阶段（唯一切换入口）
+if(fn === "sqrty" && rootMode === "yroot"){
+if(rootPhase === "x"){
+rootPhase = "y";
+rootClosed = checkAllBracketClosed(rootXRaw);
+    }else{
+rootPhase = "x";
+rootClosed = checkAllBracketClosed(rootXRaw);
+    }
+updateView();
+return;
+}
+}
+
+// ========== 正在输入幂 xⁿ 模式 ==========
+if(waitingPow){
+if(!fn){
+if(val === ")"){
+powExpRaw += val;
+powExpShow += val;
+updateView();
+return;
+    }
+if(val === "("){
+powExpRaw += val;
+powExpShow += val;
+updateView();
+return;
+    }
+if(["+","-","*","/"].includes(val)){
+const level = getBracketLevel(powExpRaw);
+if(level === 0){
+finishPow();
+rawExpr += val;
+if(val === "*") showExpr += "×";
+else if(val === "/") showExpr += "÷";
+else showExpr += val;
+justCalc = false;
+updateView();
+return;
+        }else{
+powExpRaw += val;
+if(val === "*") powExpShow += "×";
+else if(val === "/") powExpShow += "÷";
+else powExpShow += val;
+updateView();
+return;
+        }
+    }
+if(val === "back"){
+if(powExpShow.length > 0){
+powExpRaw = powExpRaw.slice(0,-1);
+powExpShow = powExpShow.slice(0,-1);
+        }else{
+waitingPow = false;
+powyBtn.classList.remove("nd2-active");
+powBaseRaw = "";
+powBaseShow = "";
+powExpRaw = "";
+powExpShow = "";
+powIsBasePureNum = false;
+        }
+updateView();
+return;
+    }
+if(val === "C"){
+waitingPow = false;
+powyBtn.classList.remove("nd2-active");
+powBaseRaw = "";
+powBaseShow = "";
+powExpRaw = "";
+powExpShow = "";
+powIsBasePureNum = false;
+rawExpr = "";
+showExpr = "";
+expDom.innerHTML = "0";
+updateView();
+justCalc = false;
+return;
+    }
+if(val === "="){
+finishPow();
+gotoCalc();
+return;
+    }
+
+powExpRaw += val;
+if(val === "*") powExpShow += "×";
+else if(val === "/") powExpShow += "÷";
+else powExpShow += val;
+updateView();
+return;
+}
+}
+
+// ========= 普通表达式的右括号拦截逻辑 =========
+if(val === ")"){
+const innerMain = getInnerBracketContent(rawExpr);
+if(!bracketHasValidContent(innerMain)){
+updateView();
+return;
+    }
+rawExpr += val;
+showExpr += val;
+updateView();
+return;
+}
+
+if(justCalc && !fn && ["+","-","*","/"].includes(val)){
+rawExpr += val;
+if(val === "*") showExpr += "×";
+else if(val === "/") showExpr += "÷";
+else showExpr += val;
+justCalc = false;
+updateView();
+return;
+}
+
+if(justCalc && !fn && val !== "back" && val !== "="){
+expDom.innerHTML = "";
+rawExpr = val;
+showExpr = val;
+justCalc = false;
+rootClosed = false;
+updateView();
+return;
+}
+
+if(val === "back"){
+if(justCalc){
+expDom.innerHTML = "";
+justCalc = false;
+    }
+if(showExpr.length <= 1){
+rawExpr = "";
+showExpr = "";
+waitingRoot = false;
+rootClosed = false;
+rootPhase = "x";
+sqrtyBtn.classList.remove("nd2-active");
+    }else{
+rawExpr = rawExpr.slice(0,-1);
+showExpr = showExpr.slice(0,-1);
+rootClosed = checkAllBracketClosed(rawExpr);
+    }
+updateView();
+return;
+}
+
+if(fn === "plusMinus"){
+togglePlusMinus();
+return;
+}
+
+if(fn === "mc"){
+memory = 0;
+return;
+}
+if(fn === "mplus"){
+try{
+let calc = rawExpr.replace(/×/g,"*").replace(/÷/g,"/");
+calc = addImplicitMul(calc);
+const v = eval(calc);
+memory += v;
+}catch(e){}
+return;
+}
+if(fn === "mminus"){
+try{
+let calc = rawExpr.replace(/×/g,"*").replace(/÷/g,"/");
+calc = addImplicitMul(calc);
+const v = eval(calc);
+memory -= v;
+}catch(e){}
+return;
+}
+if(fn === "mr"){
+const mStr = memory.toString();
+rawExpr += mStr;
+showExpr += mStr;
+justCalc = false;
+rootClosed = false;
+updateView();
+return;
+}
+
+if(fn === "nd2"){
+is2nd = !is2nd;
+nd2Btn.classList.toggle("nd2-active", is2nd);
+return;
+}
+
+if(fn === "rad"){
+isRad = !isRad;
+btn.innerText = isRad ? "Deg" : "Rad";
+return;
+}
+
+if(val === "C"){
+rawExpr = "";
+showExpr = "";
+expDom.innerHTML = "0";
+waitingRoot = false;
+rootMode = "fixed";
+rootXRaw = "";
+rootXShow = "";
+rootYRaw = "";
+rootYShow = "";
+rootPrefixRaw = "";
+rootPrefixShow = "";
+rootClosed = false;
+rootPhase = "x";
+waitingPow = false;
+powyBtn.classList.remove("nd2-active");
+sqrtyBtn.classList.remove("nd2-active");
+powBaseRaw = "";
+powBaseShow = "";
+powExpRaw = "";
+powExpShow = "";
+powIsBasePureNum = false;
+updateView();
+justCalc = false;
+return;
+}
+
+// 抽离计算逻辑为公共函数 gotoCalc
+function gotoCalc(){
+try {
+let calcStr = rawExpr
+.replace(/×/g,"*").replace(/÷/g,"/");
+
+calcStr = addImplicitMul(calcStr);
+
+calcStr = calcStr
+.replace(/log₁₀\(/g,"Math.log10(")
+.replace(/ln\(/g,"Math.log(")
+.replace(/²√\(/g,"Math.sqrt(")
+.replace(/³√\(/g,"Math.cbrt(")
+.replace(/π/g,"Math.PI")
+.replace(/e/g,"Math.E");
+
+if(is2nd){
+calcStr = calcStr
+.replace(/sin\(/g,"Math.asin(")
+.replace(/cos\(/g,"Math.acos(")
+.replace(/tan\(/g,"Math.atan(");
+if(!isRad){
+calcStr = calcStr.replace(/Math\.a(sin|cos|tan)\(/g,"(180/Math.PI)*Math.a$1(");
+}
+}else{
+if(isRad){
+calcStr = calcStr
+.replace(/sin\(/g,"Math.sin(")
+.replace(/cos\(/g,"Math.cos(")
+.replace(/tan\(/g,"Math.tan(");
+}else{
+calcStr = calcStr
+.replace(/sin\(/g,"Math.sin(Math.PI/180*")
+.replace(/cos\(/g,"Math.cos(Math.PI/180*")
+.replace(/tan\(/g,"Math.tan(Math.PI/180*");
+}
+}
+calcStr = calcStr
+.replace(/sinh\(/g,"Math.sinh(")
+.replace(/cosh\(/g,"Math.cosh(")
+.replace(/tanh\(/g,"Math.tanh(");
+
+if(calcStr.includes("!")){
+calcStr = calcStr.replace(/(\d+\.?\d*)\!/g, (match, num)=> factorial(Number(num)) );
+}
+
+let res = eval(calcStr);
+res = Number(res.toPrecision(12));
+expDom.innerHTML = showExpr;
+showExpr = String(res);
+rawExpr = String(res);
+rootClosed = true;
+updateView();
+justCalc = true;
+}catch(e){
+resDom.innerHTML = "错误";
+justCalc = true;
+console.error(e);
+}
+}
+
+if(val === "="){
+gotoCalc();
+return;
+}
+
+if(fn){
+if(["pow2","pow3","powy"].includes(fn)){
+if(rawExpr === "") return;
+
+const tailRaw = getTailSegment(rawExpr);
+const tailShow = getTailSegment(showExpr);
+const isPureNum = /^-?\d*\.?\d+$/.test(tailRaw);
+
+if(fn==="pow2"){
+if(isPureNum){
+rawExpr = rawExpr.slice(0, rawExpr.length - tailRaw.length) + `${tailRaw}**2`;
+showExpr = showExpr.slice(0, showExpr.length - tailShow.length) + `${tailShow}<sup>2</sup>`;
+}else{
+rawExpr = rawExpr.slice(0, rawExpr.length - tailRaw.length) + `(${tailRaw})**2`;
+showExpr = showExpr.slice(0, showExpr.length - tailShow.length) + `(${tailShow})<sup>2</sup>`;
+}
+justCalc = false;
+rootClosed = false;
+updateView();
+return;
+}else if(fn==="pow3"){
+if(isPureNum){
+rawExpr = rawExpr.slice(0, rawExpr.length - tailRaw.length) + `${tailRaw}**3`;
+showExpr = showExpr.slice(0, showExpr.length - tailShow.length) + `${tailShow}<sup>3</sup>`;
+}else{
+rawExpr = rawExpr.slice(0, rawExpr.length - tailRaw.length) + `(${tailRaw})**3`;
+showExpr = showExpr.slice(0, showExpr.length - tailShow.length) + `(${tailShow})<sup>3</sup>`;
+}
+justCalc = false;
+rootClosed = false;
+updateView();
+return;
+}else if(fn==="powy"){
+waitingPow = true;
+powyBtn.classList.add("nd2-active");
+powBaseRaw = tailRaw;
+powBaseShow = tailShow;
+powIsBasePureNum = isPureNum;
+powExpRaw = "";
+powExpShow = "";
+justCalc = false;
+updateView();
+return;
+}
+}
+
+if(["sqrt2","sqrt3","sqrty"].includes(fn)){
+const tailRaw = getTailSegment(rawExpr);
+const tailShow = getTailSegment(showExpr);
+rootPrefixRaw = rawExpr.slice(0, rawExpr.length - tailRaw.length);
+rootPrefixShow = showExpr.slice(0, showExpr.length - tailShow.length);
+
+waitingRoot = true;
+rootClosed = false;
+if(fn==="sqrt2"){
+rootMode = "fixed";
+rootYRaw = "2";
+rootYShow = "2";
+rootXRaw = tailRaw;
+rootXShow = tailShow;
+rootPhase = "x";
+sqrtyBtn.classList.remove("nd2-active");
+}else if(fn==="sqrt3"){
+rootMode = "fixed";
+rootYRaw = "3";
+rootYShow = "3";
+rootXRaw = tailRaw;
+rootXShow = tailShow;
+rootPhase = "x";
+sqrtyBtn.classList.remove("nd2-active");
+}else if(fn==="sqrty"){
+rootMode = "yroot";
+rootYRaw = "";
+rootYShow = "";
+rootXRaw = tailRaw;
+rootXShow = tailShow;
+rootPhase = "x";
+sqrtyBtn.classList.add("nd2-active");
+}
+justCalc = false;
+updateView();
+return;
+}
+
+let fnMapRaw = {};
+let fnMapShow = {};
+if(is2nd){
+fnMapRaw = {
+sin:"asin(",
+cos:"acos(",
+tan:"atan(",
+sinh:"asinh(",
+cosh:"acosh(",
+tanh:"atanh(",
+log10:"log₁₀(",
+ln:"ln(",
+reciprocal:"1/",
+fact:"!",
+pi:"π",
+e:"e",
+rand:"Math.random()",
+ee:"E",
+exp:"Math.exp(",
+tenpow:"10**"
+};
+fnMapShow = {
+sin:"asin(",
+cos:"acos(",
+tan:"atan(",
+sinh:"asinh(",
+cosh:"acosh(",
+tanh:"atanh(",
+log10:"log₁₀(",
+ln:"ln(",
+reciprocal:"1/",
+fact:"!",
+pi:"π",
+e:"e",
+rand:"Math.random()",
+ee:"E",
+exp:"e^(",
+tenpow:"10^"
+};
+}else{
+fnMapRaw = {
+sin:"sin(",
+cos:"cos(",
+tan:"tan(",
+sinh:"sinh(",
+cosh:"cosh(",
+tanh:"tanh(",
+log10:"log₁₀(",
+ln:"ln(",
+reciprocal:"1/",
+fact:"!",
+pi:"π",
+e:"e",
+rand:"Math.random()",
+ee:"E",
+exp:"Math.exp(",
+tenpow:"10**"
+};
+fnMapShow = {
+sin:"sin(",
+cos:"cos(",
+tan:"tan(",
+sinh:"sinh(",
+cosh:"cosh(",
+tanh:"tanh(",
+log10:"log₁₀(",
+ln:"ln(",
+reciprocal:"1/",
+fact:"!",
+pi:"π",
+e:"e",
+rand:"Math.random()",
+ee:"E",
+exp:"e^(",
+tenpow:"10^"
+};
+}
+if(fnMapRaw[fn]){
+rawExpr += fnMapRaw[fn];
+showExpr += fnMapShow[fn];
+justCalc = false;
+rootClosed = false;
+}
+updateView();
+return;
+}
+rawExpr += val;
+if(val === "*") showExpr += "×";
+else if(val === "/") showExpr += "÷";
+else showExpr += val;
+justCalc = false;
+rootClosed = false;
+updateView();
+}
+})
+</script>
+
+
+</body>
+</html>
