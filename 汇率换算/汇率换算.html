@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>汇率计算器</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+primary: '#347c64',
+lightBg: '#f8f5ec',
+cardBg: '#ffffff',
+resultBg: '#e8f3ee',
+tagBg: '#d9ece3',
+          },
+fontFamily: {
+sans: ['system-ui', 'sans-serif'],
+          },
+        },
+      }
+}
+</script>
+<style type="text/tailwindcss">
+@layer utilities {
+.shadow-soft {
+box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      }
+.input-border {
+@apply border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40;
+      }
+.dropdown-panel {
+@apply absolute left-0 top-full mt-1 w-full bg-white rounded-lg shadow-lg z-50 overflow-hidden;
+      }
+.option-item {
+@apply px-4 py-2 hover:bg-stone-100 cursor-pointer;
+      }
+.option-item.active {
+@apply bg-tagBg text-primary;
+      }
+.currency-tag {
+@apply px-3 py-3 rounded-2xl bg-[#f9f7f2] flex flex-row justify-between items-center gap-2 h-full;
+min-height: 64px;
+      }
+.tag-name {
+@apply text-stone-800 text-sm whitespace-nowrap overflow-hidden text-ellipsis flex-1 text-left;
+      }
+.tag-rate {
+@apply text-primary font-medium text-sm shrink-0;
+      }
+.info-card-box {
+@apply rounded-3xl p-6 md:p-10 shadow-soft bg-cardBg mt-6;
+      }
+.info-tag {
+@apply inline-block bg-tagBg text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4;
+      }
+.info-side-box {
+@apply border border-stone-200 rounded-2xl px-6 py-4 mt-4;
+      }
+.lang-dropdown-panel {
+@apply absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg z-50 overflow-hidden w-36;
+      }
+.lang-option {
+@apply px-4 py-2 hover:bg-stone-100 cursor-pointer text-sm;
+      }
+.lang-option.active {
+@apply bg-tagBg text-primary;
+      }
+    }
+</style>
+</head>
+<body class="bg-lightBg min-h-screen p-4 md:p-8 flex justify-center items-start">
+<div class="w-full max-w-4xl">
+<!-- 返回按钮 + 语言选择 同一行 -->
+<div class="flex justify-between items-center mb-4">
+    <a href="../首页/首页.html" class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition">
+        <i class="fa fa-arrow-left"></i>
+    </a>
+    <div class="relative lang-dropdown">
+        <div class="input-border bg-white px-4 py-2 flex items-center gap-2 cursor-pointer lang-trigger">
+            <span id="langText">简体中文</span>
+            <i class="fa fa-chevron-down text-sm text-stone-500"></i>
+        </div>
+        <div class="lang-dropdown-panel hidden">
+            <div class="lang-option active" data-lang="zh-CN">简体中文</div>
+            <div class="lang-option" data-lang="zh-TW">繁體中文</div>
+            <div class="lang-option" data-lang="en">English</div>
+        </div>
+    </div>
+</div>
+
+<!-- 上方换算主卡片 -->
+<div class="bg-cardBg rounded-3xl p-6 md:p-10 shadow-soft mb-6">
+<span id="topTag" class="inline-block bg-tagBg text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">今日汇率换算</span>
+<h1 id="mainTitle" class="text-[clamp(1.8rem,4vw,3rem)] font-medium text-stone-800 mb-8 text-center">汇率换算</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto_1fr] gap-4 md:gap-6 items-center justify-center mb-6">
+<div class="w-full">
+<label id="labelAmount" class="block text-stone-700 mb-2 font-medium">金额</label>
+<input id="amount" type="number" value="1" step="any" class="input-border w-full px-4 py-3 text-lg" />
+</div>
+
+<!-- 【从币种】自定义下拉 -->
+<div class="w-full">
+<label id="labelFrom" class="block text-stone-700 mb-2 font-medium">从</label>
+<div class="relative currency-dropdown">
+<div class="input-border w-full px-4 py-3 text-lg bg-white flex justify-between items-center cursor-pointer dropdown-trigger">
+<span class="curr-label">人民币（在岸）(CNY)</span>
+<i class="fa fa-chevron-down text-stone-400"></i>
+</div>
+<div class="dropdown-panel hidden">
+<input type="text" class="curr-search w-full px-4 py-2 border-b border-stone-200 focus:outline-none" placeholder="搜索币种代码/名称..." />
+<div class="option-list max-h-64 overflow-y-auto"></div>
+</div>
+<input type="hidden" class="curr-value" value="CNY" />
+</div>
+</div>
+
+<!-- 交换按钮 -->
+<button id="swapBtn" class="bg-primary text-white w-12 h-12 rounded-full flex items-center justify-center text-xl hover:bg-primary/90 transition shrink-0">
+<i class="fa fa-exchange"></i>
+</button>
+
+<!-- 【到币种】自定义下拉 -->
+<div class="w-full">
+<label id="labelTo" class="block text-stone-700 mb-2 font-medium">到</label>
+<div class="relative currency-dropdown">
+<div class="input-border w-full px-4 py-3 text-lg bg-white flex justify-between items-center cursor-pointer dropdown-trigger">
+<span class="curr-label">美元 (USD)</span>
+<i class="fa fa-chevron-down text-stone-400"></i>
+</div>
+<div class="dropdown-panel hidden">
+<input type="text" class="curr-search w-full px-4 py-2 border-b border-stone-200 focus:outline-none" placeholder="搜索币种代码/名称..." />
+<div class="option-list max-h-64 overflow-y-auto"></div>
+</div>
+<input type="hidden" class="curr-value" value="USD" />
+</div>
+</div>
+</div>
+
+<!-- 换算按钮 -->
+<button id="calcBtn" class="w-full bg-primary text-white py-4 rounded-xl text-lg font-medium hover:bg-primary/90 transition mb-6">
+<span id="btnCalc">立即换算</span>
+</button>
+
+<!-- 结果区域 -->
+<div class="bg-resultBg rounded-2xl p-6">
+<p id="resultText" class="text-[clamp(1.2rem,2vw,1.6rem)] text-stone-800 mb-3">加载汇率中...</p>
+<p id="rateInfo" class="text-stone-500"></p>
+</div>
+<div id="updateDate" class="text-right text-stone-500 mt-4 text-sm"></div>
+</div>
+
+<!-- ========== 独立：今日汇率表 单独圆角卡片容器 ========== -->
+<div class="bg-cardBg rounded-3xl p-6 md:p-10 shadow-soft mb-6">
+<h2 id="tableTitle" class="text-2xl font-medium text-stone-800 mb-6">今日汇率表</h2>
+<div id="rateTableWrap" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+<span class="text-stone-400 col-span-2 md:col-span-4">汇率加载中...</span>
+</div>
+</div>
+
+<!-- ========== 新增：信息卡片 ========== -->
+<div class="info-card-box">
+<span id="infoTag" class="info-tag">今日汇率参考</span>
+<h2 id="infoTitle" class="text-[clamp(1.8rem,4vw,3rem)] font-medium text-stone-800">汇率换算器</h2>
+<p id="infoDesc" class="text-stone-600 mt-3 text-lg">本站展示 <span id="infoDate">2026-10-26</span> 的参考汇率数据（非实时成交价），仅供换算参考，不作为专业金融决策依据。</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+<div class="info-side-box">
+<p id="lblDataDate" class="text-stone-500">数据日期</p>
+<p id="infoDateShow" class="text-3xl font-medium text-stone-800 mt-1">2026-10-26</p>
+</div>
+<div class="info-side-box">
+<p id="lblCopyright" class="text-stone-500">版权信息</p>
+<p id="copyrightText" class="text-3xl font-medium text-stone-800 mt-1">汇率换算器 (c) 2026</p>
+</div>
+</div>
+</div>
+
+</div>
+
+<script>
+// 翻译包
+const i18n = {
+  "zh-CN": {
+    langName: "简体中文",
+    topTag: "今日汇率换算",
+    mainTitle: "汇率换算",
+    labelAmount: "金额",
+    labelFrom: "从",
+    labelTo: "到",
+    searchPlaceholder: "搜索币种代码/名称...",
+    btnCalc: "立即换算",
+    loadingRate: "加载汇率中...",
+    noRateData: "暂无该币种汇率数据",
+    rateLine: "{date} 参考汇率: 1 {from} ≈ {rate} {to}",
+    updatePrefix: "更新日期: ",
+    tableTitle: "今日汇率表",
+    tableLoading: "汇率加载中...",
+    infoTag: "今日汇率参考",
+    infoTitle: "汇率换算器",
+    infoDesc: "本站展示 <span id=\"infoDate\">{date}</span> 的参考汇率数据（非实时成交价），仅供换算参考，不作为专业金融决策依据。",
+    lblDataDate: "数据日期",
+    lblCopyright: "版权信息",
+    copyrightText: "汇率换算器 (c) 2026",
+    fetchFail: "汇率获取失败",
+    networkErr: "网络异常，无法获取汇率"
+  },
+  "zh-TW": {
+    langName: "繁體中文",
+    topTag: "今日匯率換算",
+    mainTitle: "匯率換算",
+    labelAmount: "金額",
+    labelFrom: "自",
+    labelTo: "至",
+    searchPlaceholder: "搜尋幣種代碼/名稱...",
+    btnCalc: "立即換算",
+    loadingRate: "載入匯率中...",
+    noRateData: "暫無該幣種匯率資料",
+    rateLine: "{date} 參考匯率: 1 {from} ≈ {rate} {to}",
+    updatePrefix: "更新日期: ",
+    tableTitle: "今日匯率表",
+    tableLoading: "匯率載入中...",
+    infoTag: "今日匯率參考",
+    infoTitle: "匯率換算器",
+    infoDesc: "本站展示 <span id=\"infoDate\">{date}</span> 的參考匯率資料（非即時成交價），僅供換算參考，不做為專業金融決策依據。",
+    lblDataDate: "資料日期",
+    lblCopyright: "版權資訊",
+    copyrightText: "匯率換算器 (c) 2026",
+    fetchFail: "匯率取得失敗",
+    networkErr: "網路異常，無法取得匯率"
+  },
+  "en": {
+    langName: "English",
+    topTag: "Today's Exchange Rate",
+    mainTitle: "Currency Converter",
+    labelAmount: "Amount",
+    labelFrom: "From",
+    labelTo: "To",
+    searchPlaceholder: "Search currency code / name...",
+    btnCalc: "Convert Now",
+    loadingRate: "Loading rates...",
+    noRateData: "No rate data for this currency",
+    rateLine: "Reference rate on {date}: 1 {from} ≈ {rate} {to}",
+    updatePrefix: "Updated: ",
+    tableTitle: "Today's Rate List",
+    tableLoading: "Loading rates...",
+    infoTag: "Reference Rate",
+    infoTitle: "Currency Converter",
+    infoDesc: "This site shows reference exchange rates for <span id=\"infoDate\">{date}</span> (not real-time trading price), for reference only. Not financial advice.",
+    lblDataDate: "Data Date",
+    lblCopyright: "Copyright",
+    copyrightText: "Currency Converter (c) 2026",
+    fetchFail: "Failed to fetch rates",
+    networkErr: "Network error, cannot fetch rates"
+  }
+};
+
+// 币种多语言名称
+const currencyList = [
+{code:"AED",zh:"阿聯酋迪拉姆 (AED)",en:"UAE Dirham (AED)"},
+{code:"AFN",zh:"阿富汗尼 (AFN)",en:"Afghan Afghani (AFN)"},
+{code:"ALL",zh:"阿爾巴尼亞列克 (ALL)",en:"Albanian Lek (ALL)"},
+{code:"AMD",zh:"亞美尼亞德拉姆 (AMD)",en:"Armenian Dram (AMD)"},
+{code:"ANG",zh:"荷屬安的列斯盾 (ANG)",en:"Netherlands Antillean Guilder (ANG)"},
+{code:"AOA",zh:"安哥拉寬扎 (AOA)",en:"Angolan Kwanza (AOA)"},
+{code:"ARS",zh:"阿根廷比索 (ARS)",en:"Argentine Peso (ARS)"},
+{code:"AUD",zh:"澳大利亞元 (AUD)",en:"Australian Dollar (AUD)"},
+{code:"AWG",zh:"阿魯巴弗羅林 (AWG)",en:"Aruban Florin (AWG)"},
+{code:"AZN",zh:"阿塞拜疆馬納特 (AZN)",en:"Azerbaijani Manat (AZN)"},
+{code:"BAM",zh:"波黑可兌換馬克 (BAM)",en:"Bosnia-Herzegovina Convertible Mark (BAM)"},
+{code:"BBD",zh:"巴巴多斯元 (BBD)",en:"Barbadian Dollar (BBD)"},
+{code:"BDT",zh:"孟加拉塔卡 (BDT)",en:"Bangladeshi Taka (BDT)"},
+{code:"BGN",zh:"保加利亞列弗 (BGN)",en:"Bulgarian Lev (BGN)"},
+{code:"BHD",zh:"巴林第納爾 (BHD)",en:"Bahraini Dinar (BHD)"},
+{code:"BIF",zh:"布隆迪法郎 (BIF)",en:"Burundian Franc (BIF)"},
+{code:"BMD",zh:"百慕達元 (BMD)",en:"Bermudian Dollar (BMD)"},
+{code:"BND",zh:"汶萊林吉特 (BND)",en:"Brunei Dollar (BND)"},
+{code:"BOB",zh:"玻利維亞諾 (BOB)",en:"Bolivian Boliviano (BOB)"},
+{code:"BRL",zh:"巴西雷亞爾 (BRL)",en:"Brazilian Real (BRL)"},
+{code:"BSD",zh:"巴哈馬元 (BSD)",en:"Bahamian Dollar (BSD)"},
+{code:"BTN",zh:"不丹努扎姆 (BTN)",en:"Bhutanese Ngultrum (BTN)"},
+{code:"BWP",zh:"波札那普拉 (BWP)",en:"Botswana Pula (BWP)"},
+{code:"BYN",zh:"白俄羅斯盧布 (BYN)",en:"Belarusian Ruble (BYN)"},
+{code:"BZD",zh:"貝里斯元 (BZD)",en:"Belize Dollar (BZD)"},
+{code:"CAD",zh:"加拿大元 (CAD)",en:"Canadian Dollar (CAD)"},
+{code:"CDF",zh:"剛果法郎 (CDF)",en:"Congolese Franc (CDF)"},
+{code:"CHF",zh:"瑞士法郎 (CHF)",en:"Swiss Franc (CHF)"},
+{code:"CLF",zh:"智利發展單位 (CLF)",en:"Chilean Unit of Account (CLF)"},
+{code:"CLP",zh:"智利比索 (CLP)",en:"Chilean Peso (CLP)"},
+{code:"CNH",zh:"離岸人民幣 (CNH)",en:"Offshore Chinese Yuan (CNH)"},
+{code:"CNY",zh:"人民幣（在岸）(CNY)",en:"Chinese Yuan (Onshore) (CNY)"},
+{code:"COP",zh:"哥倫比亞比索 (COP)",en:"Colombian Peso (COP)"},
+{code:"CRC",zh:"哥斯大黎加科朗 (CRC)",en:"Costa Rican Colón (CRC)"},
+{code:"CUP",zh:"古巴比索 (CUP)",en:"Cuban Peso (CUP)"},
+{code:"CVE",zh:"佛得角埃斯庫多 (CVE)",en:"Cape Verdean Escudo (CVE)"},
+{code:"CZK",zh:"捷克克朗 (CZK)",en:"Czech Koruna (CZK)"},
+{code:"DJF",zh:"吉布地法郎 (DJF)",en:"Djiboutian Franc (DJF)"},
+{code:"DKK",zh:"丹麥克朗 (DKK)",en:"Danish Krone (DKK)"},
+{code:"DOP",zh:"多明尼加比索 (DOP)",en:"Dominican Peso (DOP)"},
+{code:"DZD",zh:"阿爾及利亞第納爾 (DZD)",en:"Algerian Dinar (DZD)"},
+{code:"EGP",zh:"埃及鎊 (EGP)",en:"Egyptian Pound (EGP)"},
+{code:"ERN",zh:"厄利垂亞納克法 (ERN)",en:"Eritrean Nakfa (ERN)"},
+{code:"ETB",zh:"衣索比亞比爾 (ETB)",en:"Ethiopian Birr (ETB)"},
+{code:"EUR",zh:"歐元 (EUR)",en:"Euro (EUR)"},
+{code:"FJD",zh:"斐濟元 (FJD)",en:"Fijian Dollar (FJD)"},
+{code:"FKP",zh:"福克蘭群島鎊 (FKP)",en:"Falkland Islands Pound (FKP)"},
+{code:"FOK",zh:"法羅群島克朗 (FOK)",en:"Faroese Króna (FOK)"},
+{code:"GBP",zh:"英鎊 (GBP)",en:"British Pound (GBP)"},
+{code:"GEL",zh:"喬治亞拉里 (GEL)",en:"Georgian Lari (GEL)"},
+{code:"GGP",zh:"根西島鎊 (GGP)",en:"Guernsey Pound (GGP)"},
+{code:"GHS",zh:"迦納塞地 (GHS)",en:"Ghanaian Cedi (GHS)"},
+{code:"GIP",zh:"直布羅陀鎊 (GIP)",en:"Gibraltar Pound (GIP)"},
+{code:"GMD",zh:"甘比亞達拉西 (GMD)",en:"Gambian Dalasi (GMD)"},
+{code:"GNF",zh:"幾內亞法郎 (GNF)",en:"Guinean Franc (GNF)"},
+{code:"GTQ",zh:"瓜地馬拉格查爾 (GTQ)",en:"Guatemalan Quetzal (GTQ)"},
+{code:"GYD",zh:"蓋亞那元 (GYD)",en:"Guyanese Dollar (GYD)"},
+{code:"HKD",zh:"港幣 (HKD)",en:"Hong Kong Dollar (HKD)"},
+{code:"HNL",zh:"宏都拉斯倫皮拉 (HNL)",en:"Honduran Lempira (HNL)"},
+{code:"HRK",zh:"克羅埃西亞庫納 (HRK)",en:"Croatian Kuna (HRK)"},
+{code:"HTG",zh:"海地古德 (HTG)",en:"Haitian Gourde (HTG)"},
+{code:"HUF",zh:"匈牙利福林 (HUF)",en:"Hungarian Forint (HUF)"},
+{code:"IDR",zh:"印尼盾 (IDR)",en:"Indonesian Rupiah (IDR)"},
+{code:"ILS",zh:"以色列新謝克爾 (ILS)",en:"Israeli New Shekel (ILS)"},
+{code:"IMP",zh:"馬恩島鎊 (IMP)",en:"Manx Pound (IMP)"},
+{code:"INR",zh:"印度盧比 (INR)",en:"Indian Rupee (INR)"},
+{code:"IQD",zh:"伊拉克第納爾 (IQD)",en:"Iraqi Dinar (IQD)"},
+{code:"ISK",zh:"冰島克朗 (ISK)",en:"Icelandic Króna (ISK)"},
+{code:"JEP",zh:"澤西島鎊 (JEP)",en:"Jersey Pound (JEP)"},
+{code:"JMD",zh:"牙買加元 (JMD)",en:"Jamaican Dollar (JMD)"},
+{code:"JOD",zh:"約旦第納爾 (JOD)",en:"Jordanian Dinar (JOD)"},
+{code:"JPY",zh:"日圓 (JPY)",en:"Japanese Yen (JPY)"},
+{code:"KES",zh:"肯亞先令 (KES)",en:"Kenyan Shilling (KES)"},
+{code:"KGS",zh:"吉爾吉斯斯坦索姆 (KGS)",en:"Kyrgyzstani Som (KGS)"},
+{code:"KHR",zh:"柬埔寨瑞爾 (KHR)",en:"Cambodian Riel (KHR)"},
+{code:"KID",zh:"吉里巴斯元 (KID)",en:"Kiribati Dollar (KID)"},
+{code:"KMF",zh:"葛摩法郎 (KMF)",en:"Comorian Franc (KMF)"},
+{code:"KRW",zh:"韓圓 (KRW)",en:"South Korean Won (KRW)"},
+{code:"KWD",zh:"科威特第納爾 (KWD)",en:"Kuwaiti Dinar (KWD)"},
+{code:"KYD",zh:"開曼元 (KYD)",en:"Cayman Islands Dollar (KYD)"},
+{code:"KZT",zh:"哈薩克斯坦堅戈 (KZT)",en:"Kazakhstani Tenge (KZT)"},
+{code:"LAK",zh:"寮國基普 (LAK)",en:"Lao Kip (LAK)"},
+{code:"LBP",zh:"黎巴嫩鎊 (LBP)",en:"Lebanese Pound (LBP)"},
+{code:"LKR",zh:"斯里蘭卡盧比 (LKR)",en:"Sri Lankan Rupee (LKR)"},
+{code:"LRD",zh:"賴比瑞亞元 (LRD)",en:"Liberian Dollar (LRD)"},
+{code:"LSL",zh:"賴索托洛蒂 (LSL)",en:"Lesotho Loti (LSL)"},
+{code:"LYD",zh:"利比亞第納爾 (LYD)",en:"Libyan Dinar (LYD)"},
+{code:"MAD",zh:"摩洛哥迪拉姆 (MAD)",en:"Moroccan Dirham (MAD)"},
+{code:"MDL",zh:"摩爾多瓦列伊 (MDL)",en:"Moldovan Leu (MDL)"},
+{code:"MGA",zh:"馬達加斯加阿里亞里 (MGA)",en:"Malagasy Ariary (MGA)"},
+{code:"MKD",zh:"北馬其頓第納爾 (MKD)",en:"North Macedonian Denar (MKD)"},
+{code:"MMK",zh:"緬甸緬元 (MMK)",en:"Myanmar Kyat (MMK)"},
+{code:"MNT",zh:"蒙古圖格里克 (MNT)",en:"Mongolian Tugrik (MNT)"},
+{code:"MOP",zh:"澳門元 (MOP)",en:"Macanese Pataca (MOP)"},
+{code:"MRU",zh:"茅利塔尼亞烏吉亞 (MRU)",en:"Mauritanian Ouguiya (MRU)"},
+{code:"MUR",zh:"模里西斯盧比 (MUR)",en:"Mauritian Rupee (MUR)"},
+{code:"MVR",zh:"馬爾地夫拉菲亞 (MVR)",en:"Maldivian Rufiyaa (MVR)"},
+{code:"MWK",zh:"馬拉威克瓦查 (MWK)",en:"Malawian Kwacha (MWK)"},
+{code:"MXN",zh:"墨西哥比索 (MXN)",en:"Mexican Peso (MXN)"},
+{code:"MYR",zh:"馬來西亞林吉特 (MYR)",en:"Malaysian Ringgit (MYR)"},
+{code:"MZN",zh:"莫三比克梅蒂卡爾 (MZN)",en:"Mozambican Metical (MZN)"},
+{code:"NAD",zh:"納米比亞元 (NAD)",en:"Namibian Dollar (NAD)"},
+{code:"NGN",zh:"奈及利亞奈拉 (NGN)",en:"Nigerian Naira (NGN)"},
+{code:"NIO",zh:"尼加拉瓜科多巴 (NIO)",en:"Nicaraguan Córdoba (NIO)"},
+{code:"NOK",zh:"挪威克朗 (NOK)",en:"Norwegian Krone (NOK)"},
+{code:"NPR",zh:"尼泊爾盧比 (NPR)",en:"Nepalese Rupee (NPR)"},
+{code:"NZD",zh:"紐西蘭元 (NZD)",en:"New Zealand Dollar (NZD)"},
+{code:"OMR",zh:"阿曼里亞爾 (OMR)",en:"Omani Rial (OMR)"},
+{code:"PAB",zh:"巴拿馬巴波亞 (PAB)",en:"Panamanian Balboa (PAB)"},
+{code:"PEN",zh:"秘魯索爾 (PEN)",en:"Peruvian Sol (PEN)"},
+{code:"PGK",zh:"巴布亞紐幾內亞基那 (PGK)",en:"Papua New Guinean Kina (PGK)"},
+{code:"PHP",zh:"菲律賓比索 (PHP)",en:"Philippine Peso (PHP)"},
+{code:"PKR",zh:"巴基斯坦盧比 (PKR)",en:"Pakistani Rupee (PKR)"},
+{code:"PLN",zh:"波蘭茲羅提 (PLN)",en:"Polish Złoty (PLN)"},
+{code:"PYG",zh:"巴拉圭瓜拉尼 (PYG)",en:"Paraguayan Guarani (PYG)"},
+{code:"QAR",zh:"卡達里亞爾 (QAR)",en:"Qatari Riyal (QAR)"},
+{code:"RON",zh:"羅馬尼亞列伊 (RON)",en:"Romanian Leu (RON)"},
+{code:"RSD",zh:"塞爾維亞第納爾 (RSD)",en:"Serbian Dinar (RSD)"},
+{code:"RUB",zh:"俄羅斯盧布 (RUB)",en:"Russian Ruble (RUB)"},
+{code:"RWF",zh:"盧安達法郎 (RWF)",en:"Rwandan Franc (RWF)"},
+{code:"SAR",zh:"沙烏地里亞爾 (SAR)",en:"Saudi Riyal (SAR)"},
+{code:"SBD",zh:"索羅門群島元 (SBD)",en:"Solomon Islands Dollar (SBD)"},
+{code:"SCR",zh:"塞席爾盧比 (SCR)",en:"Seychellois Rupee (SCR)"},
+{code:"SDG",zh:"蘇丹鎊 (SDG)",en:"Sudanese Pound (SDG)"},
+{code:"SEK",zh:"瑞典克朗 (SEK)",en:"Swedish Krona (SEK)"},
+{code:"SGD",zh:"新加坡元 (SGD)",en:"Singapore Dollar (SGD)"},
+{code:"SHP",zh:"聖赫勒拿鎊 (SHP)",en:"Saint Helena Pound (SHP)"},
+{code:"SLE",zh:"塞拉利昂利昂 (SLE)",en:"Sierra Leonean Leone (SLE)"},
+{code:"SOS",zh:"索馬利亞先令 (SOS)",en:"Somali Shilling (SOS)"},
+{code:"SRD",zh:"蘇利南元 (SRD)",en:"Surinamese Dollar (SRD)"},
+{code:"SSP",zh:"南蘇丹鎊 (SSP)",en:"South Sudanese Pound (SSP)"},
+{code:"STN",zh:"聖多美和普林西比多布拉 (STN)",en:"São Tomé and Príncipe Dobra (STN)"},
+{code:"SYP",zh:"敘利亞鎊 (SYP)",en:"Syrian Pound (SYP)"},
+{code:"SZL",zh:"史瓦濟蘭里蘭吉尼 (SZL)",en:"Eswatini Lilangeni (SZL)"},
+{code:"THB",zh:"泰銖 (THB)",en:"Thai Baht (THB)"},
+{code:"TJS",zh:"塔吉克斯坦索莫尼 (TJS)",en:"Tajikistani Somoni (TJS)"},
+{code:"TMT",zh:"土庫曼斯坦馬納特 (TMT)",en:"Turkmenistani Manat (TMT)"},
+{code:"TND",zh:"突尼西亞第納爾 (TND)",en:"Tunisian Dinar (TND)"},
+{code:"TOP",zh:"湯加潘加 (TOP)",en:"Tongan Paʻanga (TOP)"},
+{code:"TRY",zh:"土耳其里拉 (TRY)",en:"Turkish Lira (TRY)"},
+{code:"TTD",zh:"特立尼達和多巴哥元 (TTD)",en:"Trinidad and Tobago Dollar (TTD)"},
+{code:"TVD",zh:"吐瓦魯元 (TVD)",en:"Tuvaluan Dollar (TVD)"},
+{code:"TWD",zh:"新台幣 (TWD)",en:"New Taiwan Dollar (TWD)"},
+{code:"TZS",zh:"坦尚尼亞先令 (TZS)",en:"Tanzanian Shilling (TZS)"},
+{code:"UAH",zh:"烏克蘭格里夫納 (UAH)",en:"Ukrainian Hryvnia (UAH)"},
+{code:"UGX",zh:"烏干達先令 (UGX)",en:"Ugandan Shilling (UGX)"},
+{code:"USD",zh:"美元 (USD)",en:"US Dollar (USD)"},
+{code:"UYU",zh:"烏拉圭比索 (UYU)",en:"Uruguayan Peso (UYU)"},
+{code:"UZS",zh:"烏茲別克斯坦蘇姆 (UZS)",en:"Uzbekistani Som (UZS)"},
+{code:"VES",zh:"委內瑞拉玻利瓦爾 (VES)",en:"Venezuelan Bolívar (VES)"},
+{code:"VND",zh:"越南盾 (VND)",en:"Vietnamese Dong (VND)"},
+{code:"VUV",zh:"萬那杜瓦圖 (VUV)",en:"Vanuatu Vatu (VUV)"},
+{code:"WST",zh:"薩摩亞塔拉 (WST)",en:"Samoan Tala (WST)"},
+{code:"XAF",zh:"中非金融合作法郎 (XAF)",en:"Central African CFA Franc (XAF)"},
+{code:"XCD",zh:"東加勒比元 (XCD)",en:"East Caribbean Dollar (XCD)"},
+{code:"XDR",zh:"特別提款權 (XDR)",en:"Special Drawing Rights (XDR)"},
+{code:"XOF",zh:"西非法郎 (XOF)",en:"West African CFA Franc (XOF)"},
+{code:"XPF",zh:"太平洋法郎 (XPF)",en:"CFP Franc (XPF)"},
+{code:"YER",zh:"葉門里亞爾 (YER)",en:"Yemeni Rial (YER)"},
+{code:"ZAR",zh:"南非蘭特 (ZAR)",en:"South African Rand (ZAR)"},
+{code:"ZMW",zh:"尚比亞克瓦查 (ZMW)",en:"Zambian Kwacha (ZMW)"},
+{code:"ZWL",zh:"辛巴威元 (ZWL)",en:"Zimbabwean Dollar (ZWL)"}
+];
+
+let currentLang = "zh-CN";
+let rateMap = {};
+let lastUpdate = "";
+const dropdowns = document.querySelectorAll('.currency-dropdown');
+const rateTableWrap = document.getElementById('rateTableWrap');
+
+function getCurrencyName(item){
+  if(currentLang === "en") return item.en;
+  return item.zh;
+}
+
+// 更新全站文字
+function applyLang(lang){
+  currentLang = lang;
+  const t = i18n[lang];
+  document.getElementById('langText').innerText = t.langName;
+  document.getElementById('topTag').innerText = t.topTag;
+  document.getElementById('mainTitle').innerText = t.mainTitle;
+  document.getElementById('labelAmount').innerText = t.labelAmount;
+  document.getElementById('labelFrom').innerText = t.labelFrom;
+  document.getElementById('labelTo').innerText = t.labelTo;
+  document.getElementById('btnCalc').innerText = t.btnCalc;
+  document.getElementById('tableTitle').innerText = t.tableTitle;
+  document.getElementById('infoTag').innerText = t.infoTag;
+  document.getElementById('infoTitle').innerText = t.infoTitle;
+  document.getElementById('lblDataDate').innerText = t.lblDataDate;
+  document.getElementById('lblCopyright').innerText = t.lblCopyright;
+  document.getElementById('copyrightText').innerText = t.copyrightText;
+
+  // 更新搜索框占位
+  document.querySelectorAll('.curr-search').forEach(el=>{
+    el.placeholder = t.searchPlaceholder;
+  })
+
+  // 刷新下拉列表、汇率表格、计算结果
+  dropdowns.forEach(d=>renderDropdown(d));
+  renderRateTable();
+  calculate();
+}
+
+// 语言下拉交互
+const langDropdown = document.querySelector('.lang-dropdown');
+const langTrigger = langDropdown.querySelector('.lang-trigger');
+const langPanel = langDropdown.querySelector('.lang-dropdown-panel');
+const langOptions = langDropdown.querySelectorAll('.lang-option');
+
+langTrigger.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    langPanel.classList.toggle('hidden');
+});
+langOptions.forEach(opt=>{
+    opt.onclick = ()=>{
+        langOptions.forEach(o=>o.classList.remove('active'));
+        opt.classList.add('active');
+        applyLang(opt.dataset.lang);
+        langPanel.classList.add('hidden');
+    }
+})
+
+// 渲染汇率标签表格（基准：1 USD）
+function renderRateTable(){
+  const t = i18n[currentLang];
+  rateTableWrap.innerHTML = "";
+  if(Object.keys(rateMap).length === 0){
+    rateTableWrap.innerHTML = `<span class="text-stone-400 col-span-2 md:col-span-4">${t.tableLoading}</span>`;
+    return;
+  }
+  currencyList.forEach(item=>{
+    const r = rateMap[item.code];
+    if(r === undefined) return;
+    const tag = document.createElement('div');
+    tag.className = "currency-tag";
+    tag.innerHTML = `
+<span class="tag-name" title="${getCurrencyName(item)}">${getCurrencyName(item)}</span>
+<span class="tag-rate">${r.toFixed(4)}</span>
+`;
+    rateTableWrap.appendChild(tag);
+  })
+}
+
+// 渲染下拉选项
+function renderDropdown(dropEl, keyword=""){
+  const listWrap = dropEl.querySelector('.option-list');
+  const selectedCode = dropEl.querySelector('.curr-value').value;
+  listWrap.innerHTML = "";
+  const kw = keyword.toLowerCase();
+  const filtered = currencyList.filter(item=>{
+    const name = getCurrencyName(item).toLowerCase();
+    return name.includes(kw) || item.code.toLowerCase().includes(kw);
+  });
+  filtered.forEach(item=>{
+    const div = document.createElement('div');
+    div.className = 'option-item' + (item.code === selectedCode ? ' active' : '');
+    div.innerText = getCurrencyName(item);
+    div.dataset.code = item.code;
+    div.onclick = ()=>{
+      dropEl.querySelector('.curr-value').value = item.code;
+      dropEl.querySelector('.curr-label').innerText = getCurrencyName(item);
+      dropEl.querySelector('.dropdown-panel').classList.add('hidden');
+      calculate();
+    }
+    listWrap.appendChild(div);
+  })
+}
+
+// 初始化每个币种下拉
+dropdowns.forEach(dropEl=>{
+  renderDropdown(dropEl);
+  dropEl.querySelector('.dropdown-trigger').addEventListener('click',(e)=>{
+    e.stopPropagation();
+    const panel = dropEl.querySelector('.dropdown-panel');
+    dropdowns.forEach(d=>{
+      if(d!==dropEl) d.querySelector('.dropdown-panel').classList.add('hidden');
+    })
+    panel.classList.toggle('hidden');
+    if(!panel.classList.contains('hidden')){
+      dropEl.querySelector('.curr-search').focus();
+    }
+  })
+  dropEl.querySelector('.curr-search').addEventListener('input',(e)=>{
+    renderDropdown(dropEl, e.target.value);
+  })
+})
+
+document.addEventListener('click',()=>{
+  dropdowns.forEach(d=>{
+    d.querySelector('.dropdown-panel').classList.add('hidden');
+  })
+  langPanel.classList.add('hidden');
+})
+
+function getFromTo(){
+  const from = document.querySelectorAll('.curr-value')[0].value;
+  const to = document.querySelectorAll('.curr-value')[1].value;
+  return {from,to};
+}
+
+async function fetchRates() {
+  const t = i18n[currentLang];
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/USD");
+    const data = await res.json();
+    if(data.result !== "success"){
+      alert(t.fetchFail);
+      return;
+    }
+    rateMap = data.rates;
+    const d = new Date(data.time_last_update_utc);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    lastUpdate = `${year}-${month}-${day}`;
+    // 同步更新底部信息卡片日期
+    document.getElementById("infoDate").innerText = lastUpdate;
+    document.getElementById("infoDateShow").innerText = lastUpdate;
+    calculate();
+    renderRateTable();
+  } catch(e) {
+    console.error(e);
+    alert(t.networkErr);
+  }
+}
+
+function calculate(){
+  const t = i18n[currentLang];
+  const amount = parseFloat(document.getElementById('amount').value);
+  const {from, to} = getFromTo();
+
+  if(isNaN(amount) || amount <= 0) return;
+  if(!rateMap[from] || !rateMap[to]){
+    document.getElementById("resultText").innerText = t.noRateData;
+    document.getElementById("rateInfo").innerText = "";
+    document.getElementById("updateDate").innerText = "";
+    return;
+  }
+
+  const result = amount * (rateMap[to] / rateMap[from]);
+  const oneUnitRate = rateMap[to] / rateMap[from];
+
+  document.getElementById("resultText").innerText = `${amount} ${from} ≈ ${result.toFixed(6)} ${to}`;
+  document.getElementById("rateInfo").innerText = t.rateLine.replace('{date}',lastUpdate).replace('{from}',from).replace('{rate}',oneUnitRate.toFixed(6)).replace('{to}',to);
+  document.getElementById("updateDate").innerText = t.updatePrefix + lastUpdate;
+}
+
+function swapCurrency(){
+  const val0 = document.querySelectorAll('.curr-value')[0];
+  const val1 = document.querySelectorAll('.curr-value')[1];
+  const label0 = document.querySelectorAll('.curr-label')[0];
+  const label1 = document.querySelectorAll('.curr-label')[1];
+
+  const tempCode = val0.value;
+  const tempName = label0.innerText;
+
+  val0.value = val1.value;
+  label0.innerText = label1.innerText;
+  val1.value = tempCode;
+  label1.innerText = tempName;
+
+  renderDropdown(dropdowns[0]);
+  renderDropdown(dropdowns[1]);
+  calculate();
+}
+
+document.getElementById('calcBtn').addEventListener('click', calculate);
+document.getElementById('swapBtn').addEventListener('click', swapCurrency);
+document.getElementById('amount').addEventListener('input', calculate);
+
+fetchRates();
+</script>
+</body>
+</html>
