@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>日历</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+primary: '#3b82f6',
+restRed: '#ef4444',
+grayText: '#6b7280',
+yiliGreen: '#229944',
+yiliRed: '#dd3333'
+          }
+        }
+      }
+}
+</script>
+<style type="text/tailwindcss">
+@layer utilities {
+.calendar-cell {
+@apply relative min-h-[72px] sm:min-h-[86px] p-1 text-center rounded-lg transition-all hover:bg-slate-100 cursor-pointer;
+      }
+.cell-rest {
+@apply bg-red-50 text-restRed;
+      }
+.cell-today {
+@apply border-2 border-primary bg-blue-50;
+      }
+.cell-active {
+@apply border-2 border-primary bg-blue-50/60;
+      }
+.badge-rest {
+@apply absolute top-1 right-1 bg-restRed text-white text-[10px] px-1 rounded;
+      }
+.badge-work {
+@apply absolute top-1 right-1 bg-slate-600 text-white text-[10px] px-1 rounded;
+      }
+.badge-today {
+@apply absolute top-1 left-1 bg-primary text-white text-[10px] px-1 rounded;
+      }
+.lunar-text {
+@apply text-[11px] text-grayText mt-0.5;
+      }
+.festival-text {
+@apply text-[11px] text-restRed;
+      }
+    }
+</style>
+</head>
+<body class="bg-slate-50 p-2 sm:p-6">
+<div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+<!-- 顶部工具栏 -->
+<div class="flex items-center justify-between p-3 sm:p-4 border-b gap-2 flex-wrap">
+<div class="flex items-center gap-2">
+<!-- 返回按钮：圆形左箭头，垂直居中 -->
+<a href="../首页/首页.html" class="w-7 h-7 flex items-center justify-center rounded-full border border-slate-300 hover:bg-slate-100 transition-all text-slate-600">
+  <i class="fa fa-chevron-left text-sm"></i>
+</a>
+<select id="filterSelect" class="border rounded px-2 py-1 bg-slate-50 text-sm">
+<option value="">假期</option>
+<option value="元旦">元旦</option>
+<option value="春节">春节</option>
+<option value="清明节">清明节</option>
+<option value="劳动节">劳动节</option>
+<option value="端午节">端午节</option>
+<option value="中秋节">中秋节</option>
+<option value="国庆节">国庆节</option>
+<option value="妇女节">妇女节</option>
+<option value="青年节">青年节</option>
+<option value="儿童节">儿童节</option>
+<option value="建军节">建军节</option>
+</select>
+<!-- 新增：24节气下拉框 -->
+<select id="solarTermSelect" class="border rounded px-2 py-1 bg-slate-50 text-sm">
+<option value="">节气</option>
+<option value="立春">立春</option>
+<option value="雨水">雨水</option>
+<option value="惊蛰">惊蛰</option>
+<option value="春分">春分</option>
+<option value="清明">清明</option>
+<option value="谷雨">谷雨</option>
+<option value="立夏">立夏</option>
+<option value="小满">小满</option>
+<option value="芒种">芒种</option>
+<option value="夏至">夏至</option>
+<option value="小暑">小暑</option>
+<option value="大暑">大暑</option>
+<option value="立秋">立秋</option>
+<option value="处暑">处暑</option>
+<option value="白露">白露</option>
+<option value="秋分">秋分</option>
+<option value="寒露">寒露</option>
+<option value="霜降">霜降</option>
+<option value="立冬">立冬</option>
+<option value="小雪">小雪</option>
+<option value="大雪">大雪</option>
+<option value="冬至">冬至</option>
+<option value="小寒">小寒</option>
+<option value="大寒">大寒</option>
+</select>
+</div>
+<div class="flex items-center gap-2">
+<button id="prevBtn" class="text-slate-500"><i class="fa fa-chevron-left"></i></button>
+<select id="yearSelect" class="border rounded px-2 py-1 bg-slate-50 text-sm"></select>
+<select id="monthSelect" class="border rounded px-2 py-1 bg-slate-50 text-sm"></select>
+<button id="nextBtn" class="text-slate-500"><i class="fa fa-chevron-right"></i></button>
+</div>
+<button id="todayBtn" class="border rounded px-3 py-1 text-sm bg-slate-50">今天</button>
+</div>
+
+<!-- 主体：日历 + 黄历卡片 左右并排 -->
+<div class="flex flex-col lg:flex-row">
+<!-- 左侧月历区域 -->
+<div class="lg:w-[60%] border-b lg:border-b-0 lg:border-r">
+<!-- 星期头部 周日第一列 -->
+<div class="grid grid-cols-7 py-2 text-center text-sm text-slate-500">
+<div class="text-restRed">日</div>
+<div>一</div>
+<div>二</div>
+<div>三</div>
+<div>四</div>
+<div>五</div>
+<div class="text-restRed">六</div>
+</div>
+<!-- 日历网格 -->
+<div id="calendarWrap" class="grid grid-cols-7 gap-1 p-2"></div>
+</div>
+
+<!-- 右侧黄历详情卡片（对标截图样式） -->
+<div id="infoPanel" class="lg:w-[40%] p-4 sm:p-6">
+<div class="text-center">
+<div id="infoDateText" class="text-xl font-semibold text-slate-800"></div>
+<div id="infoDayAgo" class="text-yiliRed text-lg my-2"></div>
+
+<div class="flex items-center justify-center gap-6 my-4">
+<button id="infoPrevDay" class="text-yiliRed text-3xl"><i class="fa fa-chevron-left"></i></button>
+<span id="infoDayNum" class="text-7xl font-bold text-yiliRed">1</span>
+<button id="infoNextDay" class="text-yiliRed text-3xl"><i class="fa fa-chevron-right"></i></button>
+</div>
+
+<div id="infoLunarFest" class="text-xl my-3"></div>
+
+<div id="infoGanZhi" class="border border-yiliRed rounded-lg py-2 my-4 text-lg"></div>
+
+<div class="text-left mt-6 space-y-4">
+<div class="flex items-start gap-3">
+<span class="bg-yiliGreen text-white px-3 py-2 rounded text-xl font-bold">宜</span>
+<span id="yiText" class="pt-1"></span>
+</div>
+<div class="flex items-start gap-3">
+<span class="bg-yiliRed text-white px-3 py-2 rounded text-xl font-bold">忌</span>
+<span id="jiText" class="pt-1"></span>
+</div>
+</div>
+
+<div class="text-left mt-6 space-y-2 text-slate-700">
+<div>上一节气：<span id="prevTerm"></span></div>
+<div>下一节气：<span id="nextTerm"></span></div>
+</div>
+<!-- ========== 新增：倒计时区域 ========== -->
+<div class="text-left mt-6 space-y-2 text-slate-700 border-t pt-4">
+<div id="countNewYear"><i class="fa fa-clock-o mr-1"></i>距离下一个元旦：--天</div>
+<div id="countSpringFest"><i class="fa fa-clock-o mr-1"></i>距离下一个春节：--天</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+let solarTermMap = {}; // 新版节气：{年份: {节气名: "yyyy-MM-dd HH:mm:ss"}}
+let lunarFestivalMap = {};
+let holidayMap = {};
+let lunarDateMap = {};
+let festivalDateMap = {};
+let ganzhiMap = {}; // 干支缓存 农历json/干支1900-2100.json
+let almanacMap = {}; // 宜忌缓存 农历json/宜忌1900-2100.json
+
+// 生肖表，地支顺序
+const zodiacList = ["鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗","猪"];
+function getZodiac(year){
+const idx = (year - 4) % 12;
+return zodiacList[idx];
+}
+
+// 根据【春节（正月初一）】计算生肖
+function getZodiacBySpring(targetDate){
+const y = targetDate.getFullYear();
+let springStr = festivalDateMap[y]?.['春节'];
+if (!springStr) {
+springStr = festivalDateMap[y+1]?.['春节'];
+    }
+if(!springStr){
+// 没有春节数据，降级用阳历年
+return getZodiac(y);
+    }
+const springDt = parseDateStr(springStr);
+if(targetDate < springDt){
+// 春节前，用上一年生肖
+return getZodiac(y - 1);
+    }else{
+// 春节及之后，本年生肖
+return getZodiac(y);
+    }
+}
+
+// 获取星座
+function getConstellation(m, d){
+const arr = [
+        [1,20,"水瓶座"],
+        [2,19,"双鱼座"],
+        [3,21,"白羊座"],
+        [4,20,"金牛座"],
+        [5,21,"双子座"],
+        [6,22,"巨蟹座"],
+        [7,23,"狮子座"],
+        [8,23,"处女座"],
+        [9,23,"天秤座"],
+        [10,24,"天蝎座"],
+        [11,23,"射手座"],
+        [12,22,"摩羯座"]
+    ];
+if(m === 1 && d < 20) return "摩羯座";
+for(let item of arr){
+if(m === item[0]){
+if(d >= item[1]) return item[2];
+else {
+const prev = arr[(arr.indexOf(item)+11)%12];
+return prev[2];
+            }
+        }
+    }
+return "";
+}
+
+// 处理农历显示：正月初一 → 正月；正月初二 → 初二
+function formatLunarShow(text) {
+if (!text) return '';
+if (text.includes('初一')) {
+return text.replace('初一', '');
+    }
+// 兼容闰月，正则匹配闰月+月份
+return text.replace(/^(闰)?(正|二|三|四|五|六|七|八|九|十|冬|腊)月/, '');
+}
+
+// 解析 "yyyy-mm-dd" 字符串返回Date
+function parseDateStr(s) {
+const [y,m,d] = s.split('-').map(Number);
+return new Date(y, m-1, d);
+}
+
+// 解析带时分秒的节气时间字符串
+function parseDateTimeStr(s) {
+return new Date(s.replace(/-/g, '/'));
+}
+
+// 根据日期key，获取当天节气名称
+function getDaySolarTermName(dateKey){
+const [y,m,d] = dateKey.split('-').map(Number);
+const yearStr = String(y);
+if(!solarTermMap[yearStr]) return '';
+const yearTerms = solarTermMap[yearStr];
+for(let termName in yearTerms){
+const t = parseDateTimeStr(yearTerms[termName]);
+const ty = t.getFullYear();
+const tm = t.getMonth()+1;
+const td = t.getDate();
+if(ty === y && tm === m && td === d){
+return termName;
+        }
+    }
+return '';
+}
+
+// 【核心】根据目标日期，在 solarTermMap 找最近上一个、下一个节气
+function findNearestSolarTerm(targetDate) {
+let allTerms = [];
+// 遍历所有年份、所有节气
+for (const yearKey in solarTermMap) {
+const y = parseInt(yearKey);
+const termObj = solarTermMap[yearKey];
+for (const termName in termObj) {
+const dt = parseDateTimeStr(termObj[termName]);
+allTerms.push({ name: termName, timeStr: termObj[termName], date: dt });
+        }
+    }
+// 按时间排序
+allTerms.sort((a, b) => a.date - b.date);
+
+let lastTerm = null;
+let nextTerm = null;
+for (let i = 0; i < allTerms.length; i++) {
+const item = allTerms[i];
+if (item.date <= targetDate) {
+lastTerm = item;
+        } else {
+nextTerm = item;
+break;
+        }
+    }
+return { lastTerm, nextTerm };
+}
+
+// 跳转到指定年份+节气
+function jumpSolarTerm(year, termName) {
+if(!solarTermMap[year] || !solarTermMap[year][termName]) return;
+const timeStr = solarTermMap[year][termName];
+const targetDate = parseDateTimeStr(timeStr);
+currentDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+selectDate = new Date(targetDate);
+renderCalendar();
+}
+
+// 查找下一个元旦
+function getNextNewYear(fromDate){
+const y = fromDate.getFullYear();
+let ny = new Date(y+1,0,1);
+if(fromDate < new Date(y,0,1)){
+ny = new Date(y,0,1);
+}
+return ny;
+}
+
+// 查找下一个春节（遍历festivalDateMap）
+function getNextSpringFestival(fromDate){
+let springDates = [];
+for(let y in festivalDateMap){
+if(festivalDateMap[y]['春节']){
+springDates.push(parseDateStr(festivalDateMap[y]['春节']));
+}
+}
+springDates.sort((a,b)=>a-b);
+for(let d of springDates){
+if(d >= fromDate){
+return d;
+}
+}
+return null;
+}
+
+// 跳转到指定年份+节日
+function jumpFestival(year, festivalName) {
+if(!festivalDateMap[year] || !festivalDateMap[year][festivalName]) return;
+const targetDate = parseDateStr(festivalDateMap[year][festivalName]);
+currentDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+selectDate = new Date(targetDate);
+renderCalendar();
+}
+
+// 加载干支json
+async function loadGanZhiJson(){
+try {
+const res = await fetch("./农历json/干支1900-2100.json");
+if (!res.ok) throw new Error("干支1900-2100.json not found");
+ganzhiMap = await res.json();
+console.log("✅ 干支数据加载成功");
+    } catch (err) {
+console.warn("❌ 加载干支json失败：", err);
+ganzhiMap = {};
+    }
+await loadFestivalDateJson();
+}
+
+// 加载跳转节日对照json
+async function loadFestivalDateJson() {
+try {
+const res = await fetch("./农历json/跳转节日阳历对照.json");
+if (!res.ok) throw new Error("跳转节日阳历对照.json not found");
+festivalDateMap = await res.json();
+console.log("✅ 跳转节日对照加载成功");
+    } catch (err) {
+console.warn("❌ 加载跳转节日对照失败：", err);
+festivalDateMap = {};
+    }
+await loadSolarTermJson();
+}
+
+// 加载新版节气json：节气交节时刻1900-2100.json
+async function loadSolarTermJson() {
+try {
+const res = await fetch("./农历json/节气交节时刻1900-2100.json");
+if (!res.ok) throw new Error("节气json not found");
+solarTermMap = await res.json();
+console.log("✅ 节气交节时刻加载成功");
+    } catch (err) {
+console.warn("❌ 加载节气json失败：", err);
+solarTermMap = {};
+    }
+await loadLunarFestivalJson();
+}
+// 加载农历节日json，格式 { "2026-09-17":"中秋节" }
+async function loadLunarFestivalJson() {
+try {
+const res = await fetch("./农历json/节日1900-2100.json");
+if (!res.ok) throw new Error("节日json not found");
+lunarFestivalMap = await res.json();
+console.log("✅ 农历节日加载成功");
+    } catch (err) {
+console.warn("❌ 加载节日json失败：", err);
+lunarFestivalMap = {};
+    }
+await loadHolidayJson();
+}
+// 加载法定节假日&调休
+async function loadHolidayJson() {
+try {
+const res = await fetch("./农历json/法定节假日放假调休1900-2100.json");
+if (!res.ok) throw new Error("节假日json not found");
+holidayMap = await res.json();
+console.log("✅ 法定节假日加载成功");
+    } catch (err) {
+console.warn("❌ 加载节假日json失败：", err);
+holidayMap = {};
+    }
+await loadLunarDateJson();
+}
+// 加载农历日期json：农历1900-2100.json，格式同节气 {"1900-01-01":"正月初一"}
+async function loadLunarDateJson() {
+try {
+const res = await fetch("./农历json/农历1900-2100.json");
+if (!res.ok) throw new Error("农历json not found");
+lunarDateMap = await res.json();
+console.log("✅ 农历日期加载成功");
+    } catch (err) {
+console.warn("❌ 加载农历日期json失败：", err);
+lunarDateMap = {};
+    }
+await loadAlmanacJson();
+}
+// 加载宜忌json
+async function loadAlmanacJson() {
+try {
+const res = await fetch("./农历json/宜忌1900-2100.json");
+if (!res.ok) throw new Error("宜忌1900-2100.json not found");
+almanacMap = await res.json();
+console.log("✅ 宜忌数据加载成功");
+    } catch (err) {
+console.warn("❌ 加载宜忌json失败：", err);
+almanacMap = {};
+    }
+renderCalendar();
+}
+
+// 普通纪念日
+const otherFestival = {
+'11-08':'记者节'
+};
+
+// ========== 全局状态 ==========
+let currentDate = new Date();
+let selectDate = new Date();
+const calendarWrap = document.getElementById('calendarWrap');
+const yearSelect = document.getElementById('yearSelect');
+const monthSelect = document.getElementById('monthSelect');
+const filterSelect = document.getElementById('filterSelect');
+const solarTermSelect = document.getElementById('solarTermSelect');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const todayBtn = document.getElementById('todayBtn');
+
+// 右侧黄历的上下天按钮
+const infoPrevDay = document.getElementById('infoPrevDay');
+const infoNextDay = document.getElementById('infoNextDay');
+infoPrevDay.onclick = ()=>{
+selectDate.setDate(selectDate.getDate()-1);
+renderCalendar();
+};
+infoNextDay.onclick = ()=>{
+selectDate.setDate(selectDate.getDate()+1);
+renderCalendar();
+};
+
+// 节日下拉切换
+filterSelect.onchange = function(){
+const festival = this.value;
+if(!festival) return;
+solarTermSelect.value = ""; // 清空节气选择
+const y = +yearSelect.value;
+jumpFestival(y, festival);
+}
+
+// 节气下拉切换（新增）
+solarTermSelect.onchange = function(){
+const term = this.value;
+if(!term) return;
+filterSelect.value = ""; // 清空假期选择
+const y = +yearSelect.value;
+jumpSolarTerm(y, term);
+}
+
+// ========== 初始化下拉框 1900 ~ 2100 ==========
+function initSelect(){
+yearSelect.innerHTML = '';
+for(let y=1900;y<=2100;y++){
+const opt = document.createElement('option');
+opt.value = y;
+opt.innerText = y+'年';
+yearSelect.appendChild(opt);
+  }
+monthSelect.innerHTML = '';
+for(let m=1;m<=12;m++){
+const opt = document.createElement('option');
+opt.value = m;
+opt.innerText = m+'月';
+monthSelect.appendChild(opt);
+  }
+bindSelectChange();
+}
+function bindSelectChange(){
+yearSelect.onchange = ()=>{
+const selectedFestival = filterSelect.value;
+const selectedTerm = solarTermSelect.value;
+const y = +yearSelect.value;
+if(selectedFestival){
+jumpFestival(y, selectedFestival);
+}else if(selectedTerm){
+jumpSolarTerm(y, selectedTerm);
+}else{
+currentDate.setFullYear(y);
+renderCalendar();
+}
+  }
+monthSelect.onchange = ()=>{
+currentDate.setMonth(+monthSelect.value -1);
+renderCalendar();
+  }
+}
+
+// ========== 渲染日历主体 ==========
+function renderCalendar(){
+const y = currentDate.getFullYear();
+const m = currentDate.getMonth();
+yearSelect.value = y;
+monthSelect.value = m+1;
+
+calendarWrap.innerHTML = '';
+const firstDay = new Date(y,m,1);
+const lastDay = new Date(y,m+1,0);
+// 周日为0，周一1 ... 周六6，适配周日第一列
+let firstWeek = firstDay.getDay();
+const prevMonthLast = new Date(y,m,0).getDate();
+
+for(let i= firstWeek -1; i>=0; i--){
+const d = prevMonthLast - i;
+const div = createCell(y,m-1,d,true);
+calendarWrap.appendChild(div);
+  }
+for(let d=1;d<=lastDay.getDate();d++){
+const div = createCell(y,m,d,false);
+calendarWrap.appendChild(div);
+  }
+const totalRendered = firstWeek + lastDay.getDate();
+const nextFill = 42 - totalRendered;
+for(let d=1;d<=nextFill;d++){
+const div = createCell(y,m+1,d,true);
+calendarWrap.appendChild(div);
+  }
+updateInfoPanel(selectDate);
+}
+
+// ========== 创建格子 ==========
+function createCell(y,m,d,isOtherMonth){
+const dateObj = new Date(y,m,d);
+const dateKey = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const solarMd = `${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const holidayItem = holidayMap[dateKey];
+const lunarRaw = lunarDateMap[dateKey] || '';
+const lunarStr = formatLunarShow(lunarRaw);
+const termName = getDaySolarTermName(dateKey);
+
+let festivalName = lunarFestivalMap[dateKey] || otherFestival[solarMd] || '';
+
+const div = document.createElement('div');
+div.className = 'calendar-cell';
+div.dataset.date = dateKey;
+
+const isToday = isSameDay(dateObj, new Date());
+const isSelected = isSameDay(dateObj, selectDate);
+
+if(isOtherMonth){
+div.classList.add('text-slate-400');
+  }else{
+if(isToday) div.classList.add('cell-today');
+if(isSelected && !isToday) div.classList.add('cell-active');
+if(holidayItem?.type === 'rest') div.classList.add('cell-rest');
+  }
+
+let html = `<div class="font-medium">${d}</div>`;
+if(holidayItem?.type === 'rest') html += `<span class="badge-rest">休</span>`;
+else if(holidayItem?.type === 'work') html += `<span class="badge-work">班</span>`;
+
+// 优先级：节气 > 节日 > 农历
+if(termName){
+html += `<div class="festival-text">${termName}</div>`;
+}else if(festivalName){
+html += `<div class="festival-text">${festivalName}</div>`;
+}else if(lunarStr){
+html += `<div class="lunar-text">${lunarStr}</div>`;
+}
+
+if(isToday) html += `<span class="badge-today">今</span>`;
+div.innerHTML = html;
+
+div.onclick = ()=>{
+selectDate = new Date(y,m,d);
+renderCalendar();
+  }
+return div;
+}
+
+// ========== 更新右侧黄历面板 ==========
+function updateInfoPanel(dt){
+const now = new Date();
+const y = dt.getFullYear(), m=dt.getMonth()+1, d=dt.getDate();
+const weekArr = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+const weekStr = weekArr[dt.getDay()];
+const consName = getConstellation(m, d);
+const dateKey = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+// 获取当日节气
+const termName = getDaySolarTermName(dateKey);
+
+const diffMs = dt - now;
+const diffDays = Math.round(diffMs / (1000*3600*24));
+let agoText = '';
+if(diffDays>0) agoText = `${diffDays}天后`;
+else if(diffDays<0) agoText = `${Math.abs(diffDays)}天前`;
+else agoText = '今天';
+
+const lfes = lunarFestivalMap[dateKey] || '';
+const lunarRaw = lunarDateMap[dateKey] || '';
+
+const ganzhiItem = ganzhiMap[dateKey];
+let ganzhiHtml = '暂无干支';
+if(ganzhiItem){
+const sx = getZodiacBySpring(dt);
+ganzhiHtml = `${ganzhiItem.年柱}（${sx}年） ${ganzhiItem.月柱}月 ${ganzhiItem.日柱}日`;
+// 如果当天是节气，追加红色节气
+if(termName){
+ganzhiHtml += ` <span class="text-yiliRed">｜${termName}</span>`;
+}
+}
+
+const alm = almanacMap[dateKey];
+let yiText = '暂无宜忌';
+let jiText = '暂无宜忌';
+if(alm){
+yiText = Array.isArray(alm.宜)
+? (alm.宜.length > 0 ? alm.宜.join(' ') : '无')
+: alm.宜;
+jiText = Array.isArray(alm.忌)
+? (alm.忌.length > 0 ? alm.忌.join(' ') : '无')
+: alm.忌;
+}
+
+const { lastTerm, nextTerm } = findNearestSolarTerm(dt);
+let prevTermText = '无';
+let nextTermText = '无';
+if(lastTerm){
+prevTermText = `<span class="text-yiliRed font-medium">${lastTerm.name}</span> <span class="text-black font-normal">（${lastTerm.timeStr}）</span>`;
+}
+if(nextTerm){
+nextTermText = `<span class="text-yiliRed font-medium">${nextTerm.name}</span> <span class="text-black font-normal">（${nextTerm.timeStr}）</span>`;
+}
+
+const nyDate = getNextNewYear(dt);
+const nyYear = nyDate.getFullYear();
+const nyDiff = Math.ceil((nyDate - dt) / (1000*3600*24));
+document.getElementById('countNewYear').innerHTML = `<i class="fa fa-clock-o mr-1"></i>距离${nyYear}年元旦还有${nyDiff}天`;
+
+const springDate = getNextSpringFestival(dt);
+if(springDate){
+const springYear = springDate.getFullYear();
+const springDiff = Math.ceil((springDate - dt) / (1000*3600*24));
+document.getElementById('countSpringFest').innerHTML = `<i class="fa fa-clock-o mr-1"></i>距离${springYear}年春节还有${springDiff}天`;
+}else{
+document.getElementById('countSpringFest').innerHTML = `<i class="fa fa-clock-o mr-1"></i>距离下一个春节：暂无春节数据`;
+}
+
+document.getElementById('infoDateText').innerText = `${y}年${m}月${d}日 ${weekStr} · ${consName}`;
+document.getElementById('infoDayAgo').innerText = agoText;
+document.getElementById('infoDayNum').innerText = d;
+document.getElementById('infoLunarFest').innerHTML = lunarRaw + (lfes ? ' <span class="text-yiliRed">'+lfes+'</span>' : '');
+document.getElementById('infoGanZhi').innerHTML = ganzhiHtml;
+document.getElementById('yiText').innerText = yiText;
+document.getElementById('jiText').innerText = jiText;
+document.getElementById('prevTerm').innerHTML = prevTermText;
+document.getElementById('nextTerm').innerHTML = nextTermText;
+}
+
+function isSameDay(d1,d2){
+return d1.getFullYear() === d2.getFullYear() &&
+d1.getMonth() === d2.getMonth() &&
+d1.getDate() === d2.getDate();
+}
+
+prevBtn.onclick = ()=>{
+currentDate.setMonth(currentDate.getMonth()-1);
+renderCalendar();
+}
+nextBtn.onclick = ()=>{
+currentDate.setMonth(currentDate.getMonth()+1);
+renderCalendar();
+}
+todayBtn.onclick = ()=>{
+filterSelect.value = "";
+solarTermSelect.value = ""; // 同时清空节气选择
+currentDate = new Date();
+selectDate = new Date();
+renderCalendar();
+}
+
+initSelect();
+loadGanZhiJson();
+</script>
+</body>
+</html>
