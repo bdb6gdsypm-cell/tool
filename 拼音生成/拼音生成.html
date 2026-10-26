@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汉字转拼音生成器</title>
+<script src="https://unpkg.com/pinyin-pro"></script>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: system-ui, -apple-system, sans-serif;
+    }
+body {
+/* 匹配图里的浅绿到青绿色渐变 */
+background: linear-gradient(135deg, #82f0b7, #43d4bb);
+padding: 20px;
+min-height: 100vh;
+    }
+.container {
+max-width: 720px;
+margin: 0 auto;
+background: #fff;
+border-radius: 16px;
+padding: 24px;
+box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+position: relative;
+    }
+/* 返回按钮样式 */
+.back-btn {
+width: 40px;
+height: 40px;
+border-radius: 50%;
+background-color: #f1f1f1;
+display: flex;
+align-items: center;
+justify-content: center;
+position: absolute;
+top: 16px;
+left: 16px;
+text-decoration: none;
+transition: 0.2s;
+}
+.back-btn:hover {
+background-color: #e4e4e4;
+}
+.back-btn svg {
+width: 20px;
+height: 20px;
+fill: #333;
+}
+h1 {
+text-align: center;
+font-size: 22px;
+color: #222;
+margin-bottom: 24px;
+/* 给标题留出顶部空间，避免被返回按钮遮挡 */
+margin-top: 16px;
+    }
+.row {
+margin-bottom: 18px;
+    }
+label {
+display: block;
+font-size: 15px;
+color: #444;
+margin-bottom: 8px;
+    }
+textarea {
+width: 100%;
+min-height: 120px;
+padding: 12px 14px;
+border: 1px solid #ddd;
+border-radius: 10px;
+font-size: 16px;
+resize: vertical;
+outline: none;
+    }
+textarea:focus {
+border-color: #4080ff;
+    }
+.radio-group {
+display: flex;
+gap: 18px;
+flex-wrap: wrap;
+padding: 6px 0;
+    }
+.radio-item {
+display: flex;
+align-items: center;
+gap: 5px;
+    }
+.btn-wrap {
+display: flex;
+gap: 12px;
+flex-wrap: wrap;
+    }
+button {
+flex: 1;
+min-width: 120px;
+padding: 12px;
+border: none;
+border-radius: 10px;
+font-size: 16px;
+cursor: pointer;
+transition: 0.2s;
+    }
+#convertBtn {
+background-color: #4080ff;
+color: white;
+    }
+#convertBtn:hover {
+background-color: #2b6ed9;
+    }
+#copyBtn {
+background-color: #eee;
+color: #333;
+    }
+#copyBtn:hover {
+background-color: #dddddd;
+    }
+#exportDocBtn {
+background-color: #28a745;
+color: #fff;
+    }
+#exportDocBtn:hover {
+background-color: #218838;
+    }
+.result-box {
+width: 100%;
+min-height: 140px;
+padding: 14px;
+background-color: #f8f9fa;
+border: 1px solid #e8e8e8;
+border-radius: 10px;
+font-size: 24px;
+line-height: 1.6;
+    }
+.tip {
+margin-top: 10px;
+font-size: 13px;
+color: #888;
+    }
+@media (max-width: 480px) {
+.container {
+padding: 16px;
+      }
+h1 {
+font-size: 19px;
+      }
+.btn-wrap {
+flex-direction: column;
+      }
+.result-box {
+font-size: 22px;
+      }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+<!-- 返回按钮 -->
+<a href="../首页/首页.html" class="back-btn">
+<svg viewBox="0 0 24 24">
+<path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+</svg>
+</a>
+
+<h1>汉字转拼音生成器</h1>
+<div class="row">
+<label>输入汉字：</label>
+<textarea id="inputText" placeholder="在这里输入汉字，例如：江南可采莲，莲叶何田田"></textarea>
+</div>
+<div class="row">
+<label>声调选项：</label>
+<div class="radio-group">
+<div class="radio-item">
+<input type="radio" name="tone" id="toneYes" checked value="symbol">
+<label for="toneYes">带声调</label>
+</div>
+<div class="radio-item">
+<input type="radio" name="tone" id="toneNo" value="none">
+<label for="toneNo">无声调</label>
+</div>
+</div>
+</div>
+<div class="row">
+<label>输出排版模式：</label>
+<div class="radio-group">
+<div class="radio-item">
+<input type="radio" name="layout" id="l1" checked value="only">
+<label for="l1">仅拼音</label>
+</div>
+<div class="radio-item">
+<input type="radio" name="layout" id="l2" value="top">
+<label for="l2">拼音在上（课本样式）</label>
+</div>
+<div class="radio-item">
+<input type="radio" name="layout" id="l3" value="right">
+<label for="l3">拼音在汉字右侧</label>
+</div>
+<div class="radio-item">
+<input type="radio" name="layout" id="l4" value="bottom">
+<label for="l4">拼音在汉字下方</label>
+</div>
+</div>
+</div>
+<div class="row btn-wrap">
+<button id="convertBtn">生成拼音</button>
+<button id="copyBtn">复制结果</button>
+<button id="exportDocBtn">导出Doc</button>
+</div>
+<div class="row">
+<label>生成结果：</label>
+<div class="result-box" id="resultBox"></div>
+<div class="tip">拼音在上为小学语文课本对齐样式，拼音一行、汉字一行；导出doc可用WPS/Word打开，必须先点【生成拼音】再导出</div>
+</div>
+</div>
+
+<script>
+const { pinyin } = pinyinPro;
+const inputText = document.getElementById('inputText');
+const resultBox = document.getElementById('resultBox');
+const convertBtn = document.getElementById('convertBtn');
+const copyBtn = document.getElementById('copyBtn');
+const exportDocBtn = document.getElementById('exportDocBtn');
+let lastHtml = "";
+
+convertBtn.onclick = function () {
+const text = inputText.value.trim();
+if (!text) {
+resultBox.innerHTML = "请先输入汉字！";
+lastHtml = "";
+return;
+      }
+const toneVal = document.querySelector('input[name="tone"]:checked').value;
+const layout = document.querySelector('input[name="layout"]:checked').value;
+const pyArr = pinyin(text, { toneType: toneVal, type: 'array' });
+const charArr = [...text];
+
+let html = '';
+if (layout === 'only') {
+html = `<p style="font-size:24px;line-height:1.2">${pyArr.join(' ')}</p>`;
+      } else if (layout === 'top') {
+let pyRow = "";
+let hanRow = "";
+for (let i = 0; i < charArr.length; i++) {
+pyRow += `<span style="display:inline-block;width:48px;text-align:center;font-size:18px;vertical-align:middle">${pyArr[i]}</span>&nbsp;`;
+hanRow += `<span style="display:inline-block;width:48px;text-align:center;font-size:24px;vertical-align:middle">${charArr[i]}</span>&nbsp;`;
+        }
+html = `<p style="line-height:20pt;mso-line-height-rule:exactly;margin:0;vertical-align:middle">${pyRow}</p><p style="line-height:20pt;mso-line-height-rule:exactly;margin:0;vertical-align:middle">${hanRow}</p>`;
+      } else if (layout === 'right') {
+const temp = [];
+for (let i = 0; i < charArr.length; i++) {
+temp.push(`${charArr[i]}（${pyArr[i]}）`);
+        }
+html = `<p style="font-size:24px;line-height:1.2">${temp.join(' ')}</p>`;
+      } else if (layout === 'bottom') {
+const temp = [];
+for (let i = 0; i < charArr.length; i++) {
+temp.push(`<span style="display:inline-block;text-align:center;width:48px;line-height:20pt;mso-line-height-rule:exactly;vertical-align:middle;"><span style="display:block;font-size:24px;vertical-align:middle">${charArr[i]}</span><span style="display:block;font-size:18px;vertical-align:middle">${pyArr[i]}</span></span>&nbsp;`);
+        }
+html = `<p style="line-height:20pt;mso-line-height-rule:exactly;margin:0;vertical-align:middle">${temp.join('')}</p>`;
+      }
+resultBox.innerHTML = html;
+lastHtml = html;
+    }
+
+copyBtn.onclick = async function () {
+const txt = resultBox.innerText;
+if (!txt || txt === '请先输入汉字！') return;
+try {
+await navigator.clipboard.writeText(txt);
+alert('✅ 复制成功！');
+      } catch (err) {
+alert('❌ 复制失败，请手动选中复制');
+      }
+    }
+
+exportDocBtn.onclick = function(){
+if(!lastHtml){
+alert("⚠️ 请先生成拼音内容！");
+return;
+      }
+const docHtml = `
+<html>
+<head>
+<meta charset="utf-8">
+<title>拼音文档</title>
+<style>
+body { font-family: "Microsoft YaHei", SimSun, sans-serif; }
+span { white-space: nowrap; vertical-align:middle; }
+p { margin:0; padding:0; vertical-align:middle; }
+</style>
+</head>
+<body>
+${lastHtml}
+</body>
+</html>
+`;
+const blob = new Blob([docHtml], { type: "application/msword" });
+const url = URL.createObjectURL(blob);
+const a = document.createElement("a");
+a.href = url;
+a.download = "拼音文档.doc";
+document.body.appendChild(a);
+a.click();
+setTimeout(() => {
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+      }, 100);
+    }
+</script>
+</body>
+</html>
