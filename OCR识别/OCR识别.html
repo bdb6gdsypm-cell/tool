@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>本地OCR文字识别</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,PingFang SC}
+body{padding:20px;background:#f5f7fa;position:relative}
+/* 返回按钮样式 */
+.back-btn{
+    position:fixed;
+    top:16px;
+    left:16px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:#3677f5;
+    color:#fff;
+    border:none;
+    font-size:20px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    z-index:100;
+    transition:0.2s;
+}
+.back-btn:hover{
+    background:#2560d8;
+}
+.box{max-width:600px;margin:0 auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 10px #00000012}
+h3{text-align:center;margin-bottom:16px}
+.upload-area{border:2px dashed #ccc;border-radius:8px;padding:30px;text-align:center;margin-bottom:16px;cursor:pointer;transition:0.2s}
+.upload-area:hover{border-color:#3677f5}
+.upload-area.drag-hover{border-color:#3677f5;background:#e8f0fe;}
+#file{display:none}
+#preview{max-width:100%;max-height:300px;margin:10px 0;border:1px solid #eee;border-radius:6px;display:none;cursor:pointer;}
+#preview:hover{opacity:0.85;}
+#status{color:#666;margin:8px 0;word-break:break-all;}
+.progress-wrap{width:100%;height:10px;background:#e5e7eb;border-radius:5px;overflow:hidden;margin-bottom:14px;display:none;}
+#progress-bar{height:100%;width:0%;background:#3677f5;transition:0.2s linear;}
+#result{width:100%;min-height:180px;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:16px;white-space:pre-wrap}
+.btn-row{display:flex;gap:10px;margin-top:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+button{padding:10px 14px;background:#3677f5;color:#fff;border:none;border-radius:8px;cursor:pointer}
+button:disabled{background:#999;cursor:not-allowed}
+#copyBtn{background:#28a745;}
+#downloadBtn{background:#9b59b6;}
+#clearBtn {
+background: #e74c3c;
+color: #fff;
+}
+#clearBtn:hover {
+background: #c0392b;
+}
+select{
+padding:9px 12px;
+border-radius:8px;
+border:1px solid #ccc;
+font-size:14px;
+}
+
+.adjust-area{
+display:none;
+margin-bottom:14px;
+padding:12px;
+background:#fafafa;
+border:1px solid #eee;
+border-radius:8px;
+}
+.adjust-area.active{
+display:block;
+}
+.adjust-area label{
+display:block;
+font-size:14px;
+color:#555;
+margin-bottom:10px;
+}
+.adjust-area input[type=range]{
+width:100%;
+vertical-align:middle;
+}
+.adjust-value{
+display:inline-block;
+margin-left:10px;
+font-weight:bold;
+color:#3677f5;
+}
+.check-row{
+display:flex;
+gap:16px;
+margin-bottom:12px;
+flex-wrap:wrap;
+}
+#adjustPreview{
+max-width:100%;
+max-height:240px;
+margin-top:10px;
+border:1px solid #ddd;
+border-radius:6px;
+display:none;
+}
+
+.img-modal{
+display:none;
+position:fixed;
+z-index:999;
+left:0;
+top:0;
+width:100%;
+height:100%;
+background-color:rgba(0,0,0,0.85);
+padding:30px 10px;
+}
+.img-modal-content{
+display:block;
+max-width:95%;
+max-height:95vh;
+margin:0 auto;
+}
+.img-close{
+position:absolute;
+top:15px;
+right:25px;
+color:#fff;
+font-size:36px;
+font-weight:bold;
+cursor:pointer;
+}
+</style>
+<script src="https://cdn.bootcdn.net/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+</head>
+<body>
+<!-- 返回首页按钮 -->
+<button class="back-btn" onclick="location.href='../首页/首页.htm'">&larr;</button>
+
+<div class="box">
+<h3>本地OCR文字识别（本地识别不上传图片）</h3>
+<div class="upload-area" id="dropZone" onclick="document.getElementById('file').click()">
+<p>点击上传 / Ctrl+V粘贴截图 / 拖拽图片到此处（最多10张）</p>
+<input type="file" id="file" accept="image/*" multiple>
+</div>
+
+<img id="preview" alt="图片预览" onclick="openImageModal()">
+
+<div class="adjust-area" id="adjustArea">
+<div class="check-row">
+<label><input type="checkbox" id="cbBrightness" checked>启用亮度</label>
+<label><input type="checkbox" id="cbContrast" checked>启用对比度</label>
+<label><input type="checkbox" id="cbThreshold" checked>启用二值化</label>
+</div>
+<label>
+      亮度：
+<input type="range" id="brightnessRange" min="-100" max="100" value="0">
+<span class="adjust-value" id="brightnessValue">0</span>
+</label>
+<label>
+      对比度：
+<input type="range" id="contrastRange" min="-100" max="100" value="0">
+<span class="adjust-value" id="contrastValue">0</span>
+</label>
+<label>
+      二值化阈值：
+<input type="range" id="thresholdRange" min="0" max="255" value="128">
+<span class="adjust-value" id="thresholdValue">128</span>
+</label>
+<img id="adjustPreview" alt="调整预览">
+</div>
+
+<div id="status">等待上传图片或者粘贴截图</div>
+<div class="progress-wrap" id="progressWrap">
+<div id="progress-bar"></div>
+</div>
+
+<div class="btn-row">
+<button id="startBtn" disabled onclick="startOCR()">开始识别</button>
+<button id="copyBtn" disabled onclick="copyResult()">复制识别结果</button>
+<button id="downloadBtn" disabled onclick="downloadTxt()">导出TXT</button>
+
+<select id="langSelect" onchange="onLangChange()">
+<option value="chi_sim+eng">中文+英文</option>
+<option value="chi_sim">仅中文</option>
+<option value="eng">仅英文</option>
+</select>
+
+<select id="wrapSelect" onchange="onWrapChange()">
+<option value="keep">保留原图换行</option>
+<option value="merge">合并为连续段落</option>
+<option value="mergeClean">合并+清除多余空格</option>
+</select>
+
+<button id="clearBtn" onclick="clearImage()">清除图片</button>
+</div>
+
+<textarea id="result" readonly placeholder="识别结果会显示在这里"></textarea>
+</div>
+
+<div class="img-modal" id="imgModal" onclick="closeImageModal()">
+<span class="img-close">&times;</span>
+<img class="img-modal-content" id="modalBigImg">
+</div>
+
+<script>
+const { createWorker } = Tesseract;
+let worker = null;
+let imgFileList = [];
+let simulateTimer = null;
+let wrapMode = "keep";
+let rawOcrText = "";
+let currentLang = "chi_sim+eng";
+const MAX_IMAGE_COUNT = 10;
+
+const statusEl = document.getElementById('status');
+const startBtn = document.getElementById('startBtn');
+const copyBtn = document.getElementById('copyBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const clearBtn = document.getElementById('clearBtn');
+const wrapSelect = document.getElementById('wrapSelect');
+const langSelect = document.getElementById('langSelect');
+const previewEl = document.getElementById('preview');
+const resultEl = document.getElementById('result');
+const progressWrap = document.getElementById('progressWrap');
+const progressBar = document.getElementById('progress-bar');
+const imgModal = document.getElementById('imgModal');
+const modalBigImg = document.getElementById('modalBigImg');
+const dropZone = document.getElementById('dropZone');
+
+const adjustArea = document.getElementById('adjustArea');
+const brightnessRange = document.getElementById('brightnessRange');
+const brightnessValue = document.getElementById('brightnessValue');
+const contrastRange = document.getElementById('contrastRange');
+const contrastValue = document.getElementById('contrastValue');
+const thresholdRange = document.getElementById('thresholdRange');
+const thresholdValue = document.getElementById('thresholdValue');
+const adjustPreview = document.getElementById('adjustPreview');
+
+const cbBrightness = document.getElementById('cbBrightness');
+const cbContrast = document.getElementById('cbContrast');
+const cbThreshold = document.getElementById('cbThreshold');
+
+let originalImage = null;
+
+/* ========== 文本细分统计函数 ========== */
+function getTextStat(text){
+//汉字
+const hanArr = text.match(/[\u4e00‑\u9fa5]/g) || [];
+const hanCount = hanArr.length;
+//英文单词（连续字母）
+const wordArr = text.match(/[a‑zA‑Z]+/g) || [];
+const wordCount = wordArr.length;
+//数字
+const numArr = text.match(/\d/g) || [];
+const numCount = numArr.length;
+//标点符号（中英文标点）
+const punctArr = text.match(/[，。！？；：""''（）【】《》、,.!?;:"'()\[\]{}]/g) || [];
+const punctCount = punctArr.length;
+//总字符
+const total = text.length;
+return {hanCount,wordCount,numCount,punctCount,total};
+}
+
+/* ========== 拖拽上传 ========== */
+dropZone.addEventListener('dragenter',(e)=>{
+e.preventDefault();e.stopPropagation();
+dropZone.classList.add('drag-hover');
+})
+dropZone.addEventListener('dragover',(e)=>{
+e.preventDefault();e.stopPropagation();
+})
+dropZone.addEventListener('dragleave',(e)=>{
+e.preventDefault();e.stopPropagation();
+dropZone.classList.remove('drag-hover');
+})
+dropZone.addEventListener('drop',(e)=>{
+e.preventDefault();e.stopPropagation();
+dropZone.classList.remove('drag-hover');
+let files = Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
+if(files.length ===0){
+statusEl.innerText = "请拖入图片文件！";
+return;
+  }
+if(files.length > MAX_IMAGE_COUNT){
+statusEl.innerText = `最多只能选择${MAX_IMAGE_COUNT}张，已自动截取前${MAX_IMAGE_COUNT}张`;
+files = files.slice(0, MAX_IMAGE_COUNT);
+  }
+setImageFiles(files);
+})
+
+/* ========== 大图弹窗 ========== */
+function openImageModal(){
+if(!previewEl.src) return;
+modalBigImg.src = previewEl.src;
+imgModal.style.display = "block";
+}
+function closeImageModal(){
+imgModal.style.display = "none";
+modalBigImg.src = "";
+}
+document.addEventListener('keydown',function(e){
+if(e.key === "Escape") closeImageModal();
+})
+
+/* ========== 换行模式 ========== */
+function onWrapChange(){
+wrapMode = wrapSelect.value;
+applyWrapText();
+}
+
+function applyWrapText(){
+if(!rawOcrText){
+resultEl.value = "";
+return;
+  }
+if(wrapMode === "keep"){
+resultEl.value = rawOcrText;
+  }else if(wrapMode === "merge"){
+resultEl.value = rawOcrText.replace(/\s*\n\s*/g," ").replace(/ +/g," ").trim();
+  }else if(wrapMode === "mergeClean"){
+resultEl.value = rawOcrText.replace(/[\n\t\r]+/g," ").replace(/\s+/g," ").trim();
+  }
+const stat = getTextStat(resultEl.value);
+statusEl.innerText = `✅识别完成｜汉字:${stat.hanCount}｜英文单词:${stat.wordCount}｜数字:${stat.numCount}｜标点:${stat.punctCount}｜总字符:${stat.total}`;
+}
+
+/* ========== 语言切换 ========== */
+async function onLangChange(){
+currentLang = langSelect.value;
+if(worker){
+await worker.terminate();
+worker = null;
+  }
+rawOcrText = "";
+resultEl.value = "";
+copyBtn.disabled = true;
+downloadBtn.disabled = true;
+statusEl.innerText = `已切换语言：${currentLang}，请点击开始识别加载语言包`;
+}
+
+async function initWorker(){
+statusEl.innerText = `正在加载语言包：${currentLang}（首次打开较慢）...`;
+worker = await createWorker(currentLang);
+worker.logger = function(log){
+console.log(log);
+  }
+statusEl.innerText = "就绪，上传图片或者粘贴截图";
+}
+
+/* ========== 文件输入与粘贴 ========== */
+document.getElementById('file').onchange = (e)=>{
+let files = Array.from(e.target.files).filter(f=>f.type.startsWith('image/'));
+if(files.length===0) return;
+if(files.length > MAX_IMAGE_COUNT){
+statusEl.innerText = `最多只能选择${MAX_IMAGE_COUNT}张，已自动截取前${MAX_IMAGE_COUNT}张`;
+files = files.slice(0, MAX_IMAGE_COUNT);
+  }
+setImageFiles(files);
+}
+
+document.addEventListener('paste', (e)=>{
+const items = e.clipboardData.items;
+for(let item of items){
+if(item.type.startsWith('image/')){
+const file = item.getAsFile();
+setImageFiles([file]);
+e.preventDefault();
+    }
+  }
+})
+
+/* ========== 设置图片文件 ========== */
+function setImageFiles(fileArr){
+imgFileList = fileArr;
+rawOcrText = "";
+resultEl.value = "";
+copyBtn.disabled = true;
+downloadBtn.disabled = true;
+stopSimulateProgress();
+progressWrap.style.display = "none";
+progressBar.style.width = "0%";
+
+if(imgFileList.length ===1){
+const reader = new FileReader();
+reader.onload = function(ev){
+previewEl.src = ev.target.result;
+previewEl.style.display = 'block';
+statusEl.innerText = "图片已就绪，可调节参数后点击开始识别";
+
+const img = new Image();
+img.onload = function(){
+originalImage = img;
+adjustArea.classList.add('active');
+updateAdjustImage();
+      }
+img.src = ev.target.result;
+    }
+reader.onerror = function(){
+statusEl.innerText = "❌图片加载失败，请更换图片";
+previewEl.style.display = 'none';
+adjustArea.classList.remove('active');
+    }
+reader.readAsDataURL(imgFileList[0]);
+  }else{
+previewEl.style.display = 'none';
+previewEl.src = "";
+originalImage = null;
+adjustArea.classList.remove('active');
+adjustPreview.style.display = 'none';
+statusEl.innerText = `已选择 ${imgFileList.length} 张图片，点击开始批量识别`;
+  }
+startBtn.disabled = false;
+}
+
+/* ========== 滑块与复选框事件 ========== */
+brightnessRange.addEventListener('input', ()=>{
+brightnessValue.innerText = brightnessRange.value;
+updateAdjustImage();
+});
+contrastRange.addEventListener('input', ()=>{
+contrastValue.innerText = contrastRange.value;
+updateAdjustImage();
+});
+thresholdRange.addEventListener('input', ()=>{
+thresholdValue.innerText = thresholdRange.value;
+updateAdjustImage();
+});
+cbBrightness.addEventListener('change', updateAdjustImage);
+cbContrast.addEventListener('change', updateAdjustImage);
+cbThreshold.addEventListener('change', updateAdjustImage);
+
+function updateAdjustImage(){
+if(!originalImage) return;
+const processed = applyImageAdjust(
+originalImage,
+parseInt(brightnessRange.value, 10),
+parseInt(contrastRange.value, 10),
+parseInt(thresholdRange.value, 10),
+cbBrightness.checked,
+cbContrast.checked,
+cbThreshold.checked
+  );
+adjustPreview.src = processed.dataUrl;
+adjustPreview.style.display = 'block';
+}
+
+function applyImageAdjust(img, brightness, contrast, threshold, useBright, useContrast, useThresh){
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = img.width;
+canvas.height = img.height;
+ctx.drawImage(img, 0, 0);
+
+const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+const data = imgData.data;
+const contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+for(let i = 0; i < data.length; i += 4){
+let r = data[i];
+let g = data[i+1];
+let b = data[i+2];
+
+if(useBright){
+r += brightness;
+g += brightness;
+b += brightness;
+    }
+if(useContrast){
+r = contrastFactor * (r - 128) + 128;
+g = contrastFactor * (g - 128) + 128;
+b = contrastFactor * (b - 128) + 128;
+    }
+r = Math.max(0, Math.min(255, r));
+g = Math.max(0, Math.min(255, g));
+b = Math.max(0, Math.min(255, b));
+
+if(useThresh){
+const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+const v = gray >= threshold ? 255 : 0;
+data[i] = v;
+data[i+1] = v;
+data[i+2] = v;
+    }else{
+data[i] = r;
+data[i+1] = g;
+data[i+2] = b;
+    }
+  }
+ctx.putImageData(imgData, 0, 0);
+return {
+dataUrl: canvas.toDataURL('image/png'),
+canvas: canvas
+  };
+}
+
+function fileToAdjustedBlob(file, brightness, contrast, threshold, useBright, useContrast, useThresh){
+return new Promise((resolve, reject)=>{
+const reader = new FileReader();
+reader.onload = (e)=>{
+const img = new Image();
+img.onload = ()=>{
+const result = applyImageAdjust(img, brightness, contrast, threshold, useBright, useContrast, useThresh);
+result.canvas.toBlob((blob)=>{
+if(blob) resolve(blob);
+else reject(new Error('图像处理失败'));
+        }, 'image/png');
+      };
+img.onerror = reject;
+img.src = e.target.result;
+    };
+reader.onerror = reject;
+reader.readAsDataURL(file);
+  });
+}
+
+/* ========== 进度控制 ========== */
+function stopSimulateProgress(){
+if(simulateTimer){
+clearInterval(simulateTimer);
+simulateTimer = null;
+  }
+}
+
+function startSimulateProgress(){
+let p = 0;
+stopSimulateProgress();
+simulateTimer = setInterval(()=>{
+if(p < 90){
+p += 2;
+progressBar.style.width = p + '%';
+    }
+  },120);
+}
+
+/* ========== 清除图片 ========== */
+function clearImage() {
+imgFileList = [];
+previewEl.src = '';
+previewEl.style.display = 'none';
+originalImage = null;
+adjustPreview.style.display = 'none';
+adjustPreview.src = '';
+adjustArea.classList.remove('active');
+
+brightnessRange.value = 0;
+brightnessValue.innerText = '0';
+contrastRange.value = 0;
+contrastValue.innerText = '0';
+thresholdRange.value = 128;
+thresholdValue.innerText = '128';
+cbBrightness.checked = true;
+cbContrast.checked = true;
+cbThreshold.checked = true;
+
+rawOcrText = "";
+resultEl.value = '';
+startBtn.disabled = true;
+copyBtn.disabled = true;
+downloadBtn.disabled = true;
+document.getElementById('file').value = '';
+stopSimulateProgress();
+progressWrap.style.display = "none";
+progressBar.style.width = "0%";
+closeImageModal();
+statusEl.innerText = "已清除图片，等待上传或粘贴截图";
+}
+
+/* ========== 开始OCR识别 ========== */
+async function startOCR(){
+if(!worker) await initWorker();
+if(imgFileList.length ===0) return;
+
+startBtn.disabled = true;
+copyBtn.disabled = true;
+downloadBtn.disabled = true;
+progressWrap.style.display = "block";
+progressBar.style.width = "0%";
+
+rawOcrText = "";
+const total = imgFileList.length;
+const brightness = parseInt(brightnessRange.value, 10);
+const contrast = parseInt(contrastRange.value, 10);
+const threshold = parseInt(thresholdRange.value, 10);
+const useBright = cbBrightness.checked;
+const useContrast = cbContrast.checked;
+const useThresh = cbThreshold.checked;
+
+for(let i=0;i<total;i++){
+statusEl.innerText = `批量识别 ${i+1}/${total}`;
+startSimulateProgress();
+try{
+const adjustedBlob = await fileToAdjustedBlob(imgFileList[i], brightness, contrast, threshold, useBright, useContrast, useThresh);
+const ret = await worker.recognize(adjustedBlob);
+stopSimulateProgress();
+rawOcrText += `\n--------【第${i+1}张图片】--------\n`;
+rawOcrText += ret.data.text;
+    }catch(err){
+stopSimulateProgress();
+rawOcrText += `\n--------【第${i+1}张图片】--------\n识别失败：${err.message}\n`;
+console.error(err);
+    }
+progressBar.style.width = Math.round(((i+1)/total)*100)+"%";
+  }
+
+applyWrapText();
+copyBtn.disabled = false;
+downloadBtn.disabled = false;
+startBtn.disabled = false;
+}
+
+/* ========== 复制与导出 ========== */
+async function copyResult(){
+try{
+await navigator.clipboard.writeText(resultEl.value);
+statusEl.innerText = "✅ 复制成功！";
+  }catch(err){
+statusEl.innerText = "❌ 复制失败，请手动复制";
+  }
+}
+
+function getTimeStampFileName(){
+const d = new Date();
+const y = d.getFullYear();
+const m = String(d.getMonth()+1).padStart(2,'0');
+const day = String(d.getDate()).padStart(2,'0');
+const h = String(d.getHours()).padStart(2,'0');
+const min = String(d.getMinutes()).padStart(2,'0');
+return `ocr识别结果_${y}-${m}-${day}_${h}-${min}.txt`;
+}
+
+function downloadTxt(){
+const text = resultEl.value;
+if(!text) return;
+const blob = new Blob([text], {type:'text/plain;charset=utf‑8'});
+const a = document.createElement('a');
+a.href = URL.createObjectURL(blob);
+a.download = getTimeStampFileName();
+document.body.appendChild(a);
+a.click();
+a.remove();
+URL.revokeObjectURL(a.href);
+statusEl.innerText = "✅ TXT已导出";
+}
+
+window.onbeforeunload = async ()=>{
+stopSimulateProgress();
+if(worker) await worker.terminate();
+}
+</script>
+</body>
+</html>
