@@ -21,7 +21,7 @@
   .title { font-size: 17px; font-weight: 600; margin-bottom: 8px; text-align: center; }
   .desc { font-size: 13px; color: #6b7280; line-height: 1.7; text-align: center; max-width: 320px; }
   .btn {
-    margin-top: 22px; display: none; padding: 12px 30px; border-radius: 8px;
+    margin-top: 20px; display: none; padding: 12px 30px; border-radius: 8px;
     background: #407bdd; color: #fff; font-size: 15px; text-decoration: none; border: 0;
     font-family: inherit;
   }
@@ -34,10 +34,24 @@
   .btn-plain.show { display: inline-block; }
   .qrwrap { margin-top: 18px; display: none; flex-direction: column; align-items: center; }
   .qrwrap.show { display: flex; }
-  .qrwrap canvas { width: 168px; height: 168px; background: #fff; padding: 8px; border-radius: 8px; }
+  .qrwrap img { width: 180px; height: 180px; background: #fff; padding: 8px; border-radius: 10px; }
   .qrwrap span { margin-top: 8px; font-size: 12px; color: #6b7280; }
   .tip { margin-top: 14px; font-size: 12px; color: #9ca3af; line-height: 1.7; text-align: center; max-width: 320px; display: none; }
   .tip.show { display: block; }
+
+  .mask {
+    position: fixed; inset: 0; background: rgba(245, 247, 250, .97);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px; z-index: 99;
+  }
+  .mask.show { display: flex; }
+  .mask img { width: 240px; height: 240px; background: #fff; padding: 12px; border-radius: 12px; }
+  .mask p { margin: 16px 0 0; font-size: 15px; font-weight: 600; color: #1f2937; }
+  .mask small { margin-top: 8px; font-size: 12px; color: #6b7280; line-height: 1.7; text-align: center; max-width: 300px; }
+  .mask button {
+    margin-top: 16px; padding: 10px 26px; border-radius: 8px; border: 1px solid #c8d7f2;
+    background: #fff; color: #407bdd; font-size: 13px; font-family: inherit;
+  }
 </style>
 </head>
 <body>
@@ -50,9 +64,16 @@
     <div id="qrbox"></div>
     <span id="qrtxt">长按二维码识别打开</span>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <div class="tip" id="tip">若按钮点击后没有反应，说明当前应用拦截了外部跳转，可复制链接后在对应 App 内打开。</div>
+  <div class="tip" id="tip">若点击后没有反应，说明当前应用拦截了外部跳转，可复制链接后在对应 App 内打开。</div>
 
+  <div class="mask" id="mask">
+    <img id="maskimg" alt="收款码">
+    <p>长按上方二维码识别打开</p>
+    <small>微信内不允许网页自动跳转收款码，长按识别这一步即可直接打开收款页</small>
+    <button type="button" id="maskclose">仍然点击按钮打开</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 (function () {
   var titleEl = document.getElementById('title');
@@ -60,6 +81,9 @@
   var openBtn = document.getElementById('open');
   var copyBtn = document.getElementById('copy');
   var tipEl   = document.getElementById('tip');
+  var maskEl  = document.getElementById('mask');
+  var maskImg = document.getElementById('maskimg');
+  var maskBtn = document.getElementById('maskclose');
 
   function getParam(name) {
     var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
@@ -82,7 +106,7 @@
   var isAlipay = /AlipayClient|AlipayDefined|AliApp/i.test(ua);
 
   var target = isAlipay ? (ali || wx) : (wx || ali);
-  var appName = isAlipay ? '支付宝' : (isWeChat ? '微信' : '微信');
+  var appName = isAlipay ? '支付宝' : '微信';
 
   if (!target) {
     titleEl.textContent = '链接不完整';
@@ -95,53 +119,84 @@
     return;
   }
 
-  // 微信内置浏览器会拦截非 http(s) 的自动跳转（wxp:// 会被直接丢掉），
-  // 因此微信内不自动跳，改为点击按钮后跳；支付宝内可自动跳，同时保留按钮兜底。
-  titleEl.textContent = '打开' + appName + '收款页';
-  descEl.textContent = isWeChat
-    ? '微信内不支持自动跳转收款码，请点击下方按钮打开'
-    : '请点击下方按钮打开' + appName + '收款页';
-
-  // 兜底：把目标链接再画成一张二维码，微信内可长按识别打开（绕过 scheme 拦截）
-  (function renderFallbackQR() {
-    var wrap = document.getElementById('qrwrap');
+  // ---------- 兜底二维码（微信内长按识别可直接打开收款页） ----------
+  var qrDataUrl = '';
+  function buildQR(cb) {
     var box = document.getElementById('qrbox');
-    var txt = document.getElementById('qrtxt');
-    if (!window.QRCode || !box) return;
+    if (!window.QRCode || !box) { cb(''); return; }
     try {
-      new window.QRCode(box, { text: target, width: 168, height: 168, correctLevel: window.QRCode.CorrectLevel.M });
-    } catch (e) { return; }
+      new window.QRCode(box, { text: target, width: 240, height: 240, correctLevel: window.QRCode.CorrectLevel.M });
+    } catch (e) { cb(''); return; }
     setTimeout(function () {
       var cv = box.querySelector('canvas');
-      if (!cv) return;
+      if (!cv) { cb(''); return; }
       // 转成 <img>，微信里长按图片才能「识别二维码」
       var img = new Image();
       img.src = cv.toDataURL('image/png');
-      img.style.cssText = 'width:168px;height:168px;background:#fff;padding:8px;border-radius:8px';
+      img.style.cssText = 'width:180px;height:180px;background:#fff;padding:8px;border-radius:10px';
       box.innerHTML = '';
       box.appendChild(img);
-      wrap.classList.add('show');
-      txt.textContent = isWeChat ? '长按二维码识别，或用微信扫一扫' : '长按二维码识别打开';
+      qrDataUrl = img.src;
+      document.getElementById('qrwrap').classList.add('show');
+      document.getElementById('qrtxt').textContent = isWeChat ? '长按二维码识别，或用微信扫一扫' : '长按二维码识别打开';
+      cb(img.src);
     }, 120);
-  })();
+  }
 
+  titleEl.textContent = '打开' + appName + '收款页';
+  descEl.textContent = '正在自动打开' + appName + '收款页…';
   openBtn.textContent = '打开' + appName + '收款页';
   openBtn.href = target;
   openBtn.classList.add('show');
   copyBtn.classList.add('show');
 
-  function markStuck() {
-    tipEl.classList.add('show');
-    descEl.textContent = '可能被当前应用拦截了跳转，请复制链接后在' + appName + '内打开';
+  function markStuck() { tipEl.classList.add('show'); }
+
+  function showMask() {
+    maskEl.classList.add('show');
+    if (!maskImg.getAttribute('src') && qrDataUrl) maskImg.src = qrDataUrl;
   }
+
+  // 自动跳转：先用真实 <a> 触发，再退回 location.href，最后自动弹大二维码
+  function attemptJump(retry) {
+    var a = document.createElement('a');
+    a.href = target;
+    a.style.position = 'fixed';
+    a.style.left = '-9999px';
+    a.setAttribute('rel', 'noopener');
+    document.body.appendChild(a);
+    try { a.click(); } catch (e) {}
+
+    setTimeout(function () {
+      if (document.hidden) return;              // 已被切走，说明跳转成功
+      try { location.href = target; } catch (e) {}
+      setTimeout(function () {
+        if (document.hidden) return;
+        if (retry) {
+          try { location.replace(target); } catch (e) {}
+          setTimeout(function () {
+            if (document.hidden) return;
+            if (isWeChat) showMask(); else markStuck();
+          }, 900);
+        } else if (isWeChat) {
+          showMask();
+        } else {
+          markStuck();
+        }
+      }, 900);
+    }, 700);
+  }
+
+  maskBtn.addEventListener('click', function () {
+    maskEl.classList.remove('show');
+    markStuck();
+  });
 
   openBtn.addEventListener('click', function (e) {
     e.preventDefault();
-    hideCountdown();
     try { location.href = target; } catch (err) {}
     setTimeout(function () {
-      // 页面还在前台且没被切走，说明跳转被拦截
-      if (!document.hidden) markStuck();
+      if (!document.hidden) { if (isWeChat) showMask(); else markStuck(); }
     }, 1500);
   });
 
@@ -167,27 +222,10 @@
     document.body.removeChild(ta);
   }
 
-  // 支付宝内自动跳一次，失败就靠按钮
-  var countdownTimer = null;
-  function hideCountdown() {
-    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-  }
-
-  if (isAlipay) {
-    var left = 2;
-    descEl.textContent = left + ' 秒后自动打开支付宝收款页…';
-    countdownTimer = setInterval(function () {
-      left -= 1;
-      if (left > 0) {
-        descEl.textContent = left + ' 秒后自动打开支付宝收款页…';
-      } else {
-        hideCountdown();
-        descEl.textContent = '正在打开支付宝收款页…';
-        try { location.replace(target); } catch (err) {}
-        setTimeout(function () { if (!document.hidden) markStuck(); }, 1500);
-      }
-    }, 1000);
-  }
+  buildQR(function (dataUrl) {
+    maskImg.src = dataUrl || '';
+    setTimeout(function () { attemptJump(true); }, 200);
+  });
 })();
 </script>
 </body>
