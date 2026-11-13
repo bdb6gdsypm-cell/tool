@@ -68,9 +68,9 @@
 
   <div class="mask" id="mask">
     <img id="maskimg" alt="收款码">
-    <p>长按上方二维码识别打开</p>
-    <small>微信内不允许网页自动跳转收款码，长按识别这一步即可直接打开收款页</small>
-    <button type="button" id="maskclose">仍然点击按钮打开</button>
+    <p id="masktitle">长按上方二维码识别打开</p>
+    <small id="masksub">长按识别这一步即可直接打开收款页</small>
+    <button type="button" id="maskclose">打开收款页</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -152,52 +152,57 @@
 
   function markStuck() { tipEl.classList.add('show'); }
 
+  var isHttp = /^https?:/i.test(target);
+
   function showMask() {
     maskEl.classList.add('show');
+    document.getElementById('masktitle').textContent = '长按上方二维码识别打开' + appName + '收款页';
+    document.getElementById('masksub').textContent = isWeChat
+      ? '微信不允许网页自动跳转收款码，长按识别即可直接打开'
+      : '支付宝不允许网页自动跳转收款码，长按识别即可直接打开';
+    maskBtn.textContent = '打开' + appName + '收款页';
     if (!maskImg.getAttribute('src') && qrDataUrl) maskImg.src = qrDataUrl;
   }
 
-  // 自动跳转：先用真实 <a> 触发，再退回 location.href，最后自动弹大二维码
-  function attemptJump(retry) {
-    var a = document.createElement('a');
-    a.href = target;
-    a.style.position = 'fixed';
-    a.style.left = '-9999px';
-    a.setAttribute('rel', 'noopener');
-    document.body.appendChild(a);
-    try { a.click(); } catch (e) {}
+  // 按顺序尝试多种跳转方式，全部失败则自动弹出长按识别遮罩
+  function runAttempts(list) {
+    var i = 0;
+    function next() {
+      if (document.hidden) return;      // 页面已被切走，跳转成功
+      if (i >= list.length) { showMask(); return; }
+      var url = list[i];
+      i++;
+      try { location.href = url; } catch (e) {}
+      setTimeout(next, 1000);
+    }
+    next();
+  }
 
-    setTimeout(function () {
-      if (document.hidden) return;              // 已被切走，说明跳转成功
-      try { location.href = target; } catch (e) {}
-      setTimeout(function () {
-        if (document.hidden) return;
-        if (retry) {
-          try { location.replace(target); } catch (e) {}
-          setTimeout(function () {
-            if (document.hidden) return;
-            if (isWeChat) showMask(); else markStuck();
-          }, 900);
-        } else if (isWeChat) {
-          showMask();
-        } else {
-          markStuck();
-        }
-      }, 900);
-    }, 700);
+  function attemptJump() {
+    var list = [];
+    if (isHttp) {
+      // http(s) 目标：直接顶层跳转最可靠，支付宝内再补一次 startapp 包装
+      list.push(target);
+      if (isAlipay) {
+        list.push('alipays://platformapi/startapp?appId=20000067&url=' + encodeURIComponent(target));
+      }
+    } else {
+      // scheme 目标（wxp:// / alipays://）：两个 App 都会拦自动跳，只能靠长按识别
+      list.push(target);
+    }
+    runAttempts(list);
   }
 
   maskBtn.addEventListener('click', function () {
     maskEl.classList.remove('show');
-    markStuck();
+    try { location.href = target; } catch (e) {}
+    setTimeout(function () { if (!document.hidden) markStuck(); }, 1200);
   });
 
   openBtn.addEventListener('click', function (e) {
     e.preventDefault();
     try { location.href = target; } catch (err) {}
-    setTimeout(function () {
-      if (!document.hidden) { if (isWeChat) showMask(); else markStuck(); }
-    }, 1500);
+    setTimeout(function () { if (!document.hidden) showMask(); }, 1500);
   });
 
   copyBtn.addEventListener('click', function () {
@@ -222,9 +227,12 @@
     document.body.removeChild(ta);
   }
 
+  // http(s) 目标先立刻跳一次，不等二维码渲染完成
+  if (isHttp) { try { location.href = target; } catch (e) {} }
+
   buildQR(function (dataUrl) {
     maskImg.src = dataUrl || '';
-    setTimeout(function () { attemptJump(true); }, 200);
+    setTimeout(function () { attemptJump(); }, 200);
   });
 })();
 </script>
