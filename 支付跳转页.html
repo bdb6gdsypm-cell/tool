@@ -178,19 +178,9 @@
     next();
   }
 
+  // 只做一次轻微尝试，避免多次重定向被支付宝判定为可疑跳转
   function attemptJump() {
-    var list = [];
-    if (isHttp) {
-      // http(s) 目标：直接顶层跳转最可靠，支付宝内再补一次 startapp 包装
-      list.push(target);
-      if (isAlipay) {
-        list.push('alipays://platformapi/startapp?appId=20000067&url=' + encodeURIComponent(target));
-      }
-    } else {
-      // scheme 目标（wxp:// / alipays://）：两个 App 都会拦自动跳，只能靠长按识别
-      list.push(target);
-    }
-    runAttempts(list);
+    if (!isHttp) runAttempts([target]);   // scheme 目标：微信/支付宝都会拦，直接走兜底
   }
 
   maskBtn.addEventListener('click', function () {
@@ -227,8 +217,18 @@
     document.body.removeChild(ta);
   }
 
-  // http(s) 目标先立刻跳一次，不等二维码渲染完成
-  if (isHttp) { try { location.href = target; } catch (e) {} }
+  // http(s) 目标：只做一次顶层跳转（支付宝内首次跳转不会弹第三方提示，多次重定向才会）
+  if (isHttp) {
+    try { location.replace(target); } catch (e) { try { location.href = target; } catch (e2) {} }
+    setTimeout(function () {
+      if (document.hidden) return;        // 已跳走
+      buildQR(function (dataUrl) {
+        maskImg.src = dataUrl || '';
+        showMask();
+      });
+    }, 2500);
+    return;
+  }
 
   buildQR(function (dataUrl) {
     maskImg.src = dataUrl || '';
