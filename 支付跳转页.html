@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>正在打开收款页…</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: #f5f7fa; color: #1f2937;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 24px;
+  }
+  .logo {
+    width: 72px; height: 72px; border-radius: 16px; background: #e8effc;
+    display: flex; align-items: center; justify-content: center; font-size: 34px; color: #407bdd;
+    margin-bottom: 18px;
+  }
+  .title { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+  .desc { font-size: 13px; color: #6b7280; line-height: 1.6; text-align: center; max-width: 320px; }
+  .btn {
+    margin-top: 22px; display: none; padding: 11px 26px; border-radius: 8px;
+    background: #407bdd; color: #fff; font-size: 14px; text-decoration: none; border: 0;
+  }
+  .btn.show { display: inline-block; }
+</style>
+</head>
+<body>
+  <div class="logo">￥</div>
+  <div class="title" id="title">正在打开收款页…</div>
+  <div class="desc" id="desc">请稍候，正在根据当前应用跳转到对应收款码。</div>
+  <a class="btn" id="manual" href="#">手动打开</a>
+
+<script>
+(function () {
+  function getParam(name) {
+    var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  var wx  = getParam('wx')  || getParam('wechat');
+  var ali = getParam('ali') || getParam('alipay');
+
+  // 兼容 hash 里传参：/#wx=xxx&ali=yyy
+  if (!wx && !ali) {
+    var h = location.hash.replace(/^#/, '');
+    h.split('&').forEach(function (kv) {
+      var p = kv.split('=');
+      if (p[0] === 'wx' && !wx) wx = decodeURIComponent(p[1] || '');
+      if (p[0] === 'ali' && !ali) ali = decodeURIComponent(p[1] || '');
+    });
+  }
+
+  var ua = navigator.userAgent || '';
+  var isWeChat = /MicroMessenger/i.test(ua);
+  var isAlipay = /AlipayClient|AlipayDefined|AliApp/i.test(ua);
+
+  var target = '';
+  if (isWeChat) target = wx || ali;
+  else if (isAlipay) target = ali || wx;
+  else target = wx || ali;   // 浏览器等其他环境：优先微信收款码
+
+  var titleEl = document.getElementById('title');
+  var descEl  = document.getElementById('desc');
+  var manual  = document.getElementById('manual');
+
+  if (!target) {
+    titleEl.textContent = '链接不完整';
+    descEl.textContent = '缺少收款码参数（wx / ali）。请重新扫描聚合收款二维码。';
+    return;
+  }
+
+  // 校验协议，避免 javascript: 之类的伪协议被执行
+  if (!/^(https?:|wxp:|alipays:|alipay:)/i.test(target)) {
+    titleEl.textContent = '链接无法打开';
+    descEl.textContent = '收款码链接格式不正确，请确认后重新生成二维码。';
+    return;
+  }
+
+  if (isWeChat) {
+    titleEl.textContent = '正在打开微信收款页…';
+  } else if (isAlipay) {
+    titleEl.textContent = '正在打开支付宝收款页…';
+  }
+
+  manual.href = target;
+  manual.classList.add('show');
+
+  // 先尝试直接跳转，若被环境拦截则展示手动按钮
+  setTimeout(function () { location.replace(target); }, 60);
+
+  // 微信内置浏览器里，部分 scheme（如 wxp://）会被拦截，给出提示引导截图/长按识别
+  if (isWeChat && /^https?:/i.test(target)) {
+    descEl.textContent = '若未自动跳转，请点击下方按钮打开。';
+  }
+})();
+</script>
+</body>
+</html>
