@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+、<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -70,17 +70,13 @@ overflow:hidden;
 </div>
 <div class="grid grid-cols-4 gap-y-5 gap-x-2">
 <!-- 第1行 -->
-<div class="flex flex-col items-center">
-<div class="icon-box bg-gradient-to-br from-purple-400 to-purple-600">
-<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-<polyline points="14 2 14 8 20 8"/>
-<path d="M9 13h6"/>
-<path d="M9 17h6"/>
-</svg>
+<!-- 二维码解析（原「文件转换」位置，改为图片图标 + 跳转） -->
+<a href="../二维码解析/二维码解析.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/二维码解析.png" alt="二维码解析" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
 </div>
-<span class="mt-2 text-sm text-gray-700">文件转换</span>
-</div>
+<span class="mt-2 text-sm text-gray-700">二维码解析</span>
+</a>
 <!-- ✅ 计算器添加a标签跳转 -->
 <a href="../计算器/计算器.html" class="flex flex-col items-center">
 <div class="icon-box bg-white">
@@ -175,7 +171,7 @@ overflow:hidden;
 </div>
 <!-- 底部Tab栏 -->
 <div class="fixed bottom-0 left-0 w-full bg-white flex h-[72px] border-t border-gray-100">
-<div class="flex-1 flex flex-col items-center justify-center text-gray-600">
+<div class="flex-1 flex flex-col items-center justify-center text-white bg-primaryBlue rounded-tl-2xl rounded-tr-2xl">
 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
 <polyline points="9 22 9 12 15 12 15 22"/>
@@ -194,7 +190,7 @@ overflow:hidden;
 </svg>
 <span class="text-sm mt-1">收藏</span>
 </div>
-<div class="flex-1 flex flex-col items-center justify-center text-white bg-primaryBlue rounded-tl-2xl rounded-tr-2xl">
+<div class="flex-1 flex flex-col items-center justify-center text-gray-600">
 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
 <circle cx="12" cy="7" r="4"/>
