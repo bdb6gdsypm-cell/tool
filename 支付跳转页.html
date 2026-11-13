@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>正在打开收款页…</title>
+<title>收款页</title>
 <style>
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; }
   body {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -18,23 +18,49 @@
     display: flex; align-items: center; justify-content: center; font-size: 34px; color: #407bdd;
     margin-bottom: 18px;
   }
-  .title { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
-  .desc { font-size: 13px; color: #6b7280; line-height: 1.6; text-align: center; max-width: 320px; }
+  .title { font-size: 17px; font-weight: 600; margin-bottom: 8px; text-align: center; }
+  .desc { font-size: 13px; color: #6b7280; line-height: 1.7; text-align: center; max-width: 320px; }
   .btn {
-    margin-top: 22px; display: none; padding: 11px 26px; border-radius: 8px;
-    background: #407bdd; color: #fff; font-size: 14px; text-decoration: none; border: 0;
+    margin-top: 22px; display: none; padding: 12px 30px; border-radius: 8px;
+    background: #407bdd; color: #fff; font-size: 15px; text-decoration: none; border: 0;
+    font-family: inherit;
   }
   .btn.show { display: inline-block; }
+  .btn-plain {
+    margin-top: 12px; display: none; padding: 9px 22px; border-radius: 8px;
+    background: #fff; color: #407bdd; border: 1px solid #c8d7f2; font-size: 13px;
+    font-family: inherit;
+  }
+  .btn-plain.show { display: inline-block; }
+  .qrwrap { margin-top: 18px; display: none; flex-direction: column; align-items: center; }
+  .qrwrap.show { display: flex; }
+  .qrwrap canvas { width: 168px; height: 168px; background: #fff; padding: 8px; border-radius: 8px; }
+  .qrwrap span { margin-top: 8px; font-size: 12px; color: #6b7280; }
+  .tip { margin-top: 14px; font-size: 12px; color: #9ca3af; line-height: 1.7; text-align: center; max-width: 320px; display: none; }
+  .tip.show { display: block; }
 </style>
 </head>
 <body>
   <div class="logo">￥</div>
-  <div class="title" id="title">正在打开收款页…</div>
-  <div class="desc" id="desc">请稍候，正在根据当前应用跳转到对应收款码。</div>
-  <a class="btn" id="manual" href="#">手动打开</a>
+  <div class="title" id="title">收款页</div>
+  <div class="desc" id="desc">正在准备收款页…</div>
+  <a class="btn" id="open" href="#">打开收款页</a>
+  <button class="btn-plain" id="copy" type="button">复制收款链接</button>
+  <div class="qrwrap" id="qrwrap">
+    <div id="qrbox"></div>
+    <span id="qrtxt">长按二维码识别打开</span>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <div class="tip" id="tip">若按钮点击后没有反应，说明当前应用拦截了外部跳转，可复制链接后在对应 App 内打开。</div>
 
 <script>
 (function () {
+  var titleEl = document.getElementById('title');
+  var descEl  = document.getElementById('desc');
+  var openBtn = document.getElementById('open');
+  var copyBtn = document.getElementById('copy');
+  var tipEl   = document.getElementById('tip');
+
   function getParam(name) {
     var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
     return m ? decodeURIComponent(m[1]) : '';
@@ -43,10 +69,8 @@
   var wx  = getParam('wx')  || getParam('wechat');
   var ali = getParam('ali') || getParam('alipay');
 
-  // 兼容 hash 里传参：/#wx=xxx&ali=yyy
   if (!wx && !ali) {
-    var h = location.hash.replace(/^#/, '');
-    h.split('&').forEach(function (kv) {
+    location.hash.replace(/^#/, '').split('&').forEach(function (kv) {
       var p = kv.split('=');
       if (p[0] === 'wx' && !wx) wx = decodeURIComponent(p[1] || '');
       if (p[0] === 'ali' && !ali) ali = decodeURIComponent(p[1] || '');
@@ -57,43 +81,112 @@
   var isWeChat = /MicroMessenger/i.test(ua);
   var isAlipay = /AlipayClient|AlipayDefined|AliApp/i.test(ua);
 
-  var target = '';
-  if (isWeChat) target = wx || ali;
-  else if (isAlipay) target = ali || wx;
-  else target = wx || ali;   // 浏览器等其他环境：优先微信收款码
-
-  var titleEl = document.getElementById('title');
-  var descEl  = document.getElementById('desc');
-  var manual  = document.getElementById('manual');
+  var target = isAlipay ? (ali || wx) : (wx || ali);
+  var appName = isAlipay ? '支付宝' : (isWeChat ? '微信' : '微信');
 
   if (!target) {
     titleEl.textContent = '链接不完整';
-    descEl.textContent = '缺少收款码参数（wx / ali）。请重新扫描聚合收款二维码。';
+    descEl.textContent = '缺少收款码参数（wx / ali），请重新扫描聚合收款二维码。';
     return;
   }
-
-  // 校验协议，避免 javascript: 之类的伪协议被执行
-  if (!/^(https?:|wxp:|alipays:|alipay:)/i.test(target)) {
+  if (!/^(https?:|wxp:|weixin:|alipays:|alipay:)/i.test(target)) {
     titleEl.textContent = '链接无法打开';
     descEl.textContent = '收款码链接格式不正确，请确认后重新生成二维码。';
     return;
   }
 
-  if (isWeChat) {
-    titleEl.textContent = '正在打开微信收款页…';
-  } else if (isAlipay) {
-    titleEl.textContent = '正在打开支付宝收款页…';
+  // 微信内置浏览器会拦截非 http(s) 的自动跳转（wxp:// 会被直接丢掉），
+  // 因此微信内不自动跳，改为点击按钮后跳；支付宝内可自动跳，同时保留按钮兜底。
+  titleEl.textContent = '打开' + appName + '收款页';
+  descEl.textContent = isWeChat
+    ? '微信内不支持自动跳转收款码，请点击下方按钮打开'
+    : '请点击下方按钮打开' + appName + '收款页';
+
+  // 兜底：把目标链接再画成一张二维码，微信内可长按识别打开（绕过 scheme 拦截）
+  (function renderFallbackQR() {
+    var wrap = document.getElementById('qrwrap');
+    var box = document.getElementById('qrbox');
+    var txt = document.getElementById('qrtxt');
+    if (!window.QRCode || !box) return;
+    try {
+      new window.QRCode(box, { text: target, width: 168, height: 168, correctLevel: window.QRCode.CorrectLevel.M });
+    } catch (e) { return; }
+    setTimeout(function () {
+      var cv = box.querySelector('canvas');
+      if (!cv) return;
+      // 转成 <img>，微信里长按图片才能「识别二维码」
+      var img = new Image();
+      img.src = cv.toDataURL('image/png');
+      img.style.cssText = 'width:168px;height:168px;background:#fff;padding:8px;border-radius:8px';
+      box.innerHTML = '';
+      box.appendChild(img);
+      wrap.classList.add('show');
+      txt.textContent = isWeChat ? '长按二维码识别，或用微信扫一扫' : '长按二维码识别打开';
+    }, 120);
+  })();
+
+  openBtn.textContent = '打开' + appName + '收款页';
+  openBtn.href = target;
+  openBtn.classList.add('show');
+  copyBtn.classList.add('show');
+
+  function markStuck() {
+    tipEl.classList.add('show');
+    descEl.textContent = '可能被当前应用拦截了跳转，请复制链接后在' + appName + '内打开';
   }
 
-  manual.href = target;
-  manual.classList.add('show');
+  openBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    hideCountdown();
+    try { location.href = target; } catch (err) {}
+    setTimeout(function () {
+      // 页面还在前台且没被切走，说明跳转被拦截
+      if (!document.hidden) markStuck();
+    }, 1500);
+  });
 
-  // 先尝试直接跳转，若被环境拦截则展示手动按钮
-  setTimeout(function () { location.replace(target); }, 60);
+  copyBtn.addEventListener('click', function () {
+    var done = function () {
+      copyBtn.textContent = '已复制';
+      setTimeout(function () { copyBtn.textContent = '复制收款链接'; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(target).then(done, function () { fallbackCopy(target, done); });
+    } else {
+      fallbackCopy(target, done);
+    }
+  });
 
-  // 微信内置浏览器里，部分 scheme（如 wxp://）会被拦截，给出提示引导截图/长按识别
-  if (isWeChat && /^https?:/i.test(target)) {
-    descEl.textContent = '若未自动跳转，请点击下方按钮打开。';
+  function fallbackCopy(text, cb) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); cb(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // 支付宝内自动跳一次，失败就靠按钮
+  var countdownTimer = null;
+  function hideCountdown() {
+    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  }
+
+  if (isAlipay) {
+    var left = 2;
+    descEl.textContent = left + ' 秒后自动打开支付宝收款页…';
+    countdownTimer = setInterval(function () {
+      left -= 1;
+      if (left > 0) {
+        descEl.textContent = left + ' 秒后自动打开支付宝收款页…';
+      } else {
+        hideCountdown();
+        descEl.textContent = '正在打开支付宝收款页…';
+        try { location.replace(target); } catch (err) {}
+        setTimeout(function () { if (!document.hidden) markStuck(); }, 1500);
+      }
+    }, 1000);
   }
 })();
 </script>
