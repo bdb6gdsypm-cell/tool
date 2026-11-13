@@ -2,193 +2,205 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>收款页</title>
-<style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; height: 100%; }
-  body {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: #f5f7fa; color: #1f2937;
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-    padding: 24px;
-  }
-  .logo {
-    width: 72px; height: 72px; border-radius: 16px; background: #e8effc;
-    display: flex; align-items: center; justify-content: center; font-size: 34px; color: #407bdd;
-    margin-bottom: 18px;
-  }
-  .title { font-size: 17px; font-weight: 600; margin-bottom: 8px; text-align: center; }
-  .desc { font-size: 13px; color: #6b7280; line-height: 1.7; text-align: center; max-width: 320px; }
-  .btn {
-    margin-top: 22px; display: none; padding: 12px 30px; border-radius: 8px;
-    background: #407bdd; color: #fff; font-size: 15px; text-decoration: none; border: 0;
-    font-family: inherit;
-  }
-  .btn.show { display: inline-block; }
-  .btn-plain {
-    margin-top: 12px; display: none; padding: 9px 22px; border-radius: 8px;
-    background: #fff; color: #407bdd; border: 1px solid #c8d7f2; font-size: 13px;
-    font-family: inherit;
-  }
-  .btn-plain.show { display: inline-block; }
-  .qrwrap { margin-top: 18px; display: none; flex-direction: column; align-items: center; }
-  .qrwrap.show { display: flex; }
-  .qrwrap canvas { width: 168px; height: 168px; background: #fff; padding: 8px; border-radius: 8px; }
-  .qrwrap span { margin-top: 8px; font-size: 12px; color: #6b7280; }
-  .tip { margin-top: 14px; font-size: 12px; color: #9ca3af; line-height: 1.7; text-align: center; max-width: 320px; display: none; }
-  .tip.show { display: block; }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实用工具汇总</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+primaryBlue: '#4060f0',
+purpleGrad: '#7b61ff',
+                    }
+                }
+            }
+}
+</script>
+<style type="text/tailwindcss">
+@layer utilities {
+.bg-grad {
+background: linear-gradient(135deg, #3b72f8 0%, #b18cf2 100%);
+            }
+.icon-box {
+width: 72px;
+height: 72px;
+border-radius: 20px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:28px;
+color:#fff;
+overflow:hidden;
+            }
+        }
 </style>
 </head>
-<body>
-  <div class="logo">￥</div>
-  <div class="title" id="title">收款页</div>
-  <div class="desc" id="desc">正在准备收款页…</div>
-  <a class="btn" id="open" href="#">打开收款页</a>
-  <button class="btn-plain" id="copy" type="button">复制收款链接</button>
-  <div class="qrwrap" id="qrwrap">
-    <div id="qrbox"></div>
-    <span id="qrtxt">长按二维码识别打开</span>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <div class="tip" id="tip">若按钮点击后没有反应，说明当前应用拦截了外部跳转，可复制链接后在对应 App 内打开。</div>
+<body class="bg-slate-50 pb-20">
+<div class="px-5 pt-6">
+<!-- 顶部标题+头像 -->
+<div class="flex justify-between items-center mb-5">
+<h1 class="text-[26px] font-bold text-gray-800">实用工具汇总</h1>
+<div class="w-10 h-10 rounded-full overflow-hidden border">
+<img src="https://picsum.photos/id/1005/100/100" alt="头像" class="w-full h-full object-cover">
+</div>
+</div>
+<!-- 今日效率渐变卡片 -->
+<div class="bg-grad rounded-2xl p-5 text-white relative overflow-hidden mb-5">
+<div>
+<h2 class="text-[32px] font-bold">今日效率</h2>
+<p class="text-xl mt-1">已整理 18 个工具</p>
+<p class="text-xl mt-1">常用 6 个入口</p>
+</div>
+<div class="absolute right-6 top-1/2 -translate-y-1/2">
+<div class="text-[70px] font-bold opacity-90">18</div>
+</div>
+</div>
+<!-- 搜索框 -->
+<div class="bg-white rounded-full px-5 py-4 flex items-center gap-3 shadow-sm mb-5">
+<i class="fa fa-search text-gray-400"></i>
+<input type="text" placeholder="搜索工具、文件、功能" class="flex-1 outline-none text-gray-600">
+</div>
+<!-- 常用工具宫格 -->
+<div class="bg-white rounded-2xl p-5 shadow-sm mb-7">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-xl font-semibold text-gray-800">常用工具宫格</h3>
+<i class="fa fa-chevron-right text-gray-400"></i>
+</div>
+<div class="grid grid-cols-4 gap-y-5 gap-x-2">
+<!-- 第1行 -->
+<div class="flex flex-col items-center">
+<div class="icon-box bg-gradient-to-br from-purple-400 to-purple-600">
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+<polyline points="14 2 14 8 20 8"/>
+<path d="M9 13h6"/>
+<path d="M9 17h6"/>
+</svg>
+</div>
+<span class="mt-2 text-sm text-gray-700">文件转换</span>
+</div>
+<!-- ✅ 计算器添加a标签跳转 -->
+<a href="../计算器/计算器.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/计算器.png" alt="计算器" class="w-full h-full object-contain">
+</div>
+<span class="mt-2 text-sm text-gray-700">计算器</span>
+</a>
+<!-- ✅ 修改：日程提醒 → 汇率换算，图片图标，跳转汇率换算页面 -->
+<a href="../汇率换算/汇率换算.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/汇率换算.png" alt="汇率换算" class="w-full h-full object-contain">
+</div>
+<span class="mt-2 text-sm text-gray-700">汇率换算</span>
+</a>
+<!-- 拼音转换，替换为图片图标 -->
+<a href="../拼音生成/拼音生成.html" class="flex flex-col items-center">
+<div class="icon-box bg-[#eefbf6]">
+<img src="logo/拼音生成.png" alt="拼音转换" class="w-full h-full object-contain">
+</div>
+<span class="mt-2 text-sm text-gray-700">拼音转换</span>
+</a>
+<!-- ✅ 单位换算 换成你这张图 -->
+<a href="../单位换算/单位换算.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/单位换算.png" alt="单位换算" class="w-full h-full object-contain">
+</div>
+<span class="mt-2 text-sm text-gray-700">单位换算</span>
+</a>
 
-<script>
-(function () {
-  var titleEl = document.getElementById('title');
-  var descEl  = document.getElementById('desc');
-  var openBtn = document.getElementById('open');
-  var copyBtn = document.getElementById('copy');
-  var tipEl   = document.getElementById('tip');
-
-  function getParam(name) {
-    var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
-    return m ? decodeURIComponent(m[1]) : '';
-  }
-
-  var wx  = getParam('wx')  || getParam('wechat');
-  var ali = getParam('ali') || getParam('alipay');
-
-  if (!wx && !ali) {
-    location.hash.replace(/^#/, '').split('&').forEach(function (kv) {
-      var p = kv.split('=');
-      if (p[0] === 'wx' && !wx) wx = decodeURIComponent(p[1] || '');
-      if (p[0] === 'ali' && !ali) ali = decodeURIComponent(p[1] || '');
-    });
-  }
-
-  var ua = navigator.userAgent || '';
-  var isWeChat = /MicroMessenger/i.test(ua);
-  var isAlipay = /AlipayClient|AlipayDefined|AliApp/i.test(ua);
-
-  var target = isAlipay ? (ali || wx) : (wx || ali);
-  var appName = isAlipay ? '支付宝' : (isWeChat ? '微信' : '微信');
-
-  if (!target) {
-    titleEl.textContent = '链接不完整';
-    descEl.textContent = '缺少收款码参数（wx / ali），请重新扫描聚合收款二维码。';
-    return;
-  }
-  if (!/^(https?:|wxp:|weixin:|alipays:|alipay:)/i.test(target)) {
-    titleEl.textContent = '链接无法打开';
-    descEl.textContent = '收款码链接格式不正确，请确认后重新生成二维码。';
-    return;
-  }
-
-  // 微信内置浏览器会拦截非 http(s) 的自动跳转（wxp:// 会被直接丢掉），
-  // 因此微信内不自动跳，改为点击按钮后跳；支付宝内可自动跳，同时保留按钮兜底。
-  titleEl.textContent = '打开' + appName + '收款页';
-  descEl.textContent = isWeChat
-    ? '微信内不支持自动跳转收款码，请点击下方按钮打开'
-    : '请点击下方按钮打开' + appName + '收款页';
-
-  // 兜底：把目标链接再画成一张二维码，微信内可长按识别打开（绕过 scheme 拦截）
-  (function renderFallbackQR() {
-    var wrap = document.getElementById('qrwrap');
-    var box = document.getElementById('qrbox');
-    var txt = document.getElementById('qrtxt');
-    if (!window.QRCode || !box) return;
-    try {
-      new window.QRCode(box, { text: target, width: 168, height: 168, correctLevel: window.QRCode.CorrectLevel.M });
-    } catch (e) { return; }
-    setTimeout(function () {
-      var cv = box.querySelector('canvas');
-      if (!cv) return;
-      // 转成 <img>，微信里长按图片才能「识别二维码」
-      var img = new Image();
-      img.src = cv.toDataURL('image/png');
-      img.style.cssText = 'width:168px;height:168px;background:#fff;padding:8px;border-radius:8px';
-      box.innerHTML = '';
-      box.appendChild(img);
-      wrap.classList.add('show');
-      txt.textContent = isWeChat ? '长按二维码识别，或用微信扫一扫' : '长按二维码识别打开';
-    }, 120);
-  })();
-
-  openBtn.textContent = '打开' + appName + '收款页';
-  openBtn.href = target;
-  openBtn.classList.add('show');
-  copyBtn.classList.add('show');
-
-  function markStuck() {
-    tipEl.classList.add('show');
-    descEl.textContent = '可能被当前应用拦截了跳转，请复制链接后在' + appName + '内打开';
-  }
-
-  openBtn.addEventListener('click', function (e) {
-    e.preventDefault();
-    hideCountdown();
-    try { location.href = target; } catch (err) {}
-    setTimeout(function () {
-      // 页面还在前台且没被切走，说明跳转被拦截
-      if (!document.hidden) markStuck();
-    }, 1500);
-  });
-
-  copyBtn.addEventListener('click', function () {
-    var done = function () {
-      copyBtn.textContent = '已复制';
-      setTimeout(function () { copyBtn.textContent = '复制收款链接'; }, 1500);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(target).then(done, function () { fallbackCopy(target, done); });
-    } else {
-      fallbackCopy(target, done);
-    }
-  });
-
-  function fallbackCopy(text, cb) {
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand('copy'); cb(); } catch (e) {}
-    document.body.removeChild(ta);
-  }
-
-  // 支付宝内自动跳一次，失败就靠按钮
-  var countdownTimer = null;
-  function hideCountdown() {
-    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-  }
-
-  if (isAlipay) {
-    var left = 2;
-    descEl.textContent = left + ' 秒后自动打开支付宝收款页…';
-    countdownTimer = setInterval(function () {
-      left -= 1;
-      if (left > 0) {
-        descEl.textContent = left + ' 秒后自动打开支付宝收款页…';
-      } else {
-        hideCountdown();
-        descEl.textContent = '正在打开支付宝收款页…';
-        try { location.replace(target); } catch (err) {}
-        setTimeout(function () { if (!document.hidden) markStuck(); }, 1500);
-      }
-    }, 1000);
-  }
-})();
-</script>
+<!-- ========== 二维码生成 替换为图片图标 ========== -->
+<a href="../二维码/二维码.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/二维码生成.png" alt="二维码生成" class="w-full h-full object-contain">
+</div>
+<span class="mt-2 text-sm text-gray-700">二维码生成</span>
+</a>
+<!-- ✅ 图片压缩：预留base64位置，白底容器，直接替换src里面【BASE64_CODE】即可 -->
+<a href="../OCR识别/OCR识别.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/ocr识别.png" alt="OCR识别" class="w-full h-full object-contain">
+</div>
+<span class="mt-2 text-sm text-gray-700">OCR识别</span>
+</a>
+<!-- ✅ 密码管理改为日历，使用图片图标，跳转日历页面 -->
+<a href="../日历/日历.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/日历.png" alt="日历" class="w-full h-full object-contain">
+</div>
+<span class="mt-2 text-sm text-gray-700">日历</span>
+</a>
+</div>
+<!-- 小圆点指示器 -->
+<div class="flex justify-center gap-1.5 mt-4">
+<span class="w-2 h-2 rounded-full bg-blue-500"></span>
+<span class="w-2 h-2 rounded-full bg-gray-300"></span>
+<span class="w-2 h-2 rounded-full bg-gray-300"></span>
+</div>
+</div>
+<!-- 工具分类 -->
+<h3 class="text-[24px] font-bold text-gray-800 mb-4">工具分类</h3>
+<div class="grid grid-cols-3 gap-4">
+<div class="bg-white rounded-2xl p-5 shadow-sm min-h-[160px] flex flex-col">
+<h4 class="text-xl font-semibold mb-3">办公效率</h4>
+<div class="flex-1 flex items-center justify-center">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.7">
+<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+<polyline points="14 2 14 8 20 8"/>
+<path d="M9 13h6"/>
+<path d="M9 17h4"/>
+</svg>
+</div>
+</div>
+<div class="bg-white rounded-2xl p-5 shadow-sm min-h-[160px] flex flex-col">
+<h4 class="text-xl font-semibold mb-3">生活助手</h4>
+<div class="flex-1 flex items-center justify-center">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.7">
+<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+</svg>
+</div>
+</div>
+<div class="bg-white rounded-2xl p-5 shadow-sm min-h-[160px] flex flex-col">
+<h4 class="text-xl font-semibold mb-3">数据处理</h4>
+<div class="flex-1 flex items-center justify-center">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.7">
+<line x1="18" y1="20" x2="18" y2="10"/>
+<line x1="12" y1="20" x2="12" y2="4"/>
+<line x1="6" y1="20" x2="6" y2="14"/>
+</svg>
+</div>
+</div>
+</div>
+</div>
+<!-- 底部Tab栏 -->
+<div class="fixed bottom-0 left-0 w-full bg-white flex h-[72px] border-t border-gray-100">
+<div class="flex-1 flex flex-col items-center justify-center text-gray-600">
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+<polyline points="9 22 9 12 15 12 15 22"/>
+</svg>
+<span class="text-sm mt-1">首页</span>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center text-gray-600">
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+</svg>
+<span class="text-sm mt-1">工具</span>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center text-gray-600">
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+</svg>
+<span class="text-sm mt-1">收藏</span>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center text-white bg-primaryBlue rounded-tl-2xl rounded-tr-2xl">
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+<circle cx="12" cy="7" r="4"/>
+</svg>
+<span class="text-sm mt-1">我的</span>
+</div>
+</div>
 </body>
 </html>
