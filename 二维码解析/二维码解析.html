@@ -754,7 +754,7 @@ height: auto;
   color:#ffffff;
   font-weight:500;
 }
-/* 生成模式的三档滑块：文本 / 网址 / 名片 / 电话 / 短信 / Wi-Fi / 批量生码 */
+/* 生成模式的三档滑块：文本 / 网址 / 名片 / 电话 / 短信 / Wi-Fi */
 .gen-mode-seg{
   position:relative;
   top:-10px;               /* 整体上移一点，不占布局高度，下方表单与按钮位置不受影响 */
@@ -1013,7 +1013,7 @@ height: auto;
 #genWifiSsid{
   width:100%;
 }
-/* 生成按钮固定尺寸：切到「批量生码」文案变长时位置也不动 */
+/* 生成按钮固定尺寸：切换生成类型时位置不动 */
 #genBtn{
   min-width:180px;
   text-align:center;
@@ -1040,13 +1040,293 @@ height: auto;
 .qst-grp { display: contents; }
 .qst-lbl { display: none; }
 
+/* ================= 条形码生成面板 ================= */
+.bar-view { display: flex; flex-direction: column; gap: 14px; }
+.bar-kind-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.bar-kind-wrap { position: relative; }
+.bar-kind {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 34px;
+  padding: 0 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #4b5563;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.bar-kind:hover { border-color: #407bdd; color: #407bdd; }
+.bar-kind.active { background: #407bdd; border-color: #407bdd; color: #fff; font-weight: 500; }
+
+/* 「更多」按钮与展开的下拉菜单 */
+.bar-kind-more { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.bar-kind-more .bar-more-arrow { transition: transform .18s ease; }
+.bar-kind-more[aria-expanded="true"] { border-color: #407bdd; color: #407bdd; }
+.bar-kind-more[aria-expanded="true"] .bar-more-arrow { transform: rotate(90deg); }
+.bar-kind-more.is-more-active { background: #407bdd; border-color: #407bdd; color: #fff; font-weight: 500; }
+.bar-kind-more.is-more-active .bar-more-arrow { color: #fff; }
+.bar-kind-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 60;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .16);
+}
+.bar-kind-menu[hidden] { display: none; }
+.bar-kind-menu-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.bar-kind-menu-grid .bar-kind { font-size: 12px; }
+.bar-input-wrap { width: 100%; }
+.bar-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #374151;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.bar-input:focus { border-color: #407bdd; box-shadow: 0 0 0 3px rgba(64, 123, 221, .12); }
+.bar-opt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+  align-items: start;
+}
+.bar-opt { display: flex; flex-direction: column; gap: 7px; font-size: 12px; color: #6b7280; min-width: 0; }
+.bar-opt-label { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-opt-label b { color: #407bdd; font-weight: 600; }
+.bar-color {
+  width: 100%;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.bar-range { width: 100%; margin: 0; accent-color: #407bdd; }
+.bar-opt-check { flex-direction: row; align-items: center; gap: 10px; height: 32px; font-size: 12px; color: #4b5563; grid-column: 1 / -1; }
+.bar-switch { position: relative; display: inline-flex; align-items: center; width: 40px; height: 22px; flex: none; }
+.bar-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 2; }
+.bar-switch-track { position: absolute; inset: 0; border-radius: 999px; background: #d5dbe5; transition: background-color .2s; }
+.bar-switch-dot { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.18); transition: transform .2s; }
+#barShowText:checked ~ .bar-switch-track,
+#batchShowText:checked ~ .bar-switch-track { background: #407bdd; }
+#barShowText:checked ~ .bar-switch-dot,
+#batchShowText:checked ~ .bar-switch-dot { transform: translateX(18px); }
+.bar-textopt { display: none; }
+.bar-textopt.is-on { display: flex; }
+.bar-textopt-wide { grid-column: 1 / -1; }
+/* 字符位置：与顶部导航同款胶囊滑块（下 / 上两档） */
+.bar-pos-seg { position: relative; display: flex; width: 25%; height: 34px; border-radius: 9999px; background: #eff1f3; border: 1px solid #e5e7eb; overflow: hidden; }
+.bar-pos-seg .bar-pos-thumb { position: absolute; top: 0; left: 0; width: 50%; height: 100%; border-radius: 9999px; background: #407bdd; transition: left .2s ease; z-index: 0; pointer-events: none; }
+.bar-pos-seg .bar-pos-thumb.is-up { left: 50%; }
+.bar-pos-seg .bar-pos-btn { position: relative; z-index: 1; flex: 1 1 0; min-width: 0; height: 100%; padding: 0 4px; border: 0; background: transparent; font-size: 12px; color: #6b7280; cursor: pointer; transition: color .2s; white-space: nowrap; }
+.bar-pos-seg .bar-pos-btn:hover { color: #374151; }
+.bar-pos-seg .bar-pos-btn.active { color: #ffffff; font-weight: 500; }
+.bar-pos-seg .bar-pos-btn.active:hover { color: #ffffff; }
+/* ===== 批量生码面板 ===== */
+.batch-view { display: flex; flex-direction: column; align-items: flex-start; }
+.batch-seg { position: relative; display: flex; width: 100%; max-width: 780px; height: 34px; border-radius: 9999px; background: #eff1f3; border: 1px solid #e5e7eb; overflow: hidden; margin-bottom: 14px; }
+.batch-thumb { position: absolute; top: 0; left: 0; width: 14.2857%; height: 100%; border-radius: 9999px; background: #407bdd; transition: left .2s ease; z-index: 0; pointer-events: none; }
+.batch-thumb.is-right { left: 14.2857%; }
+.batch-thumb.is-third { left: 28.5714%; }
+.batch-thumb.is-fourth { left: 42.8571%; }
+.batch-thumb.is-fifth { left: 57.1428%; }
+.batch-thumb.is-sixth { left: 71.4285%; }
+.batch-thumb.is-seventh { left: 85.7142%; }
+.batch-btn { position: relative; z-index: 1; flex: 1 1 0; min-width: 0; height: 100%; border: 0; background: transparent; font-size: 13px; color: #6b7280; cursor: pointer; transition: color .2s; white-space: nowrap; }
+.batch-btn:hover { color: #374151; }
+.batch-btn.active, .batch-btn.active:hover { color: #ffffff; font-weight: 500; }
+.batch-kind-wrap { position: relative; width: 100%; }
+.batch-kind-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: 100%; margin-bottom: 10px; }
+.batch-kind-row .bb-kind { min-width: 0; padding: 0 6px; font-size: 13px; }
+.bb-kind { flex: none; height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; font-size: 12px; color: #4b5563; cursor: pointer; white-space: nowrap; transition: all .15s; }
+.bb-kind:hover { border-color: #407bdd; color: #407bdd; }
+.bb-kind.active { background: #407bdd; border-color: #407bdd; color: #ffffff; font-weight: 500; }
+/* 「更多」下拉：与条形码档同款浮层，绝不下推内容 */
+.bb-kind-more { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.bb-kind-more[aria-expanded="true"] { border-color: #407bdd; color: #407bdd; }
+.bb-kind-more[aria-expanded="true"] .bar-more-arrow { transform: rotate(90deg); }
+.bb-kind-more.is-more-active { background: #407bdd; border-color: #407bdd; color: #fff; font-weight: 500; }
+.bb-kind-more.is-more-active .bar-more-arrow { color: #fff; }
+.batch-kind-menu { position: absolute; left: 0; right: 0; top: calc(100% + 8px); z-index: 60; padding: 10px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 10px 28px rgba(15, 23, 42, .16); }
+.batch-kind-menu[hidden] { display: none; }
+.batch-kind-menu-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; }
+.batch-kind-menu-grid .bb-kind { font-size: 12px; }
+@media (max-width: 767px) {
+  .batch-kind-menu-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.batch-input { width: 100%; height: 180px; min-height: 150px; resize: vertical; border: 1px solid #407bdd; border-radius: 8px; padding: 12px 16px; font-size: 14px; line-height: 1.6; color: #374151; outline: none; box-sizing: border-box; }
+.batch-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.batch-text-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.batch-text-label { font-size: 13px; color: #4b5563; }
+/* PDF417 纠错等级下拉 */
+.pdf-select {
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+}
+.pdf-select:focus { border-color: #407bdd; box-shadow: 0 0 0 3px rgba(64,123,221,.12); }
+/* 五档导航在窄屏放不下时横向滑动，避免末档被裁掉 */
+.qr-nav-seg .nav-btn { flex: 0 0 auto; }
+@media (max-width: 767px) {
+  #qrNavSeg { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  #qrNavSeg::-webkit-scrollbar { display: none; }
+}
+.batch-gen-btn { height: 40px; padding: 0 28px; border: 0; border-radius: 8px; background: #407bdd; color: #fff; font-size: 14px; cursor: pointer; }
+.batch-gen-btn:disabled { opacity: .6; cursor: not-allowed; }
+/* 批量生成旁的「清空」：蓝框白底蓝字 */
+.batch-clear-btn { height: 40px; padding: 0 28px; border: 1px solid #407bdd; border-radius: 8px; background: #ffffff; color: #407bdd; font-size: 14px; cursor: pointer; transition: background .15s, color .15s; }
+.batch-clear-btn:hover { background: #ecf5fe; }
+.batch-clear-btn:active { background: #dbeafe; }
+/* 拖拽上传高亮：拖到上传卡片上时整块描边变蓝 + 浅蓝底 */
+.upload-border.is-dragover { border-color: #407bdd; background: #ecf5fe; }
+.upload-border.is-dragover #uploadView h2 { color: #407bdd; }
+/* 解析档：整个左侧虚线框可点击上传，悬停描边变蓝 + 手型光标 */
+#uploadBox.is-resolve { cursor: pointer; transition: none; }
+#uploadBox.is-resolve * { cursor: pointer; }
+/* 只由 JS 的 is-hover 控制（上传态才加），解码成功后保持灰色，不跟随鼠标变色 */
+#uploadBox.is-resolve.is-hover { border-color: #407bdd !important; background: #ffffff; }
+#uploadBox.is-resolve.is-hover #uploadView h2 { color: #407bdd; }
+/* 多图解码结果弹窗：标题 + 数量/复制 + 两列表格（图片名称 / 解码内容） */
+.decode-modal-mask { position: fixed; inset: 0; z-index: 70; display: none; align-items: center; justify-content: center; background: rgba(17,24,39,.45); padding: 16px; }
+.decode-modal-mask.is-open { display: flex; }
+.decode-modal { width: min(1120px, 100%); max-height: 86vh; display: flex; flex-direction: column; background: #fff; border-radius: 10px; box-shadow: 0 18px 48px rgba(15,23,42,.18); overflow: hidden; }
+.decode-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 26px; border-bottom: 1px solid #e5e7eb; flex: 0 0 auto; }
+.decode-modal-title { font-size: 20px; font-weight: 600; color: #1f2937; }
+.decode-modal-close { border: 0; background: transparent; color: #9ca3af; font-size: 22px; line-height: 1; cursor: pointer; padding: 2px 6px; }
+.decode-modal-close:hover { color: #6b7280; }
+.decode-modal-body { padding: 18px 26px 24px; overflow-y: auto; }
+.decode-modal-summary { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; font-size: 15px; color: #374151; }
+.decode-copy-link { border: 0; background: transparent; color: #407bdd; font-size: 15px; cursor: pointer; }
+.decode-copy-link:hover { text-decoration: underline; }
+.decode-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 15px; color: #374151; }
+.decode-table th, .decode-table td { border: 1px solid #e5e7eb; padding: 14px 18px; text-align: left; vertical-align: middle; word-break: break-all; }
+.decode-table th { background: #fafafa; font-weight: 600; color: #374151; }
+.decode-table th:first-child { width: 42%; }
+.decode-table td:first-child { color: #4b5563; }
+.decode-table tr:nth-child(even) td { background: #fbfbfc; }
+.decode-table .is-fail { color: #9ca3af; }
+.batch-hint { margin-top: 10px; font-size: 12px; color: #6b7280; }
+.batch-hint.is-err { color: #e5484d; }
+.batch-hint.is-ok { color: #12a150; }
+.batch-preview { display: flex; flex-direction: column; width: 100%; }
+.batch-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; max-height: 420px; overflow-y: auto; padding: 2px; }
+.batch-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px; border: 1px solid #eceff3; border-radius: 10px; background: #fff; }
+.batch-item canvas { display: block; width: 100%; height: auto; }
+.batch-item-name { font-size: 11px; color: #9aa3af; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.batch-item-dl { padding: 0; border: 0; background: none; font-size: 12px; color: #407bdd; cursor: pointer; }
+.batch-count { font-size: 12px; color: #6b7280; margin-bottom: 10px; }
+.batch-count b { color: #407bdd; }
+.batch-zip-btn { width: 100%; height: 40px; margin-top: 12px; border: 0; border-radius: 8px; background: #407bdd; color: #fff; font-size: 14px; cursor: pointer; }
+.batch-zip-btn:disabled { opacity: .6; cursor: not-allowed; }
+.bar-opt-check input { width: 16px; height: 16px; margin: 0; accent-color: #407bdd; flex-shrink: 0; }
+.bar-actions { display: flex; gap: 10px; margin-top: 2px; }
+.bar-primary-btn {
+  flex: 1 1 0;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: #407bdd;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.bar-primary-btn:hover { background: #3568c2; }
+.bar-ghost-btn {
+  flex: 0 0 auto;
+  padding: 0 18px;
+  height: 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #4b5563;
+  font-size: 14px;
+  cursor: pointer;
+}
+.bar-ghost-btn:hover { border-color: #407bdd; color: #407bdd; }
+.bar-hint { font-size: 12px; color: #9ca3af; min-height: 18px; line-height: 18px; }
+.bar-hint.err { color: #ef4444; }
+.bar-hint.ok { color: #16a34a; }
+/* 右侧预览卡内的条码画布与下载按钮 */
+#barPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+.bar-canvas-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+  -webkit-overflow-scrolling: touch;
+}
+.bar-canvas-scroll::-webkit-scrollbar { height: 6px; }
+.bar-canvas-scroll::-webkit-scrollbar-thumb { background: #d7dbe0; border-radius: 9999px; }
+.bar-dl-btns { display: flex; flex-direction: column; gap: 10px; }
+/* 左侧虚线矩形下方的「清空 / 重置」按钮：蓝底白字，各占一半宽度并排 */
+.bar-left-btns { display: flex; gap: 10px; }
+.bar-left-btns > button { flex: 1 1 0; min-width: 0; width: auto; }
+.bar-clear-btn,
+.bar-reset-btn {
+  width: 100%;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: #407bdd;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.bar-clear-btn:hover,
+.bar-reset-btn:hover { background: #3568c2; }
+.bar-clear-btn:active,
+.bar-reset-btn:active { background: #2f5dae; }
+.bar-download-btn {
+  width: 100%;
+  max-width: 100%;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: #407bdd;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.bar-download-btn:hover { background: #3568c2; }
+.bar-download-btn:active { background: #2f5dae; }
+
 /* ================= 响应式：手机 / 平板等小屏设备 ================= */
 /* 桌面上所有尺寸保持不变，以下只在宽度 ≤1023px 时覆盖 */
 @media (max-width: 1023px) {
   body { padding: 12px; }
 
-  /* 顶部返回按钮 + 双档滑块 */
+  /* 顶部返回按钮 + 三档滑块 */
   #qrNavSeg { max-width: calc(100vw - 92px); }
+  /* 三档（二维码生成/二维码解析/条形码生成）在小屏必须收紧内边距与字号，否则第三档会被裁掉 */
+  #qrNavSeg .nav-btn { padding: 0 12px; font-size: 13px; }
 
   /* 生成视图是 flex 子项，先把 min-width 放开，避免被滑块的 max-content 撑宽页面 */
   #genView { width: 100% !important; min-width: 0; max-width: 100%; }
@@ -1426,6 +1706,12 @@ height: auto;
   #uploadBox { padding: 16px !important; }
   .gen-mode-seg { height: 32px; }
   .gen-mode-seg .gen-btn { padding: 0 9px; font-size: 12px; }
+  #qrNavSeg .nav-btn { padding: 0 9px; font-size: 12px; }
+  /* 条形码面板：窄屏保持两列设置，避免过长 */
+  .bar-opt-grid { gap: 10px 12px; }
+  .bar-kind-row { gap: 6px; }
+  .bar-kind { font-size: 11px; height: 32px; padding: 0 4px; }
+  .bar-kind-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #genBtn { min-width: 150px; }
 
   /* 美化弹窗（主体版式已在 ≤1023 规则里改成上下堆叠，这里只做尺寸收紧） */
@@ -1454,6 +1740,13 @@ height: auto;
             <span class="nav-thumb"></span>
             <button type="button" class="nav-btn" data-mode="gen" title="二维码生成">二维码生成</button>
             <button type="button" class="nav-btn active" data-mode="resolve" title="二维码解析">二维码解析</button>
+            <button type="button" class="nav-btn" data-mode="barcode" title="条形码生成">条形码生成</button>
+            <button type="button" class="nav-btn" data-mode="dm" title="Data Matrix 码生成">Data Matrix 码生成</button>
+            <button type="button" class="nav-btn" data-mode="pdf" title="PDF417 码生成">PDF417 码生成</button>
+            <button type="button" class="nav-btn" data-mode="az" title="Aztec Code 生成">Aztec Code 生成</button>
+            <button type="button" class="nav-btn" data-mode="hx" title="汉信码生成">汉信码生成</button>
+            <button type="button" class="nav-btn" data-mode="mx" title="MaxiCode 生成">MaxiCode 生成</button>
+            <button type="button" class="nav-btn" data-mode="batch" title="批量生码">批量生码</button>
         </div>
     </div>
     <script>
@@ -1464,9 +1757,17 @@ height: auto;
         function place() {
             const active = seg.querySelector('.nav-btn.active');
             if (!thumb || !active) return;
+            // 窄屏导航可横向滚动：先把激活项滚到可视区居中，再按滚动后的位置量滑块
+            if (seg.scrollWidth > seg.clientWidth + 1) {
+                const al = active.offsetLeft, aw = active.offsetWidth;
+                const l = seg.scrollLeft, r = l + seg.clientWidth;
+                if (al < l || al + aw > r) {
+                    seg.scrollLeft = Math.max(0, al - (seg.clientWidth - aw) / 2);
+                }
+            }
             const r = active.getBoundingClientRect(), s = seg.getBoundingClientRect();
-            thumb.style.width = r.width + 'px';
-            thumb.style.left = (r.left - s.left) + 'px';
+            thumb.style.width = active.offsetWidth + 'px';
+            thumb.style.left = active.offsetLeft + 'px';   // 用内容坐标，导航横向滚动时滑块才跟得住
         }
         // 清空右侧预览：恢复到「既没解码也没生成」的初始样式
         function resetPreview() {
@@ -1496,15 +1797,49 @@ height: auto;
             window.offscreenBeautyCanvas = null;
         }
 
-        // 切模式：生成=大输入框；解析=上传二维码图片；切换时右侧预览清空
+        // 切模式：生成=大输入框；解析=上传二维码图片；条形码=条码设置面板；切换时右侧预览清空
         function setMode(mode) {
             seg.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
             const uploadView = document.getElementById('uploadView');
             const genView = document.getElementById('genView');
-            if (uploadView) uploadView.style.display = (mode === 'gen') ? 'none' : '';
+            const barView = document.getElementById('barView');
+            const dmView = document.getElementById('dmView');
+            const pdfView = document.getElementById('pdfView');
+            const azView = document.getElementById('azView');
+            const hxView = document.getElementById('hxView');
+            const mxView = document.getElementById('mxView');
+            const batchView = document.getElementById('batchView');
+            if (uploadView) uploadView.style.display = (mode === 'resolve') ? '' : 'none';
             if (genView) genView.style.display = (mode === 'gen') ? 'block' : 'none';
+            if (barView) barView.style.display = (mode === 'barcode') ? 'flex' : 'none';
+            if (dmView) dmView.style.display = (mode === 'dm') ? 'flex' : 'none';
+            if (pdfView) pdfView.style.display = (mode === 'pdf') ? 'flex' : 'none';
+            if (azView) azView.style.display = (mode === 'az') ? 'flex' : 'none';
+            if (hxView) hxView.style.display = (mode === 'hx') ? 'flex' : 'none';
+            if (mxView) mxView.style.display = (mode === 'mx') ? 'flex' : 'none';
+            if (batchView) batchView.style.display = (mode === 'batch') ? 'flex' : 'none';
+            // 离开条形码档（切到二维码生成 / 二维码解析）：条码内容清空，样式恢复默认
+            if (mode !== 'barcode' && typeof window.__qrBarResetAll === 'function') window.__qrBarResetAll();
+            // 离开 Data Matrix 档：内容与生成结果一并清空
+            if (mode !== 'dm' && typeof window.__qrDmReset === 'function') window.__qrDmReset();
+            // 离开 PDF417 档：内容与生成结果一并清空
+            if (mode !== 'pdf' && typeof window.__qrPdfReset === 'function') window.__qrPdfReset();
+            // 离开 Aztec Code 档：内容与生成结果一并清空
+            if (mode !== 'az' && typeof window.__qrAzReset === 'function') window.__qrAzReset();
+            // 离开汉信码档：内容与生成结果一并清空
+            if (mode !== 'hx' && typeof window.__qrHxReset === 'function') window.__qrHxReset();
+            // 离开 MaxiCode 档：内容与生成结果一并清空
+            if (mode !== 'mx' && typeof window.__qrMxReset === 'function') window.__qrMxReset();
+            // 条形码档位：内容始终贴顶对齐，样式区显隐时码制行/输入框不会上下跳动
+            const uploadBox = document.getElementById('uploadBox');
+            if (uploadBox) {
+                uploadBox.style.justifyContent = (mode === 'barcode' || mode === 'batch' || mode === 'dm' || mode === 'pdf' || mode === 'az' || mode === 'hx' || mode === 'mx') ? 'flex-start' : '';
+                // 只有「二维码解析」档整块虚线框才是可点击的上传区（决定 cursor / hover 描边）
+                uploadBox.classList.toggle('is-resolve', mode === 'resolve');
+                if (mode !== 'resolve') uploadBox.classList.remove('is-hover');
+            }
             // 切回解析：把解码结果视图收起，回到「上传二维码图片」的初始态
-            if (mode !== 'gen') {
+            if (mode === 'resolve') {
                 const uvw = document.getElementById('uploadView');
                 const rvw = document.getElementById('resultView');
                 if (uvw) { uvw.style.display = ''; uvw.classList.remove('hidden'); }
@@ -1519,18 +1854,49 @@ height: auto;
             if (genInput) genInput.value = '';   // 切换档位时清空已输入内容
             if (typeof window.__qrResetGenMode === 'function') window.__qrResetGenMode();  // 三档滑块回到「文本」
             resetPreview();
+            // 右侧空态文案与图标随档位变化：条形码档显示条码形状图标 +「此处生成条形码」
+            const initText = document.getElementById('previewInitText');
+            if (initText) initText.textContent = (mode === 'barcode') ? '此处生成条形码'
+                : (mode === 'batch' ? '此处显示批量生成结果'
+                : (mode === 'dm' ? '此处生成 Data Matrix 码'
+                : (mode === 'pdf' ? '此处生成 PDF417 码'
+                : (mode === 'az' ? '此处生成 Aztec Code'
+                : (mode === 'hx' ? '此处生成汉信码'
+                : (mode === 'mx' ? '此处生成 MaxiCode' : '此处生成二维码'))))));
+            const qrIcon = document.getElementById('previewInitQrIcon');
+            const barIcon = document.getElementById('previewInitBarIcon');
+            if (qrIcon && barIcon) {
+                const isBar = (mode === 'barcode' || mode === 'pdf');
+                qrIcon.style.display = (isBar || mode === 'batch') ? 'none' : '';
+                barIcon.style.display = isBar ? '' : 'none';
+            }
+            // 条形码模式：右侧预览区改显示条码画布（有结果时）
+            if (typeof window.__qrBarPreviewToggle === 'function') window.__qrBarPreviewToggle(mode === 'barcode');
+            if (mode === 'barcode' && typeof window.__qrBarAutoRender === 'function') window.__qrBarAutoRender();
+            if (mode === 'batch' && typeof window.__qrBatchShow === 'function') window.__qrBatchShow();
+            if (mode === 'dm' && typeof window.__qrDmShow === 'function') window.__qrDmShow();
+            if (mode === 'pdf' && typeof window.__qrPdfShow === 'function') window.__qrPdfShow();
+            if (mode === 'az' && typeof window.__qrAzShow === 'function') window.__qrAzShow();
+            if (mode === 'hx' && typeof window.__qrHxShow === 'function') window.__qrHxShow();
+            if (mode === 'mx' && typeof window.__qrMxShow === 'function') window.__qrMxShow();
+            if (mode !== 'batch') {
+                const bp = document.getElementById('batchPreview');
+                if (bp) { bp.style.display = 'none'; bp.classList.add('hidden'); }
+                const bi = document.getElementById('batchInput');   // 离开批量生码：内容清空
+                if (bi) bi.value = '';
+            }
             place();
         }
         seg.querySelectorAll('.nav-btn').forEach(b => { b.onclick = () => setMode(b.dataset.mode); });
 
         // 生成二维码：把输入框内容画到右侧预览 canvas（按钮在文档后面，等 DOM 就绪再绑定）
         function bindGenBtn() {
-        // 三档滑块：文本 / 网址 / 名片 / 电话 / 短信 / Wi-Fi / 批量生码
+        // 生成类型滑块：文本 / 网址 / 名片 / 电话 / 短信 / 邮件 / WhatsApp / 日历 / 导航 / APP下载 / 聚合支付 / Wi-Fi
         const genSeg = document.getElementById('genModeSeg');
         if (genSeg) {
             const genThumb = genSeg.querySelector('.gen-thumb');
             const genInput = document.getElementById('genInput');
-            const hints = { text: '输入要生成二维码的文字', url: '输入网址，例如 https://example.com', batch: '每行一条内容，批量生成二维码' };
+            const hints = { text: '输入要生成二维码的文字', url: '输入网址，例如 https://example.com' };
             function placeGenThumb() {
                 const act = genSeg.querySelector('.gen-btn.active');
                 if (!act || !genThumb) return;
@@ -1563,7 +1929,7 @@ height: auto;
                         if (genInput) genInput.style.display = 'block';
                     }
                     const genBtnEl = document.getElementById('genBtn');
-                    if (genBtnEl) genBtnEl.textContent = (mode === 'batch') ? '批量生成并打包' : '生成二维码';
+                    if (genBtnEl) genBtnEl.textContent = '清空';
                     // 切换生成类型：右侧上一个二维码清空，恢复「此处生成二维码」占位
                     if (typeof resetPreview === 'function') resetPreview();
                     placeGenThumb();
@@ -1664,7 +2030,7 @@ height: auto;
                 if (genInput) { genInput.value = ''; genInput.placeholder = hints.text; genInput.style.display = 'block'; }
                 hideAllRows();
                 const genBtnEl = document.getElementById('genBtn');
-                if (genBtnEl) genBtnEl.textContent = '生成二维码';
+                if (genBtnEl) genBtnEl.textContent = '清空';
                 // 归位后立刻把蓝色滑块挪回「文本」上
                 const gv = document.getElementById('genView');
                 if (genThumb && gv && gv.style.display !== 'none') {
@@ -1757,6 +2123,8 @@ height: auto;
             ed.setUint16(20, 0, true);
             return new Blob(parts.concat(central, [eocd]), { type: 'application/zip' });
         }
+        // 供「批量生码」档位复用（该函数在本作用域内，需显式暴露）
+        window.__qrMakeZip = makeZip;
         function downloadBlob(blob, filename) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1766,46 +2134,9 @@ height: auto;
             a.click();
             setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 2000);
         }
-        async function qrToCanvasPng(text) {
-            const c = document.createElement('canvas');
-            try {
-                const ret = QRCode.toCanvas(c, text, { width: 600, margin: 2, errorCorrectionLevel: 'H' });
-                if (ret && typeof ret.then === 'function') await ret;
-            } catch (e) { throw e; }
-            const blob = await new Promise(function (resolve) { c.toBlob(resolve, 'image/png'); });
-            if (!blob) throw new Error('二维码图片生成失败');
-            return { blob: blob, canvas: c };
-        }
-        async function runBatchGen(txt) {
-            const lines = txt.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
-            if (!lines.length) return;
-            const genBtnEl = document.getElementById('genBtn');
-            const oldLabel = genBtnEl ? genBtnEl.textContent : '';
-            if (genBtnEl) { genBtnEl.disabled = true; genBtnEl.style.opacity = '0.6'; genBtnEl.textContent = '正在批量生成…'; }
-            try {
-                const files = [];
-                let firstCanvas = null;
-                for (let i = 0; i < lines.length; i++) {
-                    const r = await qrToCanvasPng(lines[i]);
-                    if (!firstCanvas) firstCanvas = r.canvas;
-                    const buf = new Uint8Array(await r.blob.arrayBuffer());
-                    const pad = String(i + 1).padStart(3, '0');
-                    files.push({ name: '二维码_' + pad + '.png', data: buf });
-                }
-                const zip = makeZip(files);
-                const d = new Date();
-                const stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
-                downloadBlob(zip, '二维码批量_' + stamp + '_' + files.length + '张.zip');
-                // 批量打包不动右侧预览框：保持原有的初始样式
-            } catch (e) {
-                alert('批量生成失败：' + e.message);
-            } finally {
-                if (genBtnEl) { genBtnEl.disabled = false; genBtnEl.style.opacity = ''; genBtnEl.textContent = oldLabel || '批量生成并打包'; }
-            }
-        }
 
         const genBtn = document.getElementById('genBtn');
-        if (genBtn) genBtn.onclick = function () {
+        const runGen = function () {
             const input = document.getElementById('genInput');
             const activeG = genSeg ? genSeg.querySelector('.gen-btn.active') : null;
             let txt = (input && input.value || '').trim();
@@ -1922,7 +2253,6 @@ height: auto;
                 }
             }
             if (!txt) { if (focusEl) focusEl.focus(); return; }
-            if (activeG && activeG.dataset.gmode === 'batch') { runBatchGen(txt); return; }
             try {
                 const previewQrCanvas = document.getElementById('previewQrCanvas');
                 const previewInit = document.getElementById('previewInit');
@@ -1941,6 +2271,54 @@ height: auto;
                 alert('二维码生成失败：' + e.message);
             }
         };
+        // 「清空」按钮：清掉当前类型下的输入内容，并把右侧回到空态
+        if (genBtn) genBtn.onclick = function () {
+            const gv = document.getElementById('genView');
+            if (gv) {
+                gv.querySelectorAll('input, textarea').forEach(function (el) {
+                    if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+                    else el.value = '';
+                });
+            }
+            const ri = document.getElementById('resultInput');
+            if (ri) ri.value = '';
+            const rightBtnWrap = document.getElementById('rightBtnWrap');
+            if (rightBtnWrap) rightBtnWrap.classList.add('hidden');
+            const previewQrCanvas = document.getElementById('previewQrCanvas');
+            if (previewQrCanvas) {
+                previewQrCanvas.classList.add('hidden');
+                try { previewQrCanvas.getContext('2d').clearRect(0, 0, previewQrCanvas.width, previewQrCanvas.height); } catch (e) {}
+            }
+            const previewImg = document.getElementById('previewImg');
+            if (previewImg) previewImg.style.display = 'none';
+            const previewInit = document.getElementById('previewInit');
+            if (previewInit) previewInit.style.display = '';
+            window.offscreenBeautyCanvas = null;
+            const gi = document.getElementById('genInput');
+            if (gi && gi.style.display !== 'none') gi.focus();
+        };
+        // 二维码生成档：输入即出图（300ms 防抖），不必再点按钮；「清空」只在需要时手动清掉
+        if (genBtn) {
+            const genViewEl = document.getElementById('genView');
+            let autoTimer = null;
+            const runAuto = () => {
+                if (!genViewEl || genViewEl.style.display === 'none') return;   // 不在该档位时不自动生成
+                clearTimeout(autoTimer);
+                autoTimer = setTimeout(function () { runGen(); }, 300);
+            };
+            if (genViewEl) {
+                genViewEl.addEventListener('input', function (e) {
+                    const el = e.target;
+                    if (!el) return;
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') runAuto();
+                });
+                genViewEl.addEventListener('change', function (e) {
+                    const el = e.target;
+                    if (!el) return;
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') runAuto();
+                });
+            }
+        }
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', bindGenBtn);
@@ -1957,14 +2335,13 @@ height: auto;
     <!-- 第一行：两个卡片 -->
     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- 左侧上传解码区域 -->
-        <div class="lg:col-span-2 bg-white upload-border p-6 flex flex-col items-center justify-center min-h-[420px]" id="uploadBox">
+        <div class="lg:col-span-2 bg-white upload-border is-resolve p-6 flex flex-col items-center justify-center min-h-[420px]" id="uploadBox">
             <div id="uploadView" class="flex flex-col items-center">
                 <div class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-4"><i class="fa fa-qrcode text-3xl text-primary"></i></div>
-                <h2 class="text-2xl font-semibold text-gray-800 mb-3">上传二维码图片</h2>
-                <p class="text-gray-500 text-center mb-2">支持一次上传多张批量解码，免费版可上传9张，付费版本可上传500张</p>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-3">点击或拖拽上传二维码图片</h2>
+                <p class="text-gray-500 text-center mb-2">支持一次上传多张批量解码</p>
                 <p class="text-gray-500 text-center">支持jpg、png、jpeg、gif等格式，支持 <span class="text-primary">微信、QQ截屏解码</span></p>
                 <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
-                <button onclick="document.getElementById('fileInput').click()" class="mt-5 px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90"> 选择图片 </button>
             </div>
 
             <!-- 生成模式视图（滑块切到「二维码生成」时显示）：一个大输入框 + 生成二维码按钮 -->
@@ -1984,10 +2361,9 @@ height: auto;
                         <button type="button" class="gen-btn" data-gmode="app">APP下载</button>
                         <button type="button" class="gen-btn" data-gmode="pay">聚合支付</button>
                         <button type="button" class="gen-btn" data-gmode="wifi">Wi-Fi</button>
-                        <button type="button" class="gen-btn" data-gmode="batch">批量生码</button>
                     </div>
                 </div>
-                <!-- 输入区占位固定高度：文本/网址/名片/电话/短信/Wi-Fi/批量生码切换时，上方滑块与下方按钮位置不动 -->
+                <!-- 输入区占位固定高度：切换生成类型时，上方滑块与下方按钮位置不动 -->
                 <div id="genInputSlot" style="height:220px;display:flex;align-items:center;">
                 <div id="genUrlRow" class="gen-url-box" style="display:none;">
                     <select id="genProtoSelect" class="gen-proto-select">
@@ -2116,8 +2492,297 @@ height: auto;
                           style="height:220px;min-height:220px;font-size:15px;line-height:1.6;box-sizing:border-box;border-color:#407bdd;"></textarea>
                 </div>
                 <div class="flex justify-center">
-                    <button id="genBtn" class="mt-5 px-8 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90">生成二维码</button>
+                    <button id="genBtn" class="mt-5 batch-clear-btn">清空</button>
                 </div>
+            </div>
+
+            <!-- 条形码生成视图（滑块切到「条形码生成」时显示） -->
+            <div id="barView" class="bar-view w-full" style="display:none;">
+                <!-- 码制切换 -->
+                <div class="bar-kind-wrap">
+                    <div class="bar-kind-row" id="barKindRow">
+                        <button type="button" class="bar-kind active" data-bkind="code128">Code128</button>
+                        <button type="button" class="bar-kind" data-bkind="code39">Code39</button>
+                        <button type="button" class="bar-kind" data-bkind="ean13">EAN-13</button>
+                        <button type="button" class="bar-kind" data-bkind="itf">ITF</button>
+                        <button type="button" class="bar-kind bar-kind-more" id="barKindMore" aria-expanded="false">
+                            <span>更多</span>
+                            <svg class="bar-more-arrow" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                    <div class="bar-kind-menu" id="barKindMenu" hidden>
+                        <div class="bar-kind-menu-grid">
+                            <button type="button" class="bar-kind" data-bkind="code39ext">Code39扩展</button>
+                            <button type="button" class="bar-kind" data-bkind="code93">Code93</button>
+                            <button type="button" class="bar-kind" data-bkind="code11">Code11</button>
+                            <button type="button" class="bar-kind" data-bkind="codabar">Codabar</button>
+                            <button type="button" class="bar-kind" data-bkind="ean8">EAN-8</button>
+                            <button type="button" class="bar-kind" data-bkind="gs1">GS1-128</button>
+                            <button type="button" class="bar-kind" data-bkind="itf2of5">Interleaved 2 of 5</button>
+                            <button type="button" class="bar-kind" data-bkind="std2of5">Standard 2 of 5</button>
+                            <button type="button" class="bar-kind" data-bkind="isbn">ISBN 书号条码</button>
+                            <button type="button" class="bar-kind" data-bkind="itf14">ITF-14</button>
+                            <button type="button" class="bar-kind" data-bkind="msi">MSI</button>
+                            <button type="button" class="bar-kind" data-bkind="upca">UPC-A</button>
+                            <button type="button" class="bar-kind" data-bkind="upce">UPC-E</button>
+                            <button type="button" class="bar-kind" data-bkind="upcext2">UPC Extension 2 Digits</button>
+                            <button type="button" class="bar-kind" data-bkind="upcext5">UPC Extension 5 Digits</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- 内容输入 -->
+                <div class="bar-input-wrap">
+                    <input id="barInput" type="text" class="bar-input" placeholder="输入要生成条形码的内容" autocomplete="off" spellcheck="false">
+                </div>
+                <!-- 样式设置：只在成功生成条形码后显示 -->
+                <div id="barOptGrid" class="bar-opt-grid" style="display:none;">
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">条码颜色</span>
+                        <input type="color" id="barColor" class="bar-color" value="#000000">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">背景颜色</span>
+                        <input type="color" id="barBg" class="bar-color" value="#ffffff">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">条码高度 <b id="barHeightVal">15</b> mm</span>
+                        <input type="range" id="barHeight" class="bar-range" min="6" max="40" step="1" value="15">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">条宽 <b id="barScaleVal">3</b> px</span>
+                        <input type="range" id="barScale" class="bar-range" min="1" max="8" step="1" value="3">
+                    </label>
+                    <label class="bar-opt bar-opt-check">
+                        <span class="bar-opt-label">显示字符</span>
+                        <span class="bar-switch">
+                            <input type="checkbox" id="barShowText">
+                            <span class="bar-switch-track"></span>
+                            <span class="bar-switch-dot"></span>
+                        </span>
+                    </label>
+                    <label class="bar-opt bar-textopt">
+                        <span class="bar-opt-label">字符大小 <b id="barTextSizeVal">12</b> pt</span>
+                        <input type="range" id="barTextSize" class="bar-range" min="8" max="24" step="1" value="12">
+                    </label>
+                    <label class="bar-opt bar-textopt">
+                        <span class="bar-opt-label">条码与字符间距 <b id="barTextGapVal">2</b> pt</span>
+                        <input type="range" id="barTextGap" class="bar-range" min="0" max="16" step="1" value="2">
+                    </label>
+                    <div class="bar-opt bar-textopt bar-textopt-wide">
+                        <span class="bar-opt-label">字符位置</span>
+                        <div class="bar-pos-seg">
+                            <span class="bar-pos-thumb"></span>
+                            <button type="button" class="bar-pos-btn active" data-bpos="0">下方</button>
+                            <button type="button" class="bar-pos-btn" data-bpos="1">上方</button>
+                        </div>
+                        <input type="hidden" id="barTextPos" value="0">
+                    </div>
+                </div>
+                <!-- 输入内容即自动生成，无需「生成」按钮 -->
+                <div id="barHint" class="bar-hint">输入内容后自动生成条形码</div>
+            </div>
+
+            <!-- Data Matrix 码生成视图（滑块切到「Data Matrix 码生成」时显示） -->
+            <div id="dmView" class="bar-view w-full" style="display:none;">
+                <div class="bar-input-wrap">
+                    <input id="dmInput" type="text" class="bar-input" placeholder="输入要生成 Data Matrix 码的内容" autocomplete="off" spellcheck="false">
+                </div>
+                <div id="dmOptGrid" class="bar-opt-grid" style="display:none;">
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">码颜色</span>
+                        <input type="color" id="dmColor" class="bar-color" value="#000000">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">背景颜色</span>
+                        <input type="color" id="dmBg" class="bar-color" value="#ffffff">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">模块尺寸 <b id="dmScaleVal">6</b> px</span>
+                        <input type="range" id="dmScale" class="bar-range" min="2" max="12" step="1" value="6">
+                    </label>
+                </div>
+                <div id="dmHint" class="bar-hint">输入内容后自动生成 Data Matrix 码</div>
+            </div>
+
+            <!-- PDF417 码生成视图（滑块切到「PDF417 码生成」时显示） -->
+            <div id="pdfView" class="bar-view w-full" style="display:none;">
+                <div class="bar-input-wrap">
+                    <input id="pdfInput" type="text" class="bar-input" placeholder="输入要生成 PDF417 码的内容" autocomplete="off" spellcheck="false">
+                </div>
+                <div id="pdfOptGrid" class="bar-opt-grid" style="display:none;">
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">码颜色</span>
+                        <input type="color" id="pdfColor" class="bar-color" value="#000000">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">背景颜色</span>
+                        <input type="color" id="pdfBg" class="bar-color" value="#ffffff">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">模块尺寸 <b id="pdfScaleVal">3</b> px</span>
+                        <input type="range" id="pdfScale" class="bar-range" min="1" max="8" step="1" value="3">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">纠错等级</span>
+                        <select id="pdfEc" class="pdf-select">
+                            <option value="" selected>自动</option>
+                            <option value="1">1（最低，码最小）</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8（最高，最耐污损）</option>
+                        </select>
+                    </label>
+                </div>
+                <div id="pdfHint" class="bar-hint">输入内容后自动生成 PDF417 码</div>
+            </div>
+
+            <!-- Aztec Code 生成视图（滑块切到「Aztec Code 生成」时显示） -->
+            <div id="azView" class="bar-view w-full" style="display:none;">
+                <div class="bar-input-wrap">
+                    <input id="azInput" type="text" class="bar-input" placeholder="输入要生成 Aztec Code 的内容" autocomplete="off" spellcheck="false">
+                </div>
+                <div id="azOptGrid" class="bar-opt-grid" style="display:none;">
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">码颜色</span>
+                        <input type="color" id="azColor" class="bar-color" value="#000000">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">背景颜色</span>
+                        <input type="color" id="azBg" class="bar-color" value="#ffffff">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">模块尺寸 <b id="azScaleVal">6</b> px</span>
+                        <input type="range" id="azScale" class="bar-range" min="2" max="12" step="1" value="6">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">纠错等级</span>
+                        <select id="azEc" class="pdf-select">
+                            <option value="" selected>默认（23%）</option>
+                            <option value="10">10%</option>
+                            <option value="23">23%</option>
+                            <option value="33">33%</option>
+                            <option value="50">50%</option>
+                        </select>
+                    </label>
+                </div>
+                <div id="azHint" class="bar-hint">输入内容后自动生成 Aztec Code</div>
+            </div>
+
+            <!-- 汉信码生成视图（滑块切到「汉信码生成」时显示） -->
+            <div id="hxView" class="bar-view w-full" style="display:none;">
+                <div class="bar-input-wrap">
+                    <input id="hxInput" type="text" class="bar-input" placeholder="输入要生成汉信码的内容" autocomplete="off" spellcheck="false">
+                </div>
+                <div id="hxOptGrid" class="bar-opt-grid" style="display:none;">
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">码颜色</span>
+                        <input type="color" id="hxColor" class="bar-color" value="#000000">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">背景颜色</span>
+                        <input type="color" id="hxBg" class="bar-color" value="#ffffff">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">模块尺寸 <b id="hxScaleVal">4</b> px</span>
+                        <input type="range" id="hxScale" class="bar-range" min="2" max="10" step="1" value="4">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">纠错等级</span>
+                        <select id="hxEc" class="pdf-select">
+                            <option value="" selected>默认（自动选择）</option>
+                            <option value="L1">L1（约 8%）</option>
+                            <option value="L2">L2（约 15%）</option>
+                            <option value="L3">L3（约 23%）</option>
+                            <option value="L4">L4（约 30%）</option>
+                        </select>
+                    </label>
+                </div>
+                <div id="hxHint" class="bar-hint">输入内容后自动生成汉信码</div>
+            </div>
+
+            <!-- MaxiCode 生成视图（滑块切到「MaxiCode 生成」时显示） -->
+            <div id="mxView" class="bar-view w-full" style="display:none;">
+                <div class="bar-input-wrap">
+                    <input id="mxInput" type="text" class="bar-input" placeholder="输入要生成 MaxiCode 的内容" autocomplete="off" spellcheck="false">
+                </div>
+                <div id="mxOptGrid" class="bar-opt-grid" style="display:none;">
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">码颜色</span>
+                        <input type="color" id="mxColor" class="bar-color" value="#000000">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">背景颜色</span>
+                        <input type="color" id="mxBg" class="bar-color" value="#ffffff">
+                    </label>
+                    <label class="bar-opt">
+                        <span class="bar-opt-label">模块尺寸 <b id="mxScaleVal">3</b> px</span>
+                        <input type="range" id="mxScale" class="bar-range" min="2" max="8" step="1" value="3">
+                    </label>
+                </div>
+                <div id="mxHint" class="bar-hint">输入内容后自动生成 MaxiCode</div>
+            </div>
+
+            <!-- 批量生码视图（滑块切到「批量生码」时显示） -->
+            <div id="batchView" class="batch-view w-full" style="display:none;">
+                <div class="batch-seg" id="batchSeg">
+                    <span class="batch-thumb" id="batchThumb"></span>
+                    <button type="button" class="batch-btn active" data-bmode="qr">二维码</button>
+                    <button type="button" class="batch-btn" data-bmode="barcode">条形码</button>
+                    <button type="button" class="batch-btn" data-bmode="dm">Data Matrix 码</button>
+                    <button type="button" class="batch-btn" data-bmode="pdf">PDF417 码</button>
+                    <button type="button" class="batch-btn" data-bmode="az">Aztec Code</button>
+                    <button type="button" class="batch-btn" data-bmode="hx">汉信码</button>
+                    <button type="button" class="batch-btn" data-bmode="mx">MaxiCode</button>
+                </div>
+                <div class="batch-kind-wrap" id="batchKindWrap">
+                    <div class="batch-kind-row" id="batchKindRow" style="display:none;">
+                        <button type="button" class="bb-kind active" data-bbkind="code128">Code128</button>
+                        <button type="button" class="bb-kind" data-bbkind="code39">Code39</button>
+                        <button type="button" class="bb-kind" data-bbkind="ean13">EAN-13</button>
+                        <button type="button" class="bb-kind" data-bbkind="itf">ITF</button>
+                        <button type="button" class="bb-kind bb-kind-more" id="batchKindMore" aria-expanded="false">
+                            <span>更多</span>
+                            <svg class="bar-more-arrow" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                    <div class="batch-kind-menu" id="batchKindMenu" hidden>
+                        <div class="batch-kind-menu-grid">
+                            <button type="button" class="bb-kind" data-bbkind="code39ext">Code39扩展</button>
+                            <button type="button" class="bb-kind" data-bbkind="code93">Code93</button>
+                            <button type="button" class="bb-kind" data-bbkind="code11">Code11</button>
+                            <button type="button" class="bb-kind" data-bbkind="codabar">Codabar</button>
+                            <button type="button" class="bb-kind" data-bbkind="ean8">EAN-8</button>
+                            <button type="button" class="bb-kind" data-bbkind="gs1">GS1-128</button>
+                            <button type="button" class="bb-kind" data-bbkind="itf2of5">Interleaved 2 of 5</button>
+                            <button type="button" class="bb-kind" data-bbkind="std2of5">Standard 2 of 5</button>
+                            <button type="button" class="bb-kind" data-bbkind="isbn">ISBN</button>
+                            <button type="button" class="bb-kind" data-bbkind="itf14">ITF-14</button>
+                            <button type="button" class="bb-kind" data-bbkind="msi">MSI</button>
+                            <button type="button" class="bb-kind" data-bbkind="upca">UPC-A</button>
+                            <button type="button" class="bb-kind" data-bbkind="upce">UPC-E</button>
+                            <button type="button" class="bb-kind" data-bbkind="upcext2">UPC 扩展2</button>
+                            <button type="button" class="bb-kind" data-bbkind="upcext5">UPC 扩展5</button>
+                        </div>
+                    </div>
+                </div>
+                <textarea id="batchInput" class="batch-input" rows="8" placeholder="每行一条内容，批量生成二维码（最多 50 条）" spellcheck="false"></textarea>
+                <div class="batch-text-row" id="batchTextRow" style="display:none;">
+                    <span class="batch-text-label">显示字符</span>
+                    <span class="bar-switch">
+                        <input type="checkbox" id="batchShowText">
+                        <span class="bar-switch-track"></span>
+                        <span class="bar-switch-dot"></span>
+                    </span>
+                </div>
+                <div class="batch-actions">
+                    <button type="button" id="batchGenBtn" class="batch-gen-btn">批量生成</button>
+                    <button type="button" id="batchClearBtn" class="batch-clear-btn">清空</button>
+                </div>
+                <div id="batchHint" class="batch-hint">每行一条内容，最多一次生成 50 个</div>
             </div>
 
             <!-- 解码成功视图（默认隐藏） -->
@@ -2136,18 +2801,145 @@ height: auto;
         <!-- 右侧预览区域 -->
         <div class="bg-white upload-border p-6 flex flex-col items-center justify-center min-h-[420px]">
             <div id="previewInit" class="flex flex-col items-center">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-gray-300">
+                <svg id="previewInitQrIcon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-gray-300">
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
                     <rect x="3" y="14" width="7" height="7"></rect>
                     <line x1="14" y1="14" x2="21" y2="21"></line>
                     <line x1="21" y1="14" x2="14" y2="21"></line>
                 </svg>
-                <p class="text-gray-400 text-lg mt-2">此处生成二维码</p>
+                <!-- 条形码档位的空态图标：竖条码形状 -->
+                <svg id="previewInitBarIcon" version="1.1" width="82" height="82" viewBox="0 0 24 24" class="text-gray-300" aria-hidden="true" style="display:none;">
+                    <g fill="currentColor">
+                        <rect x="2" y="4" width="1.9" height="14"></rect>
+                        <rect x="4.9" y="4" width="1" height="14"></rect>
+                        <rect x="7.2" y="4" width="2.2" height="14"></rect>
+                        <rect x="10.6" y="4" width="1" height="14"></rect>
+                        <rect x="12.9" y="4" width="1.6" height="14"></rect>
+                        <rect x="15.6" y="4" width="1" height="14"></rect>
+                        <rect x="17.9" y="4" width="2.3" height="14"></rect>
+                    </g>
+                    <rect x="2" y="19.2" width="18.4" height="1" fill="currentColor" opacity="0.4"></rect>
+                </svg>
+                <p id="previewInitText" class="text-gray-400 text-lg mt-2">此处生成二维码</p>
             </div>
             <img id="previewImg" class="hidden max-w-full max-h-[400px] object-contain">
             <!-- =========用于右侧展示重新生成的标准二维码canvas========= -->
             <canvas id="previewQrCanvas" class="hidden max-w-full max-h-[320px] object-contain"></canvas>
+            <!-- 条形码预览（切到「条形码生成」且已生成后显示） -->
+            <div id="barPreview" class="hidden w-full" style="display:none;">
+                <div class="bar-canvas-scroll">
+                    <canvas id="barCanvas" class="block max-w-full" style="height:auto;margin:0 auto;"></canvas>
+                </div>
+            </div>
+            <!-- Data Matrix 预览（切到该档位且已生成后显示） -->
+            <div id="dmPreview" class="hidden w-full" style="display:none;">
+                <div class="bar-canvas-scroll">
+                    <canvas id="dmCanvas" class="block max-w-full" style="height:auto;margin:0 auto;"></canvas>
+                </div>
+            </div>
+            <!-- PDF417 预览（切到该档位且已生成后显示） -->
+            <div id="pdfPreview" class="hidden w-full" style="display:none;">
+                <div class="bar-canvas-scroll">
+                    <canvas id="pdfCanvas" class="block max-w-full" style="height:auto;margin:0 auto;"></canvas>
+                </div>
+            </div>
+            <!-- Aztec Code 预览（切到该档位且已生成后显示） -->
+            <div id="azPreview" class="hidden w-full" style="display:none;">
+                <div class="bar-canvas-scroll">
+                    <canvas id="azCanvas" class="block max-w-full" style="height:auto;margin:0 auto;"></canvas>
+                </div>
+            </div>
+            <!-- 汉信码预览（切到该档位且已生成后显示） -->
+            <div id="hxPreview" class="hidden w-full" style="display:none;">
+                <div class="bar-canvas-scroll">
+                    <canvas id="hxCanvas" class="block max-w-full" style="height:auto;margin:0 auto;"></canvas>
+                </div>
+            </div>
+            <!-- MaxiCode 预览（切到该档位且已生成后显示） -->
+            <div id="mxPreview" class="hidden w-full" style="display:none;">
+                <div class="bar-canvas-scroll">
+                    <canvas id="mxCanvas" class="block max-w-full" style="height:auto;margin:0 auto;"></canvas>
+                </div>
+            </div>
+            <!-- 批量生码结果网格（切到「批量生码」并生成后显示） -->
+            <div id="batchPreview" class="batch-preview hidden" style="display:none;">
+                <div class="batch-count">共 <b id="batchCount">0</b> 个结果</div>
+                <div id="batchGrid" class="batch-grid"></div>
+                <button type="button" id="batchZipBtn" class="batch-zip-btn">打包下载全部（ZIP）</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 左侧虚线矩形下方：清空按钮；右侧虚线矩形下方：下载按钮（仅「条形码生成」且已生成时显示） -->
+    <div id="barDlWrap" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mt-3" style="display:none;">
+        <div class="lg:col-span-2 bar-left-btns">
+            <button type="button" id="barClearBtn" class="bar-clear-btn">清空</button>
+            <button type="button" id="barResetBtn" class="bar-reset-btn">重置</button>
+        </div>
+        <div class="bar-dl-btns">
+            <button type="button" id="barDownloadBtn" class="bar-download-btn">下载条形码图片</button>
+            <button type="button" id="barDownloadSvgBtn" class="bar-download-btn">下载SVG矢量图</button>
+        </div>
+    </div>
+
+    <!-- Data Matrix 档位：清空/重置 + 下载（仅该档位且已生成时显示） -->
+    <div id="dmDlWrap" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mt-3" style="display:none;">
+        <div class="lg:col-span-2 bar-left-btns">
+            <button type="button" id="dmClearBtn" class="bar-clear-btn">清空</button>
+            <button type="button" id="dmResetBtn" class="bar-reset-btn">重置</button>
+        </div>
+        <div class="bar-dl-btns">
+            <button type="button" id="dmDownloadBtn" class="bar-download-btn">下载 Data Matrix 图片</button>
+            <button type="button" id="dmDownloadSvgBtn" class="bar-download-btn">下载SVG矢量图</button>
+        </div>
+    </div>
+
+    <!-- PDF417 档位：清空/重置 + 下载（仅该档位且已生成时显示） -->
+    <div id="pdfDlWrap" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mt-3" style="display:none;">
+        <div class="lg:col-span-2 bar-left-btns">
+            <button type="button" id="pdfClearBtn" class="bar-clear-btn">清空</button>
+            <button type="button" id="pdfResetBtn" class="bar-reset-btn">重置</button>
+        </div>
+        <div class="bar-dl-btns">
+            <button type="button" id="pdfDownloadBtn" class="bar-download-btn">下载 PDF417 图片</button>
+            <button type="button" id="pdfDownloadSvgBtn" class="bar-download-btn">下载SVG矢量图</button>
+        </div>
+    </div>
+
+    <!-- Aztec Code 档位：清空/重置 + 下载（仅该档位且已生成时显示） -->
+    <div id="azDlWrap" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mt-3" style="display:none;">
+        <div class="lg:col-span-2 bar-left-btns">
+            <button type="button" id="azClearBtn" class="bar-clear-btn">清空</button>
+            <button type="button" id="azResetBtn" class="bar-reset-btn">重置</button>
+        </div>
+        <div class="bar-dl-btns">
+            <button type="button" id="azDownloadBtn" class="bar-download-btn">下载 Aztec Code 图片</button>
+            <button type="button" id="azDownloadSvgBtn" class="bar-download-btn">下载SVG矢量图</button>
+        </div>
+    </div>
+
+    <!-- 汉信码档位：清空/重置 + 下载（仅该档位且已生成时显示） -->
+    <div id="hxDlWrap" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mt-3" style="display:none;">
+        <div class="lg:col-span-2 bar-left-btns">
+            <button type="button" id="hxClearBtn" class="bar-clear-btn">清空</button>
+            <button type="button" id="hxResetBtn" class="bar-reset-btn">重置</button>
+        </div>
+        <div class="bar-dl-btns">
+            <button type="button" id="hxDownloadBtn" class="bar-download-btn">下载汉信码图片</button>
+            <button type="button" id="hxDownloadSvgBtn" class="bar-download-btn">下载SVG矢量图</button>
+        </div>
+    </div>
+
+    <!-- MaxiCode 档位：清空/重置 + 下载（仅该档位且已生成时显示） -->
+    <div id="mxDlWrap" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mt-3" style="display:none;">
+        <div class="lg:col-span-2 bar-left-btns">
+            <button type="button" id="mxClearBtn" class="bar-clear-btn">清空</button>
+            <button type="button" id="mxResetBtn" class="bar-reset-btn">重置</button>
+        </div>
+        <div class="bar-dl-btns">
+            <button type="button" id="mxDownloadBtn" class="bar-download-btn">下载 MaxiCode 图片</button>
+            <button type="button" id="mxDownloadSvgBtn" class="bar-download-btn">下载SVG矢量图</button>
         </div>
     </div>
 
@@ -2175,6 +2967,28 @@ height: auto;
                     <button id="beautyBtn" class="flex-1 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">二维码美化</button>
                     <button class="flex-1 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">标签排版</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 多图解码结果弹窗（上传超过 1 张时出现） ========== -->
+    <div id="decodeModal" class="decode-modal-mask">
+        <div class="decode-modal" role="dialog" aria-modal="true" aria-labelledby="decodeModalTitle">
+            <div class="decode-modal-head">
+                <span id="decodeModalTitle" class="decode-modal-title">解码结果</span>
+                <button id="decodeModalClose" class="decode-modal-close" aria-label="关闭">&#10005;</button>
+            </div>
+            <div class="decode-modal-body">
+                <div class="decode-modal-summary">
+                    <span id="decodeModalCount">解码0张图片</span>
+                    <button id="decodeCopyBtn" class="decode-copy-link">复制解码结果</button>
+                </div>
+                <table class="decode-table">
+                    <thead>
+                        <tr><th>二维码图片名称</th><th>解码内容</th></tr>
+                    </thead>
+                    <tbody id="decodeTableBody"></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -3488,6 +4302,8 @@ height: auto;
                 if(!fileInput) return; //防御null报错
                 const files = e.target.files;
                 if(!files || files.length === 0) return;
+                // 多张图片：交给「解码结果」弹窗处理，单张才走下面这套结果视图
+                if (files.length > 1) return;
                 // 拿到选中的第一张图片（你现有逻辑，先处理单张，后续可扩展批量）
                 const file = files[0];
                 const reader = new FileReader();
@@ -3544,6 +4360,7 @@ height: auto;
                         // 显示“再建一个”、下载按钮区域
                         resetBtn.classList.remove('hidden');
                         rightBtnWrap.classList.remove('hidden');
+                        if (typeof window.__qrUploadBoxRefreshHover === 'function') setTimeout(window.__qrUploadBoxRefreshHover, 0);
                     } else {
                         alert("未能识别到二维码，请换一张清晰图片");
                     }
@@ -4407,7 +5224,7 @@ height: auto;
                 { finder: 'rounded', dot: 'rounded', dark: '#4488ff', light: '#ffffff', frame: "double", gradient: true, centerLogo: false },
                 { finder: 'square', dot: 'square', dark: '#2266dd', light: '#ffffff', frame: "card", gradient: true, centerLogo: true },
                 { finder: 'square', dot: 'dot', dark: '#207058', light: '#ffffff', frame: "stamp", gradient: true, centerLogo: false },
-                { finder: 'square', dot: 'square', dark: '#2299aa', light: '#ffffff', frame: "foldcorner", gradient: false, centerLogo: false },
+                { finder: 'square', dot: 'square', dark: '#2299aa', light: '#ffffff', frame: "fold-tri-c7", gradient: false, centerLogo: false },
                 // ✅ 原样式7，改成 chinese-solid
                 { finder: 'square', dot: 'square', dark: '#333333', light: '#ffffff', frame: "chinese-solid", gradient: false, centerLogo: false },
                 // 样式8：四角中国结回纹，和截图一致
@@ -5328,6 +6145,8 @@ height: auto;
         // 在样式绘制完成后，用用户设置的颜色重绘三个码眼（仅预览、且勾选“应用到码眼”时）
         function __qrDrawEyes(ctx, opt){
             if(!__qrAllowPaint(ctx)) return;
+            // fold-tri-c7：本体自带三段彩色圆角码眼，主色重绘会把它压成直角方眼，这里跳过
+            if(opt && opt.frame === 'fold-tri-c7') return;
             if(!qrColorState.active && !qrColorState.eyeTouched) return;
             const g = __qrEyeGeom;
             if(!g) return;
@@ -6419,7 +7238,7 @@ height: auto;
                         "teal-band": 13,
                         "gray-bracket": 13,
                         "dot-round": 13,
-                        "blue-stack": 14, "tooth-gradient": 13, "corner-meander": 12, "cyan-dual": 10, "lattice-crimson": 13, "icon-collage": 12, "fold-tri": 14, "facet-ring": 12,
+                        "blue-stack": 14, "tooth-gradient": 13, "corner-meander": 12, "cyan-dual": 10, "lattice-crimson": 13, "icon-collage": 12, "fold-tri": 14, "facet-ring": 12, "fold-tri-c7": 14,
                         "lattice-blue": 13,
                         "corner-frame": 7,   // 样式9：本体放大（原 13）
                         "sky-corners": 10,   // 样式10：本体放大（原 24）
@@ -6428,7 +7247,7 @@ height: auto;
                         "fold-sheet": 14,
                         "chinese-double": 11,
                         "bw-1": 5,
-                        "bw-2": 9,
+                        "bw-2": 14,   // 与外框样式12（fold-sheet）一致：本体缩小，避免压到下边框
                         "bw-3": 9,
                         "bw-4": 14,
                         "bw-5": 7,
@@ -7699,7 +8518,7 @@ height: auto;
                     }
 
                     //经典样式8.5 折角纸片方框 fold-sheet（左上折角 + 右下小三角）
-                    if (opt.frame === "fold-sheet" || opt.frame === "fold-tri") {
+                    if (opt.frame === "fold-sheet" || opt.frame === "fold-tri" || opt.frame === "fold-tri-c7") {
                         // 先按文字行数改画布尺寸（改尺寸会清空画布），再整幅重绘
                         // 文字统一交给 __qrDrawTextLayer（按“文字位置”放置），这里不再自己画框下方的文字
                         const fsLines = [];
@@ -7722,7 +8541,7 @@ height: auto;
                         ctx.save();
                         // fold-tri：沿左上→右下对角的三色（青 #36A8B6 / 橘 #FC9E39 / 绿 #60C085），按参考图的硬切换位置分段
                         let fsInk = '#000000';
-                        if (opt.frame === "fold-tri") {
+                        if (opt.frame === "fold-tri" || opt.frame === "fold-tri-c7") {
                             const fsGrad = ctx.createLinearGradient(0, 0, w, w);
                             fsGrad.addColorStop(0, '#36A8B6');
                             fsGrad.addColorStop(0.347, '#36A8B6');
@@ -7795,7 +8614,8 @@ height: auto;
                         ctx.restore();
 
                         // 2) 二维码本体：缩略图只显示空框，预览才画码点
-                        if (!cardExtra.pillTextFixed) {
+                        // fold-tri-c7：本体改用 foldcorner 分支的彩色斜角码点，这里只画三色外框
+                        if (!cardExtra.pillTextFixed && opt.frame !== "fold-tri-c7") {
                             ctx.save();
                             ctx.fillStyle = __qrBgFill(ctx);
                             ctx.fillRect(qrBox.x, qrBox.y, qrBox.w, qrBox.h);
@@ -9557,9 +10377,8 @@ height: auto;
                         ctx.restore();
                     }
                     //经典样式6 foldcorner
-                    if (opt.frame === "foldcorner") {
-                        ctx.save();
-                        // 四色定义
+                    if (opt.frame === "foldcorner" || opt.frame === "fold-tri-c7") {
+                        // 四色定义（本体码点/码眼共用）
                         const colorTL = "#2299aa"; //左上定位蓝2299aa
                         const colorTR = "#f29233"; //右上定位橙f29233
                         const colorBL = "#f29233"; //左下定位橙f29233
@@ -9569,6 +10388,9 @@ height: auto;
                         const colorDot3 = "#46b987";
                         const colorDot4 = "#66aabb";
                         const colorRed = "#46b987"; //右下角短线
+                        // fold-tri-c7 的外框由 fold-tri 分支绘制，这里只画彩色本体
+                        if (opt.frame === "foldcorner") {
+                        ctx.save();
                         // 外框盒子
                         const pad = drawAreaSize * 0.16;
                         // ========== 这里改成正方形逻辑 ==========
@@ -9731,6 +10553,7 @@ height: auto;
                         // =====================================================
 
                         ctx.restore();
+                        }
 
                         // ========== ✅【移动到这里：先定义码眼绘制函数】 ==========
                         // 绘制带单独圆角控制的外码眼函数（arcTo标准圆角，修复圆角失效）
@@ -9884,7 +10707,16 @@ height: auto;
                             const rTR = cfg.outer.tr;
                             const rBL = cfg.outer.bl;
                             const rBR = cfg.outer.br;
-                            drawFinderOuter(px, py, eyeSize, fp.c, rTL, rTR, rBL, rBR);
+                            // fold-tri-c7：码眼跟随二维码颜色，但保留原三段彩色圆角造型
+                            // 勾选“自定义码眼颜色”时，外圈/内芯分别取下方两个取色器；否则跟随主色
+                            const fcApplyEye = (opt.frame === 'fold-tri-c7' && typeof qrColorState !== 'undefined' && qrColorState && qrColorState.applyEye);
+                            const fcEyeOuter = (opt.frame === 'fold-tri-c7')
+                                ? (fcApplyEye ? (qrColorState.eyeOuter || fp.c) : __qrPaint(ctx, fp.c))
+                                : fp.c;
+                            const fcEyeInner = (opt.frame === 'fold-tri-c7')
+                                ? (fcApplyEye ? (qrColorState.eyeInner || fp.c) : __qrPaint(ctx, fp.c))
+                                : fp.c;
+                            drawFinderOuter(px, py, eyeSize, fcEyeOuter, rTL, rTR, rBL, rBR);
 
                             // ========== 修改：白色留白跟随外层码眼圆角等比例缩放，消除缝隙 =========
                             const whiteX = px + cellSize;
@@ -9901,7 +10733,7 @@ height: auto;
                             // 内码眼圆角
                             const innerEyeSize = cellSize * 3;
                             const innerR = cfg.innerR;
-                            drawInnerEye(px + cellSize * 2, py + cellSize * 2, innerEyeSize, fp.c, innerR);
+                            drawInnerEye(px + cellSize * 2, py + cellSize * 2, innerEyeSize, fcEyeInner, innerR);
                         }
                         if (opt.centerLogo) {
                             const logoSize = qrBox.w * 0.25;
@@ -11049,12 +11881,12 @@ height: auto;
                             ctx.fillRect(px, py, swCell * 7, swCell * 7);
                         }
 
-                        // 码点颜色固定为参考图的蓝→深蓝对角渐变（左上浅湖蓝 #67C4F2 → 右下深蓝 #2C66E9），
-                        // 不再读颜色面板 dark/light，也不再经过 __qrPaint
+                        // 码点默认用参考图的蓝→深蓝对角渐变（左上浅湖蓝 #67C4F2 → 右下深蓝 #2C66E9）；
+                        // 在「二维码颜色」面板设过色后，经 __qrPaint 改用面板颜色（纯色/渐变/前景图）
                         const swGrad = ctx.createLinearGradient(swQ.x, swQ.y, swQ.x + swW, swQ.y + swW);
                         swGrad.addColorStop(0, '#67C4F2');
                         swGrad.addColorStop(1, '#2C66E9');
-                        ctx.fillStyle = swGrad;
+                        ctx.fillStyle = __qrPaint(ctx, swGrad);
                         __qrNoteGeom((swQ.x + 0), (swQ.y + 0), swCell, modCount);
                         for (let y = 0; y < modCount; y++) {
                             for (let x = 0; x < modCount; x++) {
@@ -13506,172 +14338,93 @@ height: auto;
                     //黑白样式 bw-2
                     if (opt.frame === "bw-2") {
                         ctx.save();
+                        // 先把整幅画布铺成浅色底：既保证导出图有白底，
+                        // 也让「外框颜色」换色逻辑（以左上角像素为背景基准）能正确把黑框识别为前景。
+                        ctx.fillStyle = __qrBgFill(ctx);
+                        ctx.fillRect(0, 0, w, w);
                         // 全部改为黑色，彩色变量保留占位方便后续恢复
-                        const colorTL = "#000";
-                        const colorTR = "#000";
-                        const colorBL = "#000";
-                        const colorBR = "#000";
+                        // 码眼颜色与全站规则一致：
+                        // 勾「自定义码眼颜色」→ 用下方「码眼外/码眼内」两个取色器的颜色；
+                        // 未勾 → 码眼跟随二维码主色（纯色/渐变）。
+                        const bwEyeUseMain = !qrColorState.applyEye;
+                        const bwEyeMainBase = (qrColorState.mode === 'gradient')
+                            ? qrColorState.gradFrom
+                            : (qrColorState.solid || (beautyOption.color && beautyOption.color.dark) || '#000000');
+                        const bwEyeOuter = bwEyeUseMain ? __qrPaint(ctx, bwEyeMainBase) : qrColorState.eyeOuter;
+                        const bwEyeInner = bwEyeUseMain ? __qrPaint(ctx, bwEyeMainBase) : qrColorState.eyeInner;
+                        const colorTL = bwEyeOuter;
+                        const colorTR = bwEyeOuter;
+                        const colorBL = bwEyeOuter;
+                        const colorBR = bwEyeOuter;
                         const colorDot1 = "#000";
                         const colorDot2 = "#000";
                         const colorDot3 = "#000";
                         const colorDot4 = "#000";
                         const colorRed = "#000";
-                        // 外框盒子
-                        const pad = drawAreaSize * 0.16;
-                        // ========== 这里改成正方形逻辑 ==========
-                        const baseW = qrBox.w + pad * 2;
-                        const baseH = qrBox.h + pad * 2;
-                        const squareSide = Math.max(baseW, baseH);
-                        const outerBox = {
-                            x: qrBox.x - pad - (squareSide - baseW) / 2,
-                            y: qrBox.y - pad - (squareSide - baseH) / 2,
-                            w: squareSide,
-                            h: squareSide
-                        };
-                        // ======================================
-                        const foldLen = outerBox.w * 0.14;
-                        // 绘制外框 + 折角缺口
-                        ctx.lineWidth = outerBox.w * 0.022;
-                        ctx.lineCap = "round";
-                        ctx.lineJoin = "round";
+                        // 外框＝外框面板「外框样式12」（fold-sheet 折角纸片方框）：黑色粗线 + 左上/右下折角
+                        ctx.save();
+                        // bw-2 专用：样式12 的上下内边线本身略偏上（0.122 / 0.8495，中点 0.48575），
+                        // 而二维码本体居中在 0.5，导致下间距偏小。这里把整圈外框下移，令上下间距相等。
+                        const fsCenterDy = w * 0.01425;
+                        ctx.translate(0, fsCenterDy);
+                        const fsInk = '#000000';
+                        ctx.fillStyle = fsInk;
+                        ctx.strokeStyle = fsInk;
+                        const fsT = w * 0.030;
+                        const fsX0 = w * 0.100, fsX1 = w * 0.895;   // 左右外沿（保留参数与样式12一致）
+                        const fsYr = w * 0.0575;                    // 翻折条（上/下最外侧那条）中线
+                        const fsYt = w * 0.122;                     // 上边框中线
+                        const fsYb = w * 0.8495;                    // 下边框中线
+                        const fsYrB = w * 0.925;                    // 右下翻折条中线
+                        const fsEdgeL = w * 0.1125, fsEdgeR = w * 0.8825; // 左右竖边中线
+                        ctx.lineWidth = fsT;
+                        ctx.lineCap = 'butt';
+                        ctx.lineJoin = 'round';
+                        const fsRBend = w * 0.022;                  // 折角弯曲处倒圆半径
 
-                        // 上侧折角参数
-                        const pctX = 0.32;
-                        const pctY = 0.07;
-                        const startX = outerBox.x + outerBox.w * pctX;
-                        const startY = outerBox.y;
-                        const endX = outerBox.x + outerBox.w * (pctX + 0.1);
-                        const endY = outerBox.y + outerBox.h * pctY;
-
-                        const arcOffset = outerBox.w * 0.02;
-                        const cornerTopOffsetPct = 0.08;
-                        const cornerTopY = outerBox.y + outerBox.h * cornerTopOffsetPct;
-                        const horizontalLeftX = outerBox.x + outerBox.w * 0.20;
-
-                        // ✅ 左上角斜线：盒子左上角 → 横线左端点
-                        const slashStartX = outerBox.x;
-                        const slashStartY = outerBox.y;
-                        const slashEndX = horizontalLeftX;
-                        const slashEndY = endY;
-
-                        ctx.strokeStyle = colorTL;
+                        // 左右两条长竖边
                         ctx.beginPath();
-                        ctx.moveTo(slashStartX, slashStartY);
-                        ctx.lineTo(slashEndX, slashEndY);
+                        ctx.moveTo(fsEdgeL, fsYr);
+                        ctx.lineTo(fsEdgeL, fsYb);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(fsEdgeR, fsYt);
+                        ctx.lineTo(fsEdgeR, fsYrB);
                         ctx.stroke();
 
-                        // 上方外框轮廓
-                        const topLeftX = outerBox.x + foldLen;
-                        const topLeftY = outerBox.y;
-                        const topSplitX = outerBox.x + outerBox.w * 0.6;
-                        // 左段
-                        ctx.strokeStyle = colorTL;
+                        // 左上折角：外角 → 翻折条 →（倒圆）→ 斜下收进内边线
                         ctx.beginPath();
-                        ctx.moveTo(topLeftX, topLeftY);
-                        ctx.lineTo(startX - arcOffset, startY);
-                        ctx.quadraticCurveTo(startX, startY, startX + arcOffset * 0.6, startY + arcOffset * 0.6);
-                        ctx.lineTo(endX, endY);
-                        ctx.lineTo(horizontalLeftX, endY);
-                        ctx.lineTo(topSplitX, cornerTopY);
-                        ctx.stroke();
-                        // 右段
-                        ctx.strokeStyle = colorTR;
-                        ctx.beginPath();
-                        ctx.moveTo(topSplitX, cornerTopY);
-                        ctx.lineTo(outerBox.x + outerBox.w, cornerTopY);
+                        ctx.moveTo(fsEdgeL, fsYr);
+                        ctx.lineTo(w * 0.310 - fsRBend, fsYr);
+                        ctx.quadraticCurveTo(w * 0.310, fsYr, w * 0.310 + (w * 0.390 - w * 0.310) * (fsRBend / Math.hypot(w * 0.390 - w * 0.310, fsYt - fsYr)), fsYr + (fsYt - fsYr) * (fsRBend / Math.hypot(w * 0.390 - w * 0.310, fsYt - fsYr)));
+                        ctx.lineTo(w * 0.390, fsYt);
                         ctx.stroke();
 
-                        // --------------------------
-                        // ✅ 下边框完全镜像上边框
-                        // --------------------------
-                        const bottomStartX = outerBox.x + outerBox.w * (1 - pctX);
-                        const bottomStartY = outerBox.y + outerBox.h;
-                        const bottomEndX = outerBox.x + outerBox.w * (1 - (pctX + 0.1));
-                        const bottomEndY = outerBox.y + outerBox.h * (1 - pctY);
-                        const bottomArcOffset = outerBox.w * 0.02;
-                        const cornerBottomOffsetPct = 0.08;
-                        const cornerBottomY = outerBox.y + outerBox.h * (1 - cornerBottomOffsetPct);
-                        const horizontalRightX = outerBox.x + outerBox.w * (1 - 0.20);
-
-                        // ✅ 右下斜线
-                        const slashBRStartX = outerBox.x + outerBox.w;
-                        const slashBRStartY = outerBox.y + outerBox.h;
-                        const slashBREndX = horizontalRightX;
-                        const slashBREndY = bottomEndY;
-
-                        ctx.strokeStyle = colorBR;
+                        // 右下折角：外角 → 翻折条 →（倒圆）→ 斜上收进内边线
                         ctx.beginPath();
-                        ctx.moveTo(slashBRStartX, slashBRStartY);
-                        ctx.lineTo(slashBREndX, slashBREndY);
+                        ctx.moveTo(fsEdgeR, fsYrB);
+                        ctx.lineTo(w * 0.700 + fsRBend, fsYrB);
+                        ctx.quadraticCurveTo(w * 0.700, fsYrB, w * 0.700 - (w * 0.700 - w * 0.605) * (fsRBend / Math.hypot(w * 0.700 - w * 0.605, fsYrB - fsYb)), fsYrB - (fsYrB - fsYb) * (fsRBend / Math.hypot(w * 0.700 - w * 0.605, fsYrB - fsYb)));
+                        ctx.lineTo(w * 0.605, fsYb);
                         ctx.stroke();
 
-                        // 下方外框轮廓
-                        const bottomRightX = outerBox.x + outerBox.w - foldLen;
-                        const bottomRightY = outerBox.y + outerBox.h;
-                        const bottomSplitX = outerBox.x + outerBox.w * 0.4;
-                        // 右段
-                        ctx.strokeStyle = colorBR;
+                        // 两个折角的斜切短线：外角 → 内边线
                         ctx.beginPath();
-                        ctx.moveTo(bottomRightX, bottomRightY);
-                        ctx.lineTo(bottomStartX + bottomArcOffset, bottomStartY);
-                        ctx.quadraticCurveTo(bottomStartX, bottomStartY, bottomStartX - bottomArcOffset * 0.6, bottomStartY - bottomArcOffset * 0.6);
-                        ctx.lineTo(bottomEndX, bottomEndY);
-                        ctx.lineTo(horizontalRightX, bottomEndY);
-                        ctx.lineTo(bottomSplitX, cornerBottomY);
+                        ctx.moveTo(fsEdgeL, fsYr + w * 0.010);
+                        ctx.lineTo(w * 0.232, fsYt);
+                        ctx.lineTo(fsEdgeR, fsYt);
                         ctx.stroke();
-                        // 左段
-                        ctx.strokeStyle = colorBL;
                         ctx.beginPath();
-                        ctx.moveTo(bottomSplitX, cornerBottomY);
-                        ctx.lineTo(outerBox.x, cornerBottomY);
+                        ctx.moveTo(fsEdgeR, fsYrB - w * 0.010);
+                        ctx.lineTo(w * 0.768, fsYb);
+                        ctx.lineTo(fsEdgeL, fsYb);
                         ctx.stroke();
 
-                        // ========== 右侧竖边框分段 ==========
-                        const rightTopPointY = cornerTopY;
-                        const rightBottomPointY = outerBox.y + outerBox.h;
-                        const rightSplitY = rightBottomPointY - (rightBottomPointY - rightTopPointY) * 0.6;
-
-                        // 右上段
-                        ctx.strokeStyle = colorTR;
-                        ctx.beginPath();
-                        ctx.moveTo(outerBox.x + outerBox.w, rightTopPointY);
-                        ctx.lineTo(outerBox.x + outerBox.w, rightSplitY);
-                        ctx.stroke();
-                        // 右下段
-                        ctx.strokeStyle = colorBR;
-                        ctx.beginPath();
-                        ctx.moveTo(outerBox.x + outerBox.w, rightSplitY);
-                        ctx.lineTo(outerBox.x + outerBox.w, rightBottomPointY);
-                        ctx.stroke();
-
-                        // ========== 左侧竖边框分段 ==========
-                        const leftTopPointY = outerBox.y;
-                        const leftBottomPointY = cornerBottomY;
-                        const leftTotalH = leftBottomPointY - leftTopPointY;
-                        const leftSplitY = leftBottomPointY - leftTotalH * 0.4;
-
-                        // 左下段
-                        ctx.strokeStyle = colorBL;
-                        ctx.beginPath();
-                        ctx.moveTo(outerBox.x, leftBottomPointY);
-                        ctx.lineTo(outerBox.x, leftSplitY);
-                        ctx.stroke();
-                        // 左上段
-                        ctx.strokeStyle = colorTL;
-                        ctx.beginPath();
-                        ctx.moveTo(outerBox.x, leftSplitY);
-                        ctx.lineTo(outerBox.x, leftTopPointY);
-                        ctx.lineTo(topLeftX, topLeftY);
-                        ctx.stroke();
-
-                        // ========== 右下角短线 ==========
-                        const redLineLen = foldLen;
-                        ctx.strokeStyle = colorRed;
-                        ctx.beginPath();
-                        ctx.moveTo(slashBRStartX - redLineLen, slashBRStartY);
-                        ctx.lineTo(slashBRStartX, slashBRStartY);
-                        ctx.stroke();
-
+                        // 四个外角补成闭合直角
+                        ctx.fillRect(fsEdgeR - fsT / 2, fsYt - fsT / 2, fsT, fsT);
+                        ctx.fillRect(fsEdgeL - fsT / 2, fsYb - fsT / 2, fsT, fsT);
+                        ctx.fillRect(fsEdgeL - fsT / 2, fsYr - fsT / 2, fsT, fsT);
+                        ctx.fillRect(fsEdgeR - fsT / 2, fsYrB - fsT / 2, fsT, fsT);
                         ctx.restore();
 
                         // ========== ✅【移动到这里：先定义码眼绘制函数】 ==========
@@ -13714,7 +14467,7 @@ height: auto;
 
                         // ========== 二维码本体 ==========
                         ctx.save();
-                        const fillColor = "#000";
+                        const fillColor = opt.color.dark;   // 跟随二维码颜色面板
 
                         // ✅ 【关键修复：先把3个finder区域填充白色，清除底层残留方块底色】
                         const finderListClear = [
@@ -13729,6 +14482,8 @@ height: auto;
                             ctx.fillRect(px, py, cellSize * 7, cellSize * 7);
                         }
 
+                        // 记录码体几何（供「外框颜色」换色时保护码点区域，不误伤二维码本体）
+                        __qrNoteGeom((qrBox.x + 0), (qrBox.y + 0), cellSize, modCount);
                         // 循环绘制二维码数据模块（跳过 3 个 finder 定位区域）
                         ctx.fillStyle = __qrPaint(ctx, ctx.fillStyle);
                         for (let y = 0; y < modCount; y++) {
@@ -13742,13 +14497,10 @@ height: auto;
 
                                 if (qrData.modules.get(x, y)) {
                                     ctx.fillStyle = __qrPaint(ctx, fillColor);
-                                    const mx = qrBox.x + x * cellSize + cellSize / 2;
-                                    const my = qrBox.y + y * cellSize + cellSize / 2;
-                                    const r = cellSize / 2 * 0.82;
-                                    ctx.beginPath();
-                                    ctx.arc(mx, my, r, 0, Math.PI * 2);
-                                    ctx.fill();
-
+                                    const px = qrBox.x + x * cellSize;
+                                    const py = qrBox.y + y * cellSize;
+                                    // 码点＝码点面板「码点样式1」（square）：每格一个实心方块，铺满整格
+                                    __qrDot(ctx, px, py, cellSize, 'square');
                                 }
                             }
                         }
@@ -13823,7 +14575,8 @@ height: auto;
                             // 内码眼圆角
                             const innerEyeSize = cellSize * 3;
                             const innerR = cfg.innerR;
-                            drawInnerEye(px + cellSize * 2, py + cellSize * 2, innerEyeSize, fp.c, innerR);
+                            // 内码眼：勾了「自定义码眼颜色」时取下方的「码眼内」颜色
+                            drawInnerEye(px + cellSize * 2, py + cellSize * 2, innerEyeSize, bwEyeInner, innerR);
                         }
                         if (opt.centerLogo) {
                             const logoSize = qrBox.w * 0.25;
@@ -13956,55 +14709,73 @@ height: auto;
                     if (opt.frame === "bw-4") {
                         ctx.save();
                         const canvasSize = opt.width;
-                        // 八角外框参数
-                        const pad = drawAreaSize * 0.20;
-                        const outerBox = {
-                            x: qrBox.x - pad,
-                            y: qrBox.y - pad,
-                            w: qrBox.w + pad * 2,
-                            h: qrBox.h + pad * 2
-                        };
-                        const strokeW = outerBox.w * 0.024;
-                        ctx.lineWidth = strokeW;
-                        ctx.lineCap = "round";
-                        ctx.lineJoin = "round";
+                        // 外框改用「外框样式11（ring-arrows：十二边细环 + 内向三角）」同一套绘制
+                        {
+                            const w = opt.width;
+                            ctx.save();
+                            const raCx = w / 2, raCy = w / 2;
+                            const raR = w * 0.440;
+                            const raLW = Math.max(1, w * 0.0075);
+                            ctx.strokeStyle = '#000000';
+                            ctx.fillStyle = '#000000';
+                            ctx.lineWidth = raLW;
+                            ctx.lineCap = 'round';
+                            ctx.lineJoin = 'round';
+                            const raRad = (deg) => Math.PI / 180 * deg;
+                            const raP = (deg, r) => [raCx + r * Math.cos(raRad(deg)), raCy - r * Math.sin(raRad(deg))];
 
-                        // 8个角，全部改为黑色
-                        const cornerList = [
-                            { start: [outerBox.x + outerBox.w * 0.30, outerBox.y], end: [outerBox.x + outerBox.w * 0.42, outerBox.y - outerBox.w * 0.09], color: "#000" },
-                            { start: [outerBox.x + outerBox.w * 0.58, outerBox.y], end: [outerBox.x + outerBox.w * 0.70, outerBox.y - outerBox.w * 0.09], color: "#000" },
-                            { start: [outerBox.x + outerBox.w, outerBox.y + outerBox.h * 0.30], end: [outerBox.x + outerBox.w + outerBox.w * 0.09, outerBox.y + outerBox.h * 0.42], color: "#000" },
-                            { start: [outerBox.x + outerBox.w, outerBox.y + outerBox.h * 0.58], end: [outerBox.x + outerBox.w + outerBox.w * 0.09, outerBox.y + outerBox.h * 0.70], color: "#000" },
-                            { start: [outerBox.x + outerBox.w * 0.70, outerBox.y + outerBox.h], end: [outerBox.x + outerBox.w * 0.58, outerBox.y + outerBox.h + outerBox.w * 0.09], color: "#000" },
-                            { start: [outerBox.x + outerBox.w * 0.42, outerBox.y + outerBox.h], end: [outerBox.x + outerBox.w * 0.30, outerBox.y + outerBox.h + outerBox.w * 0.09], color: "#000" },
-                            { start: [outerBox.x, outerBox.y + outerBox.h * 0.58], end: [outerBox.x - outerBox.w * 0.09, outerBox.y + outerBox.h * 0.70], color: "#000" },
-                            { start: [outerBox.x, outerBox.y + outerBox.h * 0.30], end: [outerBox.x - outerBox.w * 0.09, outerBox.y + outerBox.h * 0.42], color: "#000" },
-                        ];
-                        // 绘制8个角的折线
-                        for (const c of cornerList) {
-                            ctx.strokeStyle = c.color;
-                            ctx.beginPath();
-                            ctx.moveTo(c.start[0], c.start[1]);
-                            ctx.lineTo(c.end[0], c.end[1]);
-                            ctx.stroke();
+                            // 六个 V 形箭头：30°/90°/150°/210°/270°/330°
+                            ctx.lineWidth = Math.max(1.5, w * 0.014);
+                            for (const base of [30, 90, 150, 210, 270, 330]) {
+                                const [ax, ay] = raP(base, raR * 1.000);
+                                const [l1x, l1y] = raP(base - 11, raR * 0.900);
+                                const [l2x, l2y] = raP(base + 11, raR * 0.900);
+                                ctx.beginPath();
+                                ctx.moveTo(l1x, l1y);
+                                ctx.lineTo(ax, ay);
+                                ctx.lineTo(l2x, l2y);
+                                ctx.stroke();
+                            }
+                            ctx.lineWidth = raLW;
+
+                            // 六个扁平三角：尖端朝外，圆角处理
+                            const raRoundTri = (pts, rad) => {
+                                ctx.beginPath();
+                                pts.forEach((cur, idx) => {
+                                    const prev = pts[(idx + pts.length - 1) % pts.length];
+                                    const next = pts[(idx + 1) % pts.length];
+                                    const v1 = [prev[0] - cur[0], prev[1] - cur[1]];
+                                    const v2 = [next[0] - cur[0], next[1] - cur[1]];
+                                    const n1 = Math.hypot(v1[0], v1[1]) || 1;
+                                    const n2 = Math.hypot(v2[0], v2[1]) || 1;
+                                    const p1 = [cur[0] + v1[0] / n1 * rad, cur[1] + v1[1] / n1 * rad];
+                                    const p2 = [cur[0] + v2[0] / n2 * rad, cur[1] + v2[1] / n2 * rad];
+                                    if (idx === 0) ctx.moveTo(p1[0], p1[1]); else ctx.lineTo(p1[0], p1[1]);
+                                    ctx.quadraticCurveTo(cur[0], cur[1], p2[0], p2[1]);
+                                });
+                                ctx.closePath();
+                                ctx.fill();
+                            };
+                            const raTri = (deg, baseLen, height) => {
+                                const a = raRad(deg);
+                                const nx = Math.cos(a), ny = -Math.sin(a);
+                                const tx = -ny, ty = nx;
+                                const rBase = raR - height;
+                                const bx = raCx + rBase * nx, by = raCy + rBase * ny;
+                                const apx = raCx + raR * nx, apy = raCy + raR * ny;
+                                raRoundTri([
+                                    [bx + tx * baseLen / 2, by + ty * baseLen / 2],
+                                    [apx, apy],
+                                    [bx - tx * baseLen / 2, by - ty * baseLen / 2]
+                                ], w * 0.016);
+                            };
+                            for (const deg of [0, 60, 120, 180, 240, 300]) {
+                                raTri(deg, w * 0.140, w * 0.050);
+                            }
+                            ctx.restore();
                         }
 
-                        // 绘制8条侧边连线，全部黑色
-                        const sideLine = [
-                            { s: [outerBox.x + outerBox.w * 0.42, outerBox.y], e: [outerBox.x + outerBox.w * 0.58, outerBox.y], col: "#000" },
-                            { s: [outerBox.x + outerBox.w, outerBox.y + outerBox.h * 0.42], e: [outerBox.x + outerBox.w, outerBox.y + outerBox.h * 0.58], col: "#000" },
-                            { s: [outerBox.x + outerBox.w * 0.58, outerBox.y + outerBox.h], e: [outerBox.x + outerBox.w * 0.42, outerBox.y + outerBox.h], col: "#000" },
-                            { s: [outerBox.x, outerBox.y + outerBox.h * 0.42], e: [outerBox.x, outerBox.y + outerBox.h * 0.58], col: "#000" },
-                        ];
-                        for (const s of sideLine) {
-                            ctx.strokeStyle = s.col;
-                            ctx.beginPath();
-                            ctx.moveTo(s.s[0], s.s[1]);
-                            ctx.lineTo(s.e[0], s.e[1]);
-                            ctx.stroke();
-                        }
-
-                        // ========= 绘制二维码本体：短横条码点，统一黑色 =========
+                        // ========= 绘制二维码本体：码点样式1（实心方块），统一黑色 =========
                         ctx.save();
                         const fillColor = "#000";
 
@@ -14036,11 +14807,8 @@ height: auto;
 
                                 const px = qrBox.x + x * cellSize;
                                 const py = qrBox.y + y * cellSize;
-                                // 短横条：宽占cell 90%，高占cell 40%，居中
-                                const w = cellSize * 0.90;
-                                const h = cellSize * 0.40;
-                                const offY = (cellSize - h) / 2;
-                                ctx.fillRect(px, py + offY, w, h);
+                                // 码点＝码点面板「码点样式1」（square）：每格一个实心方块，铺满整格
+                                __qrDot(ctx, px, py, cellSize, 'square');
                             }
                         }
 
@@ -14081,14 +14849,11 @@ height: auto;
                     //黑白样式 bw-5
                     if (opt.frame === "bw-5") {
                         ctx.save();
-                        const dotPadding = drawAreaSize * 0.16;
-                        const dotBox = {
-                            x: qrBox.x - dotPadding,
-                            y: qrBox.y - dotPadding,
-                            w: qrBox.w + dotPadding * 2,
-                            h: qrBox.h + dotPadding * 2
-                        };
-                        __qrDrawDotFrame(ctx, dotBox, __qrPaint(ctx, opt.color.dark));
+                        // 外框＝外框面板「外框样式18」（dot-round 圆角点线框）同一套参数：
+                        const drBox = { x: w * 0.060, y: w * 0.060, w: w * 0.880, h: w * 0.880 };
+                        __qrDrawDotFrame(ctx, drBox, '#000000', {
+                            dotR: 0.0115, dotGap: 0.0570, rBig: 0.105, rSmall: 0.045
+                        });
                         ctx.restore();
 
                         // ✅ bw-5 二维码本体
@@ -16467,6 +17232,7 @@ height: auto;
 
         async function handleFiles(files) {
             if (!files.length) return;
+            if (files.length > 1) return; // 多张交给「解码结果」弹窗
             const file = files[0];
             const reader = new FileReader();
             reader.onload = async (ev) => {
@@ -16599,6 +17365,1986 @@ height: auto;
 
             syncOtherSettings();
         })();
+    </script>
+    <!-- ================= 条形码生成（Code128 / Code39 / EAN-13 / ITF） ================= -->
+    <script>
+    (function () {
+        var KIND = {
+            code128:   { bcid: 'code128',  ph: '输入字母、数字或符号，例如 ABC-123' },
+            code39:    { bcid: 'code39',   ph: 'Code39 只支持数字、大写字母和 - . 空格 $ / + %' },
+            code39ext: { bcid: 'code39ext', ph: 'Code39 扩展：支持完整 ASCII，例如 abc-123' },
+            code93:    { bcid: 'code93',   ph: 'Code93 支持 ASCII 字符，例如 ABC-123' },
+            code11:    { bcid: 'code11',   ph: 'Code11 只支持数字和 -，例如 123-45' },
+            codabar:   { bcid: 'rationalizedCodabar', ph: '首尾用 A–D 作起始/终止符，例如 A123456A' },
+            ean13:     { bcid: 'ean13',    ph: '输入 12 位或 13 位数字，例如 690123456789' },
+            ean8:      { bcid: 'ean8',     ph: '输入 7 位或 8 位数字，例如 6901234' },
+            gs1:       { bcid: 'gs1-128',  ph: '按应用标识符填写，例如 (01)09501101530003(17)150123' },
+            itf:       { bcid: 'interleaved2of5', ph: '输入偶数位数字，例如 123456' },
+            itf2of5:   { bcid: 'interleaved2of5', ph: 'Interleaved 2 of 5：偶数位数字，例如 123456' },
+            std2of5:   { bcid: 'industrial2of5',  ph: 'Standard 2 of 5：纯数字，例如 12345' },
+            isbn:      { bcid: 'isbn',     ph: '带连字符的 ISBN-13，例如 978-1-2345-6789-7' },
+            itf14:     { bcid: 'itf14',    ph: '输入 13 位或 14 位数字，例如 1234567890123' },
+            msi:       { bcid: 'msi',      ph: 'MSI：纯数字，例如 1234567' },
+            upca:      { bcid: 'upca',     ph: '输入 11 位或 12 位数字，例如 01234567890' },
+            upce:      { bcid: 'upce',     ph: '输入 6 到 8 位数字，例如 0123456' },
+            upcext2:   { bcid: 'ean2',     ph: 'UPC 扩展 2 位：2 位数字，例如 12' },
+            upcext5:   { bcid: 'ean5',     ph: 'UPC 扩展 5 位：5 位数字，例如 12345' }
+        };
+
+        function $(id) { return document.getElementById(id); }
+        function hex(c) { return String(c || '#000000').replace('#', '').toUpperCase(); }
+
+        var hasResult = false;
+        var autoTimer = null;
+
+        function hint(msg, type) {
+            var el = $('barHint');
+            if (!el) return;
+            el.textContent = msg || '';
+            el.classList.remove('err', 'ok');
+            if (type) el.classList.add(type);
+        }
+
+        function showPreview(on) {
+            var wrap = $('barPreview');
+            var init = $('previewInit');
+            var dlWrap = $('barDlWrap');
+            var optGrid = $('barOptGrid');
+            var visible = !!(on && hasResult);
+            if (wrap) {
+                wrap.style.display = visible ? 'flex' : 'none';
+                wrap.classList.toggle('hidden', !visible);
+            }
+            // 下载按钮：跟着条码预览一起显隐（放在右侧虚线矩形下方）
+            if (dlWrap) dlWrap.style.display = visible ? 'grid' : 'none';
+            // 样式设置：只有成功生成条码后才出现，默认隐藏
+            if (optGrid) optGrid.style.display = visible ? '' : 'none';
+            if (init) init.style.display = visible ? 'none' : '';
+        }
+
+        function currentKind() {
+            var btn = document.querySelector('.bar-kind.active');
+            return (btn && KIND[btn.dataset.bkind]) ? KIND[btn.dataset.bkind] : KIND.code128;
+        }
+
+        // EAN-13 校验位：前 12 位按 1/3 交替加权求和，取补数到 10
+        function ean13CheckDigit(first12) {
+            var sum = 0;
+            for (var i = 0; i < 12; i++) {
+                sum += Number(first12.charAt(i)) * (i % 2 === 0 ? 1 : 3);
+            }
+            return String((10 - (sum % 10)) % 10);
+        }
+
+        // EAN-8 校验位：前 7 位按 3/1 交替加权求和，取补数到 10
+        function ean8CheckDigit(first7) {
+            var sum = 0;
+            for (var i = 0; i < 7; i++) {
+                sum += Number(first7.charAt(i)) * (i % 2 === 0 ? 3 : 1);
+            }
+            return String((10 - (sum % 10)) % 10);
+        }
+
+        // UPC-A 校验位：前 11 位按 3/1 交替加权（奇数位权重 3）
+        function upcaCheckDigit(first11) {
+            var sum = 0;
+            for (var i = 0; i < 11; i++) {
+                sum += Number(first11.charAt(i)) * (i % 2 === 0 ? 3 : 1);
+            }
+            return String((10 - (sum % 10)) % 10);
+        }
+
+        // 画布与 SVG 共用同一套渲染参数，保证两种下载结果一致
+        function buildOptions(kind, text) {
+            var showText = !kind.noText && !!($('barShowText') && $('barShowText').checked);
+            var opts = {
+                bcid: kind.bcid,
+                text: kind.bcid === 'code39' ? text.toUpperCase() : text,
+                scale: Number($('barScale') && $('barScale').value) || 3,
+                height: Number($('barHeight') && $('barHeight').value) || 15,
+                includetext: showText,
+                textxalign: 'center',
+                textsize: Number($('barTextSize') && $('barTextSize').value) || 12,
+                textyoffset: Number($('barTextGap') && $('barTextGap').value) || 0,
+                barcolor: hex($('barColor') && $('barColor').value),
+                textcolor: hex($('barColor') && $('barColor').value),
+                backgroundcolor: hex($('barBg') && $('barBg').value),
+                paddingwidth: 6,
+                paddingheight: 6
+            };
+            // 字符位置：滑到右侧（上方）时把文字画在条码上方
+            if (showText && $('barTextPos') && $('barTextPos').value === '1') opts.textyalign = 'above';
+            return opts;
+        }
+
+        // 二维码（PDF417）bwip 不渲染字符，这里自己补画文字，参数与线性码保持一致的观感
+        function barTextMetrics() {
+            var on = !!($('barShowText') && $('barShowText').checked);
+            var ts = Number($('barTextSize') && $('barTextSize').value) || 12;
+            var sc = Number($('barScale') && $('barScale').value) || 3;
+            var gapPt = Number($('barTextGap') && $('barTextGap').value) || 0;
+            return {
+                on: on,
+                above: !!($('barTextPos') && $('barTextPos').value === '1'),
+                text: ($('barInput') && $('barInput').value || '').trim(),
+                fontPx: Math.max(8, Math.round(ts * sc * 0.88)),
+                gapPx: Math.round(gapPt * sc),
+                lineH: 0,
+                color: '#' + hex($('barColor') && $('barColor').value),
+                bg: '#' + hex($('barBg') && $('barBg').value)
+            };
+        }
+
+        // 量出文字真实墨迹范围（Arial 的 top 基线带字身留白，必须按墨迹对齐才能和线性码间距一致）
+        function measureTextInk(text, fontPx) {
+            var mc = document.createElement('canvas');
+            var mctx = mc.getContext('2d');
+            var font = fontPx + 'px Arial, Helvetica, sans-serif';
+            mctx.font = font;
+            var tw = Math.ceil(mctx.measureText(text).width) + 24;
+            var th = Math.ceil(fontPx * 2.5);
+            mc.width = tw; mc.height = th;
+            mctx = mc.getContext('2d');
+            mctx.fillStyle = '#ffffff';
+            mctx.fillRect(0, 0, tw, th);
+            mctx.fillStyle = '#000000';
+            mctx.font = font;
+            mctx.textAlign = 'left';
+            mctx.textBaseline = 'top';
+            mctx.fillText(text, 10, 10);
+            var d = mctx.getImageData(0, 0, tw, th).data;
+            var top = -1, bottom = -1;
+            for (var y = 0; y < th; y++) {
+                for (var x = 0; x < tw; x++) {
+                    if (d[(y * tw + x) * 4] < 120) {
+                        if (top < 0) top = y;
+                        bottom = y;
+                        break;
+                    }
+                }
+            }
+            return { top: top - 10, bottom: bottom - 10, height: bottom - top + 1, textW: tw - 24 };
+        }
+
+        // 文字过宽时按比例缩小字号，避免超出条码画布
+        function fitTextToWidth(m, maxW) {
+            var ink = measureTextInk(m.text, m.fontPx);
+            if (ink.textW > maxW && ink.textW > 0) {
+                var fp = Math.max(8, Math.floor(m.fontPx * (maxW / ink.textW)));
+                if (fp < m.fontPx) {
+                    m.fontPx = fp;
+                    ink = measureTextInk(m.text, fp);
+                }
+            }
+            return ink;
+        }
+
+        function drawBarTextOnCanvas(canvas, m) {
+            if (!m.on || !m.text) return;
+            var tmp = document.createElement('canvas');
+            tmp.width = canvas.width; tmp.height = canvas.height;
+            var tctx = tmp.getContext('2d');
+            tctx.drawImage(canvas, 0, 0);
+            // 找条形码区的首/末墨迹行，用它当基准，间距与线性码（textyoffset*scale + 2px）保持一致
+            var td = tctx.getImageData(0, 0, tmp.width, tmp.height).data;
+            var barStart = -1, barEnd = -1;
+            for (var y = 0; y < tmp.height; y++) {
+                var dark = 0;
+                for (var x = 0; x < tmp.width; x++) { if (td[(y * tmp.width + x) * 4] < 120) dark++; }
+                if (dark > 2) { if (barStart < 0) barStart = y; barEnd = y; }
+            }
+            if (barEnd < 0) return;
+            var ink = fitTextToWidth(m, tmp.width - 12);
+            var innerGap = 2;   // 线性码文字与条码的固定净空
+            var bottomPad = Math.max(4, tmp.height - barEnd - 1);
+            var inkTop, extra, newH;
+            if (m.above) {
+                extra = m.gapPx + innerGap + ink.height;
+                inkTop = barStart;                  // 顶部留白沿用条码原本的上留白
+                newH = tmp.height + extra;
+            } else {
+                inkTop = barEnd + 1 + m.gapPx + innerGap;
+                newH = inkTop + ink.height + bottomPad;
+                extra = 0;
+            }
+            var shift = extra;
+            canvas.width = tmp.width;
+            canvas.height = newH;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = m.bg;
+            ctx.fillRect(0, 0, canvas.width, newH);
+            ctx.drawImage(tmp, 0, shift);
+            ctx.fillStyle = m.color;
+            ctx.font = m.fontPx + 'px Arial, Helvetica, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(m.text, canvas.width / 2, inkTop - ink.top);
+        }
+
+        function svgMaxPathY(svg) {
+            var maxY = 0;
+            var re = / d="([^"]+)"/g, mm;
+            while ((mm = re.exec(svg))) {
+                var nums = mm[1].match(/-?\d+(\.\d+)?/g) || [];
+                for (var i = 1; i < nums.length; i += 2) {
+                    var v = Number(nums[i]);
+                    if (v > maxY) maxY = v;
+                }
+            }
+            return maxY;
+        }
+
+        function appendBarTextToSvg(svg, m) {
+            if (!m.on || !m.text) return svg;
+            var vm = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+            if (!vm) return svg;
+            var W = Number(vm[1]), H = Number(vm[2]);
+            var barEndSvg = svgMaxPathY(svg);
+            if (!barEndSvg) barEndSvg = H - 6;
+            var ink = fitTextToWidth(m, W - 12);
+            var innerGap = 2;
+            var asc = Math.round(m.fontPx * 0.72);   // Arial 基线到字身顶的距离
+            var desc = ink.height - asc;             // 字身底部到基线
+            if (desc < 0) { desc = 0; asc = ink.height; }
+            var extra = 0, baselineY, newH;
+            if (m.above) {
+                extra = m.gapPx + innerGap + ink.height;
+                baselineY = extra - m.gapPx - innerGap - desc;
+                newH = H + extra;
+            } else {
+                baselineY = barEndSvg + 1 + m.gapPx + innerGap + asc;
+                newH = baselineY + desc + Math.max(2, H - barEndSvg - 1);
+            }
+            var headEnd = svg.indexOf('>') + 1;
+            var head = svg.slice(0, headEnd).replace(/viewBox="0 0 [\d.]+ [\d.]+"/, 'viewBox="0 0 ' + W + ' ' + newH + '"');
+            var inner = svg.slice(headEnd, svg.lastIndexOf('</svg>'));
+            var bgRect = '<rect width="100%" height="100%" fill="' + m.bg + '" />';
+            var content = '<g transform="translate(0,' + extra + ')">' + inner + '</g>';
+            var esc = m.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            var textEl = '<text x="' + (W / 2) + '" y="' + baselineY + '" font-family="Arial, Helvetica, sans-serif" font-size="' + m.fontPx + '" fill="' + m.color + '" text-anchor="middle">' + esc + '</text>';
+            return head + bgRect + content + textEl + '</svg>';
+        }
+
+        function render() {
+            var canvas = $('barCanvas');
+            var input = $('barInput');
+            if (!canvas || !input) return;
+            var kind = currentKind();
+            var text = (input.value || '').trim();
+
+            if (!text) {
+                hasResult = false;
+                showPreview(false);
+                try { canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height); } catch (e) {}
+                hint('输入内容后自动生成条形码');
+                return;
+            }
+            // 各码制的字符约束先做一层友好校验，避免 bwip-js 抛生硬英文错误
+            if (kind.bcid === 'ean13') {
+                if (!/^\d{12,13}$/.test(text)) {
+                    hasResult = false; showPreview(false);
+                    hint('EAN-13 需要 12 位或 13 位纯数字', 'err');
+                    return;
+                }
+                // 13 位时自己验一遍校验位，给出中文提示（bwip 报的是英文错误码）
+                if (text.length === 13) {
+                    var want = ean13CheckDigit(text.slice(0, 12));
+                    if (want !== text.charAt(12)) {
+                        hasResult = false; showPreview(false);
+                        hint('EAN-13 校验位不正确，正确应为 ' + text.slice(0, 12) + want, 'err');
+                        return;
+                    }
+                }
+            }
+            if (kind.bcid === 'code39' && !/^[0-9A-Z\-\. \$\/\+%]+$/.test(text.toUpperCase())) {
+                hasResult = false; showPreview(false);
+                hint('Code39 只支持数字、大写字母和 - . 空格 $ / + %', 'err');
+                return;
+            }
+            // EAN-8：7 位（自动补校验位）或 8 位（自验校验位）
+            if (kind.bcid === 'ean8') {
+                if (!/^\d{7,8}$/.test(text)) {
+                    hasResult = false; showPreview(false);
+                    hint('EAN-8 需要 7 位或 8 位纯数字', 'err');
+                    return;
+                }
+                if (text.length === 8) {
+                    var want8 = ean8CheckDigit(text.slice(0, 7));
+                    if (want8 !== text.charAt(7)) {
+                        hasResult = false; showPreview(false);
+                        hint('EAN-8 校验位不正确，正确应为 ' + text.slice(0, 7) + want8, 'err');
+                        return;
+                    }
+                }
+            }
+            // Code11：数字与连字符
+            if (kind.bcid === 'code11' && !/^[0-9\-]+$/.test(text)) {
+                hasResult = false; showPreview(false);
+                hint('Code11 只支持数字和 - ', 'err');
+                return;
+            }
+            // Codabar：数字、A–D 起止符和 - $ : / . +
+            if (kind.bcid === 'rationalizedCodabar') {
+                if (!/^[0-9A-Da-d\-\$\:\/\.\+]+$/.test(text)) {
+                    hasResult = false; showPreview(false);
+                    hint('Codabar 只支持数字、A–D 和 - $ : / . +', 'err');
+                    return;
+                }
+                if (!/[A-Da-d]/.test(text.charAt(0)) || !/[A-Da-d]/.test(text.charAt(text.length - 1))) {
+                    hasResult = false; showPreview(false);
+                    hint('Codabar 首尾需要 A–D 作为起始/终止符，例如 A123456A', 'err');
+                    return;
+                }
+            }
+            if (kind.bcid === 'interleaved2of5' && (!/^\d+$/.test(text) || text.length % 2 !== 0)) {
+                hasResult = false; showPreview(false);
+                hint('ITF 需要偶数位纯数字', 'err');
+                return;
+            }
+            if (kind.bcid === 'gs1-128' && !/\(.*\)/.test(text)) {
+                hasResult = false; showPreview(false);
+                hint('GS1-128 需要带应用标识符（括号），例如 (01)09501101530003', 'err');
+                return;
+            }
+            // Standard 2 of 5 / MSI：纯数字
+            if ((kind.bcid === 'industrial2of5' || kind.bcid === 'msi') && !/^\d+$/.test(text)) {
+                hasResult = false; showPreview(false);
+                hint('该码制只支持纯数字', 'err');
+                return;
+            }
+            // ITF-14：13 位（自动补校验位）或 14 位
+            if (kind.bcid === 'itf14' && !/^\d{13,14}$/.test(text)) {
+                hasResult = false; showPreview(false);
+                hint('ITF-14 需要 13 位或 14 位纯数字', 'err');
+                return;
+            }
+            // ISBN：需要带连字符的 ISBN-13
+            if (kind.bcid === 'isbn' && (!/^\d{1,5}(-\d+){1,4}$/.test(text) || text.length < 13)) {
+                hasResult = false; showPreview(false);
+                hint('ISBN 书号需要带连字符的 13 位 ISBN，例如 978-1-2345-6789-7', 'err');
+                return;
+            }
+            // UPC-A：11 位（自动补校验位）或 12 位（自验校验位）
+            if (kind.bcid === 'upca') {
+                if (!/^\d{11,12}$/.test(text)) {
+                    hasResult = false; showPreview(false);
+                    hint('UPC-A 需要 11 位或 12 位纯数字', 'err');
+                    return;
+                }
+                if (text.length === 12) {
+                    var wantA = upcaCheckDigit(text.slice(0, 11));
+                    if (wantA !== text.charAt(11)) {
+                        hasResult = false; showPreview(false);
+                        hint('UPC-A 校验位不正确，正确应为 ' + text.slice(0, 11) + wantA, 'err');
+                        return;
+                    }
+                }
+            }
+            // UPC-E：6–8 位数字
+            if (kind.bcid === 'upce' && !/^\d{6,8}$/.test(text)) {
+                hasResult = false; showPreview(false);
+                hint('UPC-E 需要 6 到 8 位纯数字', 'err');
+                return;
+            }
+            // UPC 扩展位：固定 2 / 5 位
+            if (kind.bcid === 'ean2' && !/^\d{2}$/.test(text)) {
+                hasResult = false; showPreview(false);
+                hint('UPC 扩展 2 位需要 2 位纯数字', 'err');
+                return;
+            }
+            if (kind.bcid === 'ean5' && !/^\d{5}$/.test(text)) {
+                hasResult = false; showPreview(false);
+                hint('UPC 扩展 5 位需要 5 位纯数字', 'err');
+                return;
+            }
+            if (typeof bwipjs === 'undefined') {
+                hasResult = false; showPreview(false);
+                hint('条码组件未加载成功，请检查网络后刷新页面', 'err');
+                return;
+            }
+
+            // 画布与 SVG 共用同一套渲染参数，保证两种下载结果一致（定义在模块作用域）
+            try {
+                bwipjs.toCanvas(canvas, buildOptions(kind, text));
+                // PDF417 这类 bwip 不带字符的码制：出图后自己补画文字
+                if (kind.noText) drawBarTextOnCanvas(canvas, barTextMetrics());
+                hasResult = true;
+                showPreview(true);
+                hint('已生成 ' + (function (l) { return l + (l.indexOf('条码') > -1 ? '' : ' 条码'); })((document.querySelector('.bar-kind.active') || {}).textContent || '') + '，可点下方按钮保存图片或 SVG', 'ok');
+            } catch (e) {
+                hasResult = false;
+                showPreview(false);
+                // bwip-js 抛的是 bwipp.xxx 这类英文错误码，这里转成中文提示
+                var msg = (e && e.message) ? String(e.message) : '';
+                var label = (document.querySelector('.bar-kind.active') || {}).textContent || '该码制';
+                if (!msg || /bwipp\./.test(msg)) {
+                    hint(label + ' 无法编码这段内容，请检查字符类型或长度', 'err');
+                } else {
+                    hint('生成失败：' + msg, 'err');
+                }
+            }
+        }
+
+        function syncLabels() {
+            var h = $('barHeight'), s = $('barScale'), t = $('barTextSize'), g = $('barTextGap'), p = $('barTextPos');
+            if (h && $('barHeightVal')) $('barHeightVal').textContent = h.value;
+            if (s && $('barScaleVal')) $('barScaleVal').textContent = s.value;
+            if (t && $('barTextSizeVal')) $('barTextSizeVal').textContent = t.value;
+            if (g && $('barTextGapVal')) $('barTextGapVal').textContent = g.value;
+        }
+
+        // 字符位置胶囊滑块：同步高亮与蓝色滑块位置
+        function syncPosSeg() {
+            var input = $('barTextPos');
+            var v = input ? String(input.value) : '0';
+            var thumb = document.querySelector('.bar-pos-seg .bar-pos-thumb');
+            document.querySelectorAll('.bar-pos-btn').forEach(function (b) {
+                b.classList.toggle('active', b.dataset.bpos === v);
+            });
+            if (thumb) thumb.classList.toggle('is-up', v === '1');
+        }
+
+        // 显示字符开关关闭时，字符大小 / 间距 / 字符位置三项一并隐藏
+        function syncTextOpts() {
+            var on = !!($('barShowText') && $('barShowText').checked);
+            document.querySelectorAll('.bar-textopt').forEach(function (el) {
+                el.classList.toggle('is-on', on);
+            });
+        }
+
+        function debouncedRender() {
+            clearTimeout(autoTimer);
+            autoTimer = setTimeout(render, 250);
+        }
+
+        function init() {
+            var kindRow = $('barKindRow');
+            var input = $('barInput');
+            if (!kindRow || !input) return;
+
+            var moreBtn = $('barKindMore');
+            var menu = $('barKindMenu');
+
+            function closeMenu() {
+                if (!menu) return;
+                menu.hidden = true;
+                if (moreBtn) moreBtn.setAttribute('aria-expanded', 'false');
+            }
+            function openMenu() {
+                if (!menu) return;
+                menu.hidden = false;
+                if (moreBtn) moreBtn.setAttribute('aria-expanded', 'true');
+            }
+            // 选中下拉里的码制时，「更多」按钮点亮，提示当前用的是隐藏项
+            function syncMoreState() {
+                if (!moreBtn || !menu) return;
+                var activeBtn = document.querySelector('.bar-kind.active');
+                var inMenu = !!(activeBtn && menu.contains(activeBtn));
+                moreBtn.classList.toggle('is-more-active', inMenu);
+            }
+
+            document.querySelectorAll('.bar-kind[data-bkind]').forEach(function (btn) {
+                btn.onclick = function (e) {
+                    if (e && e.stopPropagation) e.stopPropagation();
+                    document.querySelectorAll('.bar-kind').forEach(function (b) { b.classList.toggle('active', b === btn); });
+                    var kind = KIND[btn.dataset.bkind] || KIND.code128;
+                    input.placeholder = kind.ph;
+                    closeMenu();
+                    syncMoreState();
+                    // 换码制：清空输入内容 + 样式恢复默认，再按空态重绘
+                    clearBarState();
+                    resetBarStyles();
+                    render();   // 空内容时提示「输入内容后自动生成条形码」
+                };
+            });
+
+            if (moreBtn && menu) {
+                moreBtn.onclick = function (e) {
+                    if (e && e.stopPropagation) e.stopPropagation();
+                    var willOpen = menu.hidden;
+                    if (willOpen) openMenu(); else closeMenu();
+                };
+                menu.addEventListener('click', function (e) { e.stopPropagation(); });
+                document.addEventListener('click', function () { if (!menu.hidden) closeMenu(); });
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape' && !menu.hidden) closeMenu();
+                });
+            }
+            syncMoreState();
+
+            input.addEventListener('input', debouncedRender);
+            ['barColor', 'barBg', 'barScale', 'barHeight', 'barShowText', 'barTextSize', 'barTextGap'].forEach(function (id) {
+                var el = $(id);
+                if (!el) return;
+                el.addEventListener('input', function () { syncTextOpts(); syncLabels(); debouncedRender(); });
+                el.addEventListener('change', function () { syncTextOpts(); syncLabels(); debouncedRender(); });
+            });
+            syncTextOpts();
+            syncPosSeg();
+            document.querySelectorAll('.bar-pos-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var input2 = $('barTextPos');
+                    if (input2) input2.value = btn.dataset.bpos;
+                    syncPosSeg();
+                    debouncedRender();
+                });
+            });
+
+            // 输入内容即自动生成，原来的「生成条形码」按钮改为「清空条形码内容」
+            var clearBtn = $('barClearBtn');
+            if (clearBtn) clearBtn.onclick = function () {
+                input.value = '';
+                hasResult = false;
+                try {
+                    var cvs = $('barCanvas');
+                    if (cvs) {
+                        cvs.getContext('2d').clearRect(0, 0, cvs.width, cvs.height);
+                        cvs.width = 0; cvs.height = 0;
+                    }
+                } catch (e) {}
+                showPreview(false);
+                hint('已清空，输入内容后自动生成条形码', 'ok');
+                input.focus();
+            };
+
+            // 样式恢复默认（颜色/背景/高度/条宽/字符大小/间距/字符位置/显示字符开关）
+            function resetBarStyles() {
+                var defaults = { barColor: '#000000', barBg: '#ffffff', barHeight: 15, barScale: 3, barTextSize: 12, barTextGap: 2, barTextPos: 0 };
+                Object.keys(defaults).forEach(function (id) {
+                    var el = $(id);
+                    if (el) el.value = defaults[id];
+                });
+                var st = $('barShowText');
+                if (st) st.checked = false;   // 显示字符默认关闭
+                syncTextOpts();
+                syncPosSeg();
+                syncLabels();
+            }
+
+            // 清空输入 + 清画布 + 收起样式区，切档 / 换码制时复用
+            function clearBarState() {
+                input.value = '';
+                hasResult = false;
+                try {
+                    var cvs = $('barCanvas');
+                    if (cvs) {
+                        cvs.getContext('2d').clearRect(0, 0, cvs.width, cvs.height);
+                        cvs.width = 0; cvs.height = 0;
+                    }
+                } catch (e) {}
+                showPreview(false);
+            }
+            window.__qrBarResetAll = function () {
+                clearBarState();
+                resetBarStyles();
+            };
+
+            // 重置：样式回到默认值，输入内容保留并重绘
+            var resetBtn = $('barResetBtn');
+            if (resetBtn) resetBtn.onclick = function () {
+                resetBarStyles();
+                render();   // 有内容时按默认样式重绘
+                hint('已恢复默认样式', 'ok');
+            };
+
+            var dlBtn = $('barDownloadBtn');
+            if (dlBtn) dlBtn.onclick = function () {
+                var canvas = $('barCanvas');
+                if (!hasResult || !canvas || !canvas.width) { hint('还没有可下载的条码，请先生成', 'err'); return; }
+                var kindBtn = document.querySelector('.bar-kind.active');
+                var name = '条形码_' + ((kindBtn && kindBtn.dataset.bkind) || 'code128') + '.png';
+                var a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = name;
+                a.click();
+            };
+
+            // 下载 SVG：bwip-js 直接产出矢量字符串，尺寸/颜色/字符与画布完全一致
+            var dlSvgBtn = $('barDownloadSvgBtn');
+            if (dlSvgBtn) dlSvgBtn.onclick = function () {
+                var input2 = $('barInput');
+                var text = (input2 && input2.value || '').trim();
+                if (!hasResult || !text) { hint('还没有可下载的条码，请先生成', 'err'); return; }
+                if (typeof bwipjs === 'undefined') { hint('条码组件未加载成功，请检查网络后刷新页面', 'err'); return; }
+                try {
+                    var kindForSvg = currentKind();
+                    var svg = bwipjs.toSVG(buildOptions(kindForSvg, text));
+                    // 与画布一致：PDF417 这类码制在 SVG 里也补上字符
+                    if (kindForSvg.noText) svg = appendBarTextToSvg(svg, barTextMetrics());
+                    var kindBtn = document.querySelector('.bar-kind.active');
+                    var name = '条形码_' + ((kindBtn && kindBtn.dataset.bkind) || 'code128') + '.svg';
+                    var blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = name;
+                    a.click();
+                    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+                    hint('SVG 矢量图已开始下载', 'ok');
+                } catch (e) {
+                    hint('SVG 导出失败：' + (e && e.message ? e.message : '请稍后重试'), 'err');
+                }
+            };
+
+            // 供「批量生码」调用：按当前码制/样式把一条内容画成条码画布
+            window.__qrBatchBarCanvas = function (kindKey, text, withText) {
+                var kind = KIND[kindKey] || KIND.code128;
+                // 借用条形码面板的样式与「显示字符」状态出图，出完立即还原，不影响面板本身
+                var cb = document.getElementById('barShowText');
+                var prev = cb ? cb.checked : null;
+                if (cb) cb.checked = !!withText;
+                var cv = document.createElement('canvas');
+                try {
+                    bwipjs.toCanvas(cv, buildOptions(kind, text));
+                } finally {
+                    if (cb && prev !== null) cb.checked = prev;
+                }
+                // PDF417 等 noText 码制 bwip 不画字符，这里按同一套间距自己补画
+                if (withText && kind.noText) {
+                    var m = barTextMetrics();
+                    m.on = true;
+                    m.text = (text || '').trim();
+                    m.above = false;
+                    try { drawBarTextOnCanvas(cv, m); } catch (e) {}
+                }
+                return cv;
+            };
+
+            syncLabels();
+            showPreview(false);
+
+            // 供顶部滑块调用：进入/离开条形码模式时切换右侧预览
+            window.__qrBarPreviewToggle = showPreview;
+            window.__qrBarAutoRender = function () {
+                if (hasResult) { showPreview(true); return; }
+                if ((input.value || '').trim()) render();
+            };
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+    </script>
+
+    <!-- ===== 批量生码（第四个档位）：二维码 / 条形码两个子页签 + 缩略图网格 + ZIP 打包 ===== -->
+    <script>
+    (function () {
+        var MAX = 50;
+        var view = document.getElementById('batchView');
+        if (!view) return;
+
+        var seg = document.getElementById('batchSeg');
+        var thumb = document.getElementById('batchThumb');
+        var kindRow = document.getElementById('batchKindRow');
+        var kindMore = document.getElementById('batchKindMore');
+        var kindMenu = document.getElementById('batchKindMenu');
+        var kindWrap = document.getElementById('batchKindWrap');
+        var input = document.getElementById('batchInput');
+        var genBtn = document.getElementById('batchGenBtn');
+        var clearBtn = document.getElementById('batchClearBtn');
+        var hintEl = document.getElementById('batchHint');
+        var gridEl = document.getElementById('batchGrid');
+        var countEl = document.getElementById('batchCount');
+        var previewEl = document.getElementById('batchPreview');
+        var initEl = document.getElementById('previewInit');
+        var zipBtn = document.getElementById('batchZipBtn');
+        var textRow = document.getElementById('batchTextRow');
+        var showTextEl = document.getElementById('batchShowText');
+
+        var mode = 'qr';          // qr | barcode
+        var kind = 'code128';
+        var files = [];           // [{name, blob}]
+        var generating = false;
+
+        function hint(msg, type) {
+            if (!hintEl) return;
+            hintEl.textContent = msg;
+            hintEl.className = 'batch-hint' + (type ? ' is-' + type : '');
+        }
+        function saveBlob(blob, name) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click();
+            setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 2000);
+        }
+        function stamp() {
+            var d = new Date();
+            return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+        }
+        function togglePreview(on) {
+            if (!previewEl) return;
+            previewEl.style.display = on ? 'flex' : 'none';
+            previewEl.classList.toggle('hidden', !on);
+            if (initEl) {
+                initEl.style.display = on ? 'none' : '';
+                initEl.classList.toggle('hidden', on);
+            }
+        }
+        // 切到「批量生码」档位时由 setMode 调用：有结果就展示网格，没结果回到空态
+        window.__qrBatchShow = function () {
+            togglePreview(files.length > 0);
+        };
+
+        // 子页签：二维码 / 条形码 / Data Matrix 码
+        if (seg) {
+            seg.querySelectorAll('.batch-btn').forEach(function (b) {
+                b.onclick = function () {
+                    seg.querySelectorAll('.batch-btn').forEach(function (x) { x.classList.toggle('active', x === b); });
+                    mode = b.dataset.bmode;   // qr | barcode | dm
+                    if (thumb) {
+                        thumb.classList.toggle('is-right', mode === 'barcode');
+                        thumb.classList.toggle('is-third', mode === 'dm');
+                        thumb.classList.toggle('is-fourth', mode === 'pdf');
+                        thumb.classList.toggle('is-fifth', mode === 'az');
+                        thumb.classList.toggle('is-sixth', mode === 'hx');
+                        thumb.classList.toggle('is-seventh', mode === 'mx');
+                    }
+                    if (kindRow) kindRow.style.display = (mode === 'barcode') ? 'grid' : 'none';
+                    if (textRow) textRow.style.display = (mode === 'barcode') ? 'flex' : 'none';
+                    if (mode !== 'barcode') closeKindMenu();
+                    if (input) {
+                        input.value = '';   // 切子页签：清空内容输入框
+                        input.placeholder = (mode === 'barcode')
+                            ? '每行一条内容，按当前码制批量生成条形码（最多 50 条）'
+                            : (mode === 'dm'
+                                ? '每行一条内容，批量生成 Data Matrix 码（最多 50 条）'
+                                : (mode === 'pdf'
+                                    ? '每行一条内容，批量生成 PDF417 码（最多 50 条）'
+                                    : (mode === 'az'
+                                        ? '每行一条内容，批量生成 Aztec Code（最多 50 条）'
+                                        : (mode === 'hx'
+                                            ? '每行一条内容，批量生成汉信码（最多 50 条）'
+                                            : (mode === 'mx'
+                                                ? '每行一条内容，批量生成 MaxiCode（最多 50 条）'
+                                                : '每行一条内容，批量生成二维码（最多 50 条）')))));
+                    }
+                    clearResults();
+                    hint(mode === 'barcode' ? '条形码沿用「条形码生成」档位的码制与默认样式'
+                        : (mode === 'dm' ? 'Data Matrix 码沿用「Data Matrix 码生成」档位的默认样式'
+                        : (mode === 'pdf' ? 'PDF417 码沿用「PDF417 码生成」档位的默认样式'
+                        : (mode === 'az' ? 'Aztec Code 沿用「Aztec Code 生成」档位的默认样式'
+                        : (mode === 'hx' ? '汉信码沿用「汉信码生成」档位的默认样式'
+                        : (mode === 'mx' ? 'MaxiCode 沿用「MaxiCode 生成」档位的默认样式'
+                        : '每行一条内容，最多一次生成 50 个'))))));
+                };
+            });
+        }
+        // 批量条形码的码制选择：前 4 个直排在行内，「更多」里放其余码制（浮层下拉）
+        function allKindBtns() {
+            return Array.prototype.slice.call(document.querySelectorAll('#batchView .bb-kind[data-bbkind]'));
+        }
+        function closeKindMenu() {
+            if (!kindMenu) return;
+            kindMenu.hidden = true;
+            if (kindMore) kindMore.setAttribute('aria-expanded', 'false');
+        }
+        function openKindMenu() {
+            if (!kindMenu) return;
+            kindMenu.hidden = false;
+            if (kindMore) kindMore.setAttribute('aria-expanded', 'true');
+        }
+        function syncKindState() {
+            var menuActive = false;
+            allKindBtns().forEach(function (x) {
+                var on = x.dataset.bbkind === kind;
+                x.classList.toggle('active', on);
+                if (on && kindMenu && kindMenu.contains(x)) menuActive = true;
+            });
+            if (kindMore) kindMore.classList.toggle('is-more-active', menuActive);
+        }
+        if (kindRow && kindMenu) {
+            allKindBtns().forEach(function (b) {
+                b.onclick = function () {
+                    kind = b.dataset.bbkind;
+                    syncKindState();
+                    closeKindMenu();
+                    if (input) input.value = '';   // 换码制：清空内容输入框
+                    clearResults();
+                };
+            });
+            if (kindMore) {
+                kindMore.onclick = function (e) {
+                    e.stopPropagation();
+                    if (kindMenu.hidden) openKindMenu(); else closeKindMenu();
+                };
+            }
+            document.addEventListener('click', function (e) {
+                if (!kindMenu.hidden && kindWrap && !kindWrap.contains(e.target)) closeKindMenu();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeKindMenu();
+            });
+            syncKindState();
+        }
+
+        // 字符开关：默认关闭，只作用于批量条形码
+        if (showTextEl) {
+            showTextEl.onchange = function () {
+                clearResults();
+                hint(showTextEl.checked ? '显示字符已开启，重新批量生成后带字符' : '显示字符已关闭，重新批量生成后不含字符');
+            };
+        }
+
+        function clearResults() {
+            files = [];
+            if (gridEl) gridEl.innerHTML = '';
+            if (countEl) countEl.textContent = '0';
+            togglePreview(false);
+        }
+
+        // 「清空」：清输入、清结果，保留当前子页签的占位与提示
+        if (clearBtn) {
+            clearBtn.onclick = function () {
+                if (generating) return;
+                if (input) input.value = '';
+                clearResults();
+                hint(mode === 'barcode' ? '条形码沿用「条形码生成」档位的码制与默认样式'
+                    : (mode === 'dm' ? 'Data Matrix 码沿用「Data Matrix 码生成」档位的默认样式'
+                    : (mode === 'pdf' ? 'PDF417 码沿用「PDF417 码生成」档位的默认样式'
+                    : (mode === 'az' ? 'Aztec Code 沿用「Aztec Code 生成」档位的默认样式'
+                    : (mode === 'hx' ? '汉信码沿用「汉信码生成」档位的默认样式'
+                    : (mode === 'mx' ? 'MaxiCode 沿用「MaxiCode 生成」档位的默认样式'
+                    : '每行一条内容，最多一次生成 50 个'))))));
+                if (input) input.focus();
+            };
+        }
+
+        async function renderQr(text) {
+            var c = document.createElement('canvas');
+            var ret = QRCode.toCanvas(c, text, { width: 400, margin: 2, errorCorrectionLevel: 'H' });
+            if (ret && typeof ret.then === 'function') await ret;
+            return c;
+        }
+        function renderBar(text) {
+            if (typeof window.__qrBatchBarCanvas !== 'function') throw new Error('条形码模块未就绪');
+            return window.__qrBatchBarCanvas(kind, text, !!(showTextEl && showTextEl.checked));
+        }
+        // 批量 Data Matrix：直接走 bwip-js 的 datamatrix 码制，样式与「Data Matrix 码生成」档位默认值一致
+        function renderDm(text) {
+            var c = document.createElement('canvas');
+            bwipjs.toCanvas(c, {
+                bcid: 'datamatrix',
+                text: text,
+                scale: 6,
+                paddingwidth: 6,
+                paddingheight: 6,
+                barcolor: '000000',
+                backgroundcolor: 'FFFFFF'
+            });
+            return c;
+        }
+        // 批量 PDF417：同样直接走 bwip-js 的 pdf417 码制，默认样式与 PDF417 档位一致
+        function renderPdf(text) {
+            var c = document.createElement('canvas');
+            bwipjs.toCanvas(c, {
+                bcid: 'pdf417',
+                text: text,
+                scale: 3,
+                paddingwidth: 6,
+                paddingheight: 6,
+                barcolor: '000000',
+                backgroundcolor: 'FFFFFF'
+            });
+            return c;
+        }
+        // 批量 Aztec Code：bwip-js 的 azteccode，默认样式与 Aztec Code 档位一致
+        function renderAz(text) {
+            var c = document.createElement('canvas');
+            bwipjs.toCanvas(c, {
+                bcid: 'azteccode',
+                text: text,
+                scale: 6,
+                paddingwidth: 6,
+                paddingheight: 6,
+                barcolor: '000000',
+                backgroundcolor: 'FFFFFF'
+            });
+            return c;
+        }
+        // 批量 MaxiCode：bwip-js 的 maxicode（默认单一数据块编码），默认样式与 MaxiCode 档位一致
+        function renderMx(text) {
+            var c = document.createElement('canvas');
+            bwipjs.toCanvas(c, {
+                bcid: 'maxicode',
+                text: text,
+                scale: 3,
+                paddingwidth: 6,
+                paddingheight: 6,
+                barcolor: '000000',
+                backgroundcolor: 'FFFFFF'
+            });
+            return c;
+        }
+        // 批量汉信码：bwip-js 的 hanxin，默认样式与汉信码档位一致
+        function renderHx(text) {
+            var c = document.createElement('canvas');
+            bwipjs.toCanvas(c, {
+                bcid: 'hanxin',
+                text: text,
+                scale: 4,
+                paddingwidth: 6,
+                paddingheight: 6,
+                barcolor: '000000',
+                backgroundcolor: 'FFFFFF'
+            });
+            return c;
+        }
+        function toBlob(canvas) {
+            return new Promise(function (resolve, reject) {
+                canvas.toBlob(function (b) { b ? resolve(b) : reject(new Error('图片生成失败')); }, 'image/png');
+            });
+        }
+        function addItem(canvas, name, blob, idx) {
+            var item = document.createElement('div');
+            item.className = 'batch-item';
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+            item.appendChild(canvas);
+            var nm = document.createElement('span');
+            nm.className = 'batch-item-name';
+            nm.textContent = name.replace(/\.png$/, '');
+            item.appendChild(nm);
+            var dl = document.createElement('button');
+            dl.type = 'button';
+            dl.className = 'batch-item-dl';
+            dl.textContent = '下载';
+            dl.onclick = function () { saveBlob(blob, name); };
+            item.appendChild(dl);
+            if (gridEl) gridEl.appendChild(item);
+            if (countEl) countEl.textContent = String(idx);
+        }
+
+        if (genBtn) {
+            genBtn.onclick = async function () {
+                if (generating) return;
+                var lines = (input && input.value || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+                if (!lines.length) { hint('请先输入内容，每行一条', 'err'); if (input) input.focus(); return; }
+                if (lines.length > MAX) { hint('一次最多生成 ' + MAX + ' 个，当前有 ' + lines.length + ' 条', 'err'); return; }
+                clearResults();
+                generating = true;
+                genBtn.disabled = true;
+                var okList = [], failList = [];
+                for (var i = 0; i < lines.length; i++) {
+                    var text = lines[i];
+                    var pad = String(i + 1).padStart(3, '0');
+                    var prefix = (mode === 'barcode') ? '条形码_' : (mode === 'dm' ? 'DataMatrix_' : (mode === 'pdf' ? 'PDF417_' : (mode === 'az' ? 'AztecCode_' : (mode === 'hx' ? 'HanXin_' : (mode === 'mx' ? 'MaxiCode_' : '二维码_')))));
+                    var name = prefix + pad + '.png';
+                    try {
+                        var canvas = (mode === 'barcode') ? renderBar(text)
+                            : (mode === 'dm' ? renderDm(text)
+                            : (mode === 'pdf' ? renderPdf(text)
+                            : (mode === 'az' ? renderAz(text)
+                            : (mode === 'hx' ? renderHx(text)
+                            : (mode === 'mx' ? renderMx(text) : await renderQr(text))))));
+                        var blob = await toBlob(canvas);
+                        okList.push({ name: name, blob: blob });
+                        files.push({ name: name, blob: blob });
+                        addItem(canvas, name, blob, files.length);
+                    } catch (e) {
+                        failList.push({ idx: i + 1, text: text, msg: (e && e.message) || '生成失败' });
+                    }
+                    hint('正在生成 ' + (i + 1) + ' / ' + lines.length + ' …');
+                    if (files.length) togglePreview(true);
+                }
+                generating = false;
+                genBtn.disabled = false;
+                if (!okList.length) {
+                    hint('全部生成失败：' + (failList[0] ? failList[0].msg : '请检查内容格式'), 'err');
+                    return;
+                }
+                if (failList.length) {
+                    var first = failList[0];
+                    hint('成功 ' + okList.length + ' 个，失败 ' + failList.length + ' 个（第 ' + first.idx + ' 行：' + first.msg + '）', 'err');
+                } else {
+                    hint('已生成 ' + okList.length + ' 个，可逐个下载或打包 ZIP', 'ok');
+                }
+                togglePreview(true);
+            };
+        }
+
+        if (zipBtn) {
+            zipBtn.onclick = async function () {
+                if (generating) return;
+                if (!files.length) { hint('还没有可打包的结果', 'err'); return; }
+                try {
+                    zipBtn.disabled = true;
+                    var entries = [];
+                    for (var i = 0; i < files.length; i++) {
+                        var buf = new Uint8Array(await files[i].blob.arrayBuffer());
+                        entries.push({ name: files[i].name, data: buf });
+                    }
+                    var zip = window.__qrMakeZip(entries);
+                    var prefix = (mode === 'barcode') ? '条形码批量_' : (mode === 'dm' ? 'DataMatrix批量_' : (mode === 'pdf' ? 'PDF417批量_' : (mode === 'az' ? 'AztecCode批量_' : (mode === 'hx' ? 'HanXin批量_' : (mode === 'mx' ? 'MaxiCode批量_' : '二维码批量_')))));;
+                    saveBlob(zip, prefix + stamp() + '_' + files.length + '张.zip');
+                    hint('已打包 ' + files.length + ' 张图片（ZIP）', 'ok');
+                } catch (e) {
+                    hint('打包失败：' + ((e && e.message) || '请稍后重试'), 'err');
+                } finally {
+                    zipBtn.disabled = false;
+                }
+            };
+        }
+    })();
+    </script>
+
+    <!-- Data Matrix 码生成：基于 bwip-js 的 datamatrix 码制，输入即出图 -->
+    <script>
+    (function () {
+        var view = document.getElementById('dmView');
+        if (!view) return;
+        var input = document.getElementById('dmInput');
+        var canvas = document.getElementById('dmCanvas');
+        var hintEl = document.getElementById('dmHint');
+        var optGrid = document.getElementById('dmOptGrid');
+        var preview = document.getElementById('dmPreview');
+        var dlWrap = document.getElementById('dmDlWrap');
+        var color = document.getElementById('dmColor');
+        var bg = document.getElementById('dmBg');
+        var scale = document.getElementById('dmScale');
+        var scaleVal = document.getElementById('dmScaleVal');
+        var timer = null;
+        var hasResult = false;
+
+        function hint(msg, type) {
+            if (!hintEl) return;
+            hintEl.textContent = msg;
+            hintEl.className = 'bar-hint' + (type ? ' is-' + type : '');
+        }
+        function hexNoHash(v, fallback) {
+            var s = (v || '').replace('#', '').toUpperCase();
+            return s || fallback;
+        }
+        function dmOptions(text) {
+            return {
+                bcid: 'datamatrix',
+                text: text,
+                scale: Number(scale && scale.value) || 6,
+                paddingwidth: 6,
+                paddingheight: 6,
+                barcolor: hexNoHash(color && color.value, '000000'),
+                backgroundcolor: hexNoHash(bg && bg.value, 'FFFFFF')
+            };
+        }
+        function show(on) {
+            hasResult = on;
+            if (optGrid) optGrid.style.display = on ? 'grid' : 'none';
+            if (preview) { preview.style.display = on ? 'block' : 'none'; preview.classList.toggle('hidden', !on); }
+            if (dlWrap) dlWrap.style.display = on ? 'grid' : 'none';
+            // 生成后右侧不再显示空态
+            var init = document.getElementById('previewInit');
+            if (init) init.style.display = on ? 'none' : '';
+        }
+        function clearCanvas() {
+            if (!canvas) return;
+            try {
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = 0; canvas.height = 0;
+            } catch (e) {}
+        }
+        function clearAll() {
+            clearCanvas();
+            show(false);
+            hasResult = false;
+        }
+        function draw() {
+            if (!canvas) return;
+            var text = (input && input.value || '').trim();
+            if (!text) {
+                clearAll();
+                hint('输入内容后自动生成 Data Matrix 码');
+                return;
+            }
+            try {
+                bwipjs.toCanvas(canvas, dmOptions(text));
+                show(true);
+                hint('已生成 Data Matrix 码，可下载 PNG 或 SVG');
+            } catch (e) {
+                clearAll();
+                hint('内容不符合 Data Matrix 规范：' + ((e && e.message) || '请检查内容'), 'err');
+            }
+        }
+        function queueDraw() {
+            clearTimeout(timer);
+            timer = setTimeout(draw, 250);
+        }
+        function saveBlob(blob, name) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click();
+            setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 2000);
+        }
+        function stamp() {
+            var d = new Date();
+            return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '_' +
+                String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d.getSeconds()).padStart(2, '0');
+        }
+
+        if (input) input.addEventListener('input', queueDraw);
+        [scale, color, bg].forEach(function (el) {
+            if (el) el.addEventListener('input', function () {
+                if (scaleVal && scale) scaleVal.textContent = scale.value;
+                queueDraw();
+            });
+        });
+
+        var clearBtn = document.getElementById('dmClearBtn');
+        if (clearBtn) clearBtn.onclick = function () {
+            if (input) input.value = '';
+            clearAll();
+            hint('输入内容后自动生成 Data Matrix 码');
+            if (input) input.focus();
+        };
+        var resetBtn = document.getElementById('dmResetBtn');
+        if (resetBtn) resetBtn.onclick = function () {
+            if (input) input.value = '';
+            if (color) color.value = '#000000';
+            if (bg) bg.value = '#ffffff';
+            if (scale) scale.value = '6';
+            if (scaleVal) scaleVal.textContent = '6';
+            clearAll();
+            hint('已重置为默认样式，输入内容后自动生成');
+        };
+        var dlBtn = document.getElementById('dmDownloadBtn');
+        if (dlBtn) dlBtn.onclick = function () {
+            if (!hasResult) { hint('还没有可下载的 Data Matrix 图片', 'err'); return; }
+            canvas.toBlob(function (b) {
+                if (b) saveBlob(b, 'DataMatrix_' + stamp() + '.png');
+            }, 'image/png');
+        };
+        var svgBtn = document.getElementById('dmDownloadSvgBtn');
+        if (svgBtn) svgBtn.onclick = function () {
+            if (!hasResult) { hint('还没有可下载的 Data Matrix 图片', 'err'); return; }
+            try {
+                var text = (input && input.value || '').trim();
+                var svg = bwipjs.toSVG(dmOptions(text));
+                saveBlob(new Blob([svg], { type: 'image/svg+xml' }), 'DataMatrix_' + stamp() + '.svg');
+            } catch (e) {
+                hint('导出 SVG 失败：' + ((e && e.message) || '请稍后重试'), 'err');
+            }
+        };
+
+        // 切档 / 离开该档位时由 setMode 调用：清空内容与结果
+        window.__qrDmReset = function () {
+            if (input) input.value = '';
+            clearAll();
+            hint('输入内容后自动生成 Data Matrix 码');
+        };
+        window.__qrDmShow = function () {
+            show(hasResult);
+        };
+    })();
+    </script>
+
+    <!-- PDF417 码生成：bwip-js 的 pdf417 码制，输入即出图 -->
+    <script>
+    (function () {
+        var view = document.getElementById('pdfView');
+        if (!view) return;
+        var input = document.getElementById('pdfInput');
+        var canvas = document.getElementById('pdfCanvas');
+        var hintEl = document.getElementById('pdfHint');
+        var optGrid = document.getElementById('pdfOptGrid');
+        var preview = document.getElementById('pdfPreview');
+        var dlWrap = document.getElementById('pdfDlWrap');
+        var color = document.getElementById('pdfColor');
+        var bg = document.getElementById('pdfBg');
+        var scale = document.getElementById('pdfScale');
+        var scaleVal = document.getElementById('pdfScaleVal');
+        var ec = document.getElementById('pdfEc');
+        var timer = null;
+        var hasResult = false;
+
+        function hint(msg, type) {
+            if (!hintEl) return;
+            hintEl.textContent = msg;
+            hintEl.className = 'bar-hint' + (type ? ' is-' + type : '');
+        }
+        function hexNoHash(v, fallback) {
+            var s = (v || '').replace('#', '').toUpperCase();
+            return s || fallback;
+        }
+        function pdfOptions(text) {
+            var o = {
+                bcid: 'pdf417',
+                text: text,
+                scale: Number(scale && scale.value) || 3,
+                paddingwidth: 6,
+                paddingheight: 6,
+                barcolor: hexNoHash(color && color.value, '000000'),
+                backgroundcolor: hexNoHash(bg && bg.value, 'FFFFFF')
+            };
+            var lv = ec && ec.value;
+            if (lv) o.eclevel = Number(lv);
+            return o;
+        }
+        function show(on) {
+            hasResult = on;
+            if (optGrid) optGrid.style.display = on ? 'grid' : 'none';
+            if (preview) { preview.style.display = on ? 'block' : 'none'; preview.classList.toggle('hidden', !on); }
+            if (dlWrap) dlWrap.style.display = on ? 'grid' : 'none';
+            var init = document.getElementById('previewInit');
+            if (init) init.style.display = on ? 'none' : '';
+        }
+        function clearCanvas() {
+            if (!canvas) return;
+            try {
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = 0; canvas.height = 0;
+            } catch (e) {}
+        }
+        function clearAll() {
+            clearCanvas();
+            show(false);
+            hasResult = false;
+        }
+        function draw() {
+            if (!canvas) return;
+            var text = (input && input.value || '').trim();
+            if (!text) {
+                clearAll();
+                hint('输入内容后自动生成 PDF417 码');
+                return;
+            }
+            try {
+                bwipjs.toCanvas(canvas, pdfOptions(text));
+                show(true);
+                hint('已生成 PDF417 码，可下载 PNG 或 SVG');
+            } catch (e) {
+                clearAll();
+                hint('内容不符合 PDF417 规范：' + ((e && e.message) || '请检查内容'), 'err');
+            }
+        }
+        function queueDraw() {
+            clearTimeout(timer);
+            timer = setTimeout(draw, 250);
+        }
+        function saveBlob(blob, name) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click();
+            setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 2000);
+        }
+        function stamp() {
+            var d = new Date();
+            return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '_' +
+                String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d.getSeconds()).padStart(2, '0');
+        }
+
+        if (input) input.addEventListener('input', queueDraw);
+        [scale, color, bg, ec].forEach(function (el) {
+            if (el) el.addEventListener('input', function () {
+                if (scaleVal && scale) scaleVal.textContent = scale.value;
+                queueDraw();
+            });
+        });
+
+        var clearBtn = document.getElementById('pdfClearBtn');
+        if (clearBtn) clearBtn.onclick = function () {
+            if (input) input.value = '';
+            clearAll();
+            hint('输入内容后自动生成 PDF417 码');
+            if (input) input.focus();
+        };
+        var resetBtn = document.getElementById('pdfResetBtn');
+        if (resetBtn) resetBtn.onclick = function () {
+            if (input) input.value = '';
+            if (color) color.value = '#000000';
+            if (bg) bg.value = '#ffffff';
+            if (scale) scale.value = '3';
+            if (scaleVal) scaleVal.textContent = '3';
+            if (ec) ec.value = '';
+            clearAll();
+            hint('已重置为默认样式，输入内容后自动生成');
+        };
+        var dlBtn = document.getElementById('pdfDownloadBtn');
+        if (dlBtn) dlBtn.onclick = function () {
+            if (!hasResult) { hint('还没有可下载的 PDF417 图片', 'err'); return; }
+            canvas.toBlob(function (b) {
+                if (b) saveBlob(b, 'PDF417_' + stamp() + '.png');
+            }, 'image/png');
+        };
+        var svgBtn = document.getElementById('pdfDownloadSvgBtn');
+        if (svgBtn) svgBtn.onclick = function () {
+            if (!hasResult) { hint('还没有可下载的 PDF417 图片', 'err'); return; }
+            try {
+                var text = (input && input.value || '').trim();
+                var svg = bwipjs.toSVG(pdfOptions(text));
+                saveBlob(new Blob([svg], { type: 'image/svg+xml' }), 'PDF417_' + stamp() + '.svg');
+            } catch (e) {
+                hint('导出 SVG 失败：' + ((e && e.message) || '请稍后重试'), 'err');
+            }
+        };
+
+        window.__qrPdfReset = function () {
+            if (input) input.value = '';
+            if (ec) ec.value = '';
+            clearAll();
+            hint('输入内容后自动生成 PDF417 码');
+        };
+        window.__qrPdfShow = function () {
+            show(hasResult);
+        };
+    })();
+    </script>
+
+    <!-- Aztec Code 生成：bwip-js 的 azteccode 码制，输入即出图 -->
+    <script>
+    (function () {
+        var view = document.getElementById('azView');
+        if (!view) return;
+        var input = document.getElementById('azInput');
+        var canvas = document.getElementById('azCanvas');
+        var hintEl = document.getElementById('azHint');
+        var optGrid = document.getElementById('azOptGrid');
+        var preview = document.getElementById('azPreview');
+        var dlWrap = document.getElementById('azDlWrap');
+        var color = document.getElementById('azColor');
+        var bg = document.getElementById('azBg');
+        var scale = document.getElementById('azScale');
+        var scaleVal = document.getElementById('azScaleVal');
+        var ec = document.getElementById('azEc');
+        var timer = null;
+        var hasResult = false;
+
+        function hint(msg, type) {
+            if (!hintEl) return;
+            hintEl.textContent = msg;
+            hintEl.className = 'bar-hint' + (type ? ' is-' + type : '');
+        }
+        function hexNoHash(v, fallback) {
+            var s = (v || '').replace('#', '').toUpperCase();
+            return s || fallback;
+        }
+        function azOptions(text) {
+            var o = {
+                bcid: 'azteccode',
+                text: text,
+                scale: Number(scale && scale.value) || 6,
+                paddingwidth: 6,
+                paddingheight: 6,
+                barcolor: hexNoHash(color && color.value, '000000'),
+                backgroundcolor: hexNoHash(bg && bg.value, 'FFFFFF')
+            };
+            var lv = ec && ec.value;
+            if (lv) o.eclevel = Number(lv);
+            return o;
+        }
+        function show(on) {
+            hasResult = on;
+            if (optGrid) optGrid.style.display = on ? 'grid' : 'none';
+            if (preview) { preview.style.display = on ? 'block' : 'none'; preview.classList.toggle('hidden', !on); }
+            if (dlWrap) dlWrap.style.display = on ? 'grid' : 'none';
+            var init = document.getElementById('previewInit');
+            if (init) init.style.display = on ? 'none' : '';
+        }
+        function clearCanvas() {
+            if (!canvas) return;
+            try {
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = 0; canvas.height = 0;
+            } catch (e) {}
+        }
+        function clearAll() {
+            clearCanvas();
+            show(false);
+            hasResult = false;
+        }
+        function draw() {
+            if (!canvas) return;
+            var text = (input && input.value || '').trim();
+            if (!text) {
+                clearAll();
+                hint('输入内容后自动生成 Aztec Code');
+                return;
+            }
+            try {
+                bwipjs.toCanvas(canvas, azOptions(text));
+                show(true);
+                hint('已生成 Aztec Code，可下载 PNG 或 SVG');
+            } catch (e) {
+                clearAll();
+                hint('内容不符合 Aztec Code 规范：' + ((e && e.message) || '请检查内容'), 'err');
+            }
+        }
+        function queueDraw() {
+            clearTimeout(timer);
+            timer = setTimeout(draw, 250);
+        }
+        function saveBlob(blob, name) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click();
+            setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 2000);
+        }
+        function stamp() {
+            var d = new Date();
+            return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '_' +
+                String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d.getSeconds()).padStart(2, '0');
+        }
+
+        if (input) input.addEventListener('input', queueDraw);
+        [scale, color, bg, ec].forEach(function (el) {
+            if (el) el.addEventListener('input', function () {
+                if (scaleVal && scale) scaleVal.textContent = scale.value;
+                queueDraw();
+            });
+        });
+
+        var clearBtn = document.getElementById('azClearBtn');
+        if (clearBtn) clearBtn.onclick = function () {
+            if (input) input.value = '';
+            clearAll();
+            hint('输入内容后自动生成 Aztec Code');
+            if (input) input.focus();
+        };
+        var resetBtn = document.getElementById('azResetBtn');
+        if (resetBtn) resetBtn.onclick = function () {
+            if (input) input.value = '';
+            if (color) color.value = '#000000';
+            if (bg) bg.value = '#ffffff';
+            if (scale) scale.value = '6';
+            if (scaleVal) scaleVal.textContent = '6';
+            if (ec) ec.value = '';
+            clearAll();
+            hint('已重置为默认样式，输入内容后自动生成');
+        };
+        var dlBtn = document.getElementById('azDownloadBtn');
+        if (dlBtn) dlBtn.onclick = function () {
+            if (!hasResult) { hint('还没有可下载的 Aztec Code 图片', 'err'); return; }
+            canvas.toBlob(function (b) {
+                if (b) saveBlob(b, 'AztecCode_' + stamp() + '.png');
+            }, 'image/png');
+        };
+        var svgBtn = document.getElementById('azDownloadSvgBtn');
+        if (svgBtn) svgBtn.onclick = function () {
+            if (!hasResult) { hint('还没有可下载的 Aztec Code 图片', 'err'); return; }
+            try {
+                var text = (input && input.value || '').trim();
+                var svg = bwipjs.toSVG(azOptions(text));
+                saveBlob(new Blob([svg], { type: 'image/svg+xml' }), 'AztecCode_' + stamp() + '.svg');
+            } catch (e) {
+                hint('导出 SVG 失败：' + ((e && e.message) || '请稍后重试'), 'err');
+            }
+        };
+
+        window.__qrAzReset = function () {
+            if (input) input.value = '';
+            if (ec) ec.value = '';
+            clearAll();
+            hint('输入内容后自动生成 Aztec Code');
+        };
+        window.__qrAzShow = function () {
+            show(hasResult);
+        };
+    })();
+    </script>
+
+    <!-- 汉信码生成：bwip-js 的 hanxin 码制，输入即出图 -->
+    <script>
+    (function () {
+        var view = document.getElementById('hxView');
+        if (!view) return;
+        var input = document.getElementById('hxInput');
+        var canvas = document.getElementById('hxCanvas');
+        var hintEl = document.getElementById('hxHint');
+        var optGrid = document.getElementById('hxOptGrid');
+        var preview = document.getElementById('hxPreview');
+        var dlWrap = document.getElementById('hxDlWrap');
+        var color = document.getElementById('hxColor');
+        var bg = document.getElementById('hxBg');
+        var scale = document.getElementById('hxScale');
+        var scaleVal = document.getElementById('hxScaleVal');
+        var ec = document.getElementById('hxEc');
+        var timer = null;
+        var hasResult = false;
+
+        function hint(msg, type) {
+            if (!hintEl) return;
+            hintEl.textContent = msg;
+            hintEl.className = 'bar-hint' + (type ? ' is-' + type : '');
+        }
+        function hexNoHash(v, fallback) {
+            var s = (v || '').replace('#', '').toUpperCase();
+            return s || fallback;
+        }
+        function hxOptions(text) {
+            var o = {
+                bcid: 'hanxin',
+                text: text,
+                scale: Number(scale && scale.value) || 4,
+                paddingwidth: 6,
+                paddingheight: 6,
+                barcolor: hexNoHash(color && color.value, '000000'),
+                backgroundcolor: hexNoHash(bg && bg.value, 'FFFFFF')
+            };
+            // 汉信码纠错等级是字符串 L1–L4，不选则不传（传空值会报 invalidOption）
+            var lv = ec && ec.value;
+            if (lv) o.eclevel = lv;
+            return o;
+        }
+        function show(on) {
+            hasResult = on;
+            if (optGrid) optGrid.style.display = on ? 'grid' : 'none';
+            if (preview) { preview.style.display = on ? 'block' : 'none'; preview.classList.toggle('hidden', !on); }
+            if (dlWrap) dlWrap.style.display = on ? 'grid' : 'none';
+            var init = document.getElementById('previewInit');
+            if (init) init.style.display = on ? 'none' : '';
+        }
+        function clearCanvas() {
+            if (!canvas) return;
+            try {
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = 0; canvas.height = 0;
+            } catch (e) {}
+        }
+        function clearAll() {
+            clearCanvas();
+            show(false);
+            hasResult = false;
+        }
+        function draw() {
+            if (!canvas) return;
+            var text = (input && input.value || '').trim();
+            if (!text) {
+                clearAll();
+                hint('输入内容后自动生成汉信码');
+                return;
+            }
+            try {
+                bwipjs.toCanvas(canvas, hxOptions(text));
+                show(true);
+                hint('已生成汉信码，可下载 PNG 或 SVG');
+            } catch (e) {
+                clearAll();
+                hint('内容无法生成汉信码：' + ((e && e.message) || '请检查内容'), 'err');
+            }
+        }
+        function queueDraw() {
+            clearTimeout(timer);
+            timer = setTimeout(draw, 250);
+        }
+        function saveBlob(blob, name) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click();
+            setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 2000);
+        }
+        function stamp() {
+            var d = new Date();
+            return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '_' +
+                String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d.getSeconds()).padStart(2, '0');
+        }
+
+        if (input) input.addEventListener('input', queueDraw);
+        [scale, color, bg, ec].forEach(function (el) {
+            if (el) el.addEventListener('input', function () {
+                if (scaleVal && scale) scaleVal.textContent = scale.value;
+                queueDraw();
+            });
+        });
+
+        var clearBtn = document.getElementById('hxClearBtn');
+        if (clearBtn) clearBtn.onclick = function () {
+            if (input) input.value = '';
+            clearAll();
+            hint('输入内容后自动生成汉信码');
+            if (input) input.focus();
+        };
+        var resetBtn = document.getElementById('hxResetBtn');
+        if (resetBtn) resetBtn.onclick = function () {
+            if (input) input.value = '';
+            if (color) color.value = '#000000';
+            if (bg) bg.value = '#ffffff';
+            if (scale) scale.value = '4';
+            if (scaleVal) scaleVal.textContent = '4';
+            if (ec) ec.value = '';
+            clearAll();
+            hint('已重置为默认样式，输入内容后自动生成');
+        };
+        var dlBtn = document.getElementById('hxDownloadBtn');
+        if (dlBtn) dlBtn.onclick = function () {
+            if (!hasResult) { hint('还没有可下载的汉信码图片', 'err'); return; }
+            canvas.toBlob(function (b) {
+                if (b) saveBlob(b, 'HanXin_' + stamp() + '.png');
+            }, 'image/png');
+        };
+        var svgBtn = document.getElementById('hxDownloadSvgBtn');
+        if (svgBtn) svgBtn.onclick = function () {
+            if (!hasResult) { hint('还没有可下载的汉信码图片', 'err'); return; }
+            try {
+                var text = (input && input.value || '').trim();
+                var svg = bwipjs.toSVG(hxOptions(text));
+                saveBlob(new Blob([svg], { type: 'image/svg+xml' }), 'HanXin_' + stamp() + '.svg');
+            } catch (e) {
+                hint('导出 SVG 失败：' + ((e && e.message) || '请稍后重试'), 'err');
+            }
+        };
+
+        window.__qrHxReset = function () {
+            if (input) input.value = '';
+            if (ec) ec.value = '';
+            clearAll();
+            hint('输入内容后自动生成汉信码');
+        };
+        window.__qrHxShow = function () {
+            show(hasResult);
+        };
+    })();
+    </script>
+
+    <!-- MaxiCode 生成：bwip-js 的 maxicode 码制，输入即出图（六边形网格） -->
+    <script>
+    (function () {
+        var view = document.getElementById('mxView');
+        if (!view) return;
+        var input = document.getElementById('mxInput');
+        var canvas = document.getElementById('mxCanvas');
+        var hintEl = document.getElementById('mxHint');
+        var optGrid = document.getElementById('mxOptGrid');
+        var preview = document.getElementById('mxPreview');
+        var dlWrap = document.getElementById('mxDlWrap');
+        var color = document.getElementById('mxColor');
+        var bg = document.getElementById('mxBg');
+        var scale = document.getElementById('mxScale');
+        var scaleVal = document.getElementById('mxScaleVal');
+        var timer = null;
+        var hasResult = false;
+
+        function hint(msg, type) {
+            if (!hintEl) return;
+            hintEl.textContent = msg;
+            hintEl.className = 'bar-hint' + (type ? ' is-' + type : '');
+        }
+        function hexNoHash(v, fallback) {
+            var s = (v || '').replace('#', '').toUpperCase();
+            return s || fallback;
+        }
+        function mxOptions(text) {
+            // 不指定 mode：bwip 默认走「单一数据块」编码，中文也能直接编；mode 2/3 需要邮编 + GS 分隔符
+            return {
+                bcid: 'maxicode',
+                text: text,
+                scale: Number(scale && scale.value) || 3,
+                paddingwidth: 6,
+                paddingheight: 6,
+                barcolor: hexNoHash(color && color.value, '000000'),
+                backgroundcolor: hexNoHash(bg && bg.value, 'FFFFFF')
+            };
+        }
+        function show(on) {
+            hasResult = on;
+            if (optGrid) optGrid.style.display = on ? 'grid' : 'none';
+            if (preview) { preview.style.display = on ? 'block' : 'none'; preview.classList.toggle('hidden', !on); }
+            if (dlWrap) dlWrap.style.display = on ? 'grid' : 'none';
+            var init = document.getElementById('previewInit');
+            if (init) init.style.display = on ? 'none' : '';
+        }
+        function clearCanvas() {
+            if (!canvas) return;
+            try {
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = 0; canvas.height = 0;
+            } catch (e) {}
+        }
+        function clearAll() {
+            clearCanvas();
+            show(false);
+            hasResult = false;
+        }
+        function draw() {
+            if (!canvas) return;
+            var text = (input && input.value || '').trim();
+            if (!text) {
+                clearAll();
+                hint('输入内容后自动生成 MaxiCode');
+                return;
+            }
+            try {
+                bwipjs.toCanvas(canvas, mxOptions(text));
+                show(true);
+                hint('已生成 MaxiCode，可下载 PNG 或 SVG');
+            } catch (e) {
+                clearAll();
+                hint('内容无法生成 MaxiCode：' + ((e && e.message) || '请检查内容'), 'err');
+            }
+        }
+        function queueDraw() {
+            clearTimeout(timer);
+            timer = setTimeout(draw, 250);
+        }
+        function saveBlob(blob, name) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click();
+            setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 2000);
+        }
+        function stamp() {
+            var d = new Date();
+            return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '_' +
+                String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d.getSeconds()).padStart(2, '0');
+        }
+
+        if (input) input.addEventListener('input', queueDraw);
+        [scale, color, bg].forEach(function (el) {
+            if (el) el.addEventListener('input', function () {
+                if (scaleVal && scale) scaleVal.textContent = scale.value;
+                queueDraw();
+            });
+        });
+
+        var clearBtn = document.getElementById('mxClearBtn');
+        if (clearBtn) clearBtn.onclick = function () {
+            if (input) input.value = '';
+            clearAll();
+            hint('输入内容后自动生成 MaxiCode');
+            if (input) input.focus();
+        };
+        var resetBtn = document.getElementById('mxResetBtn');
+        if (resetBtn) resetBtn.onclick = function () {
+            if (input) input.value = '';
+            if (color) color.value = '#000000';
+            if (bg) bg.value = '#ffffff';
+            if (scale) scale.value = '3';
+            if (scaleVal) scaleVal.textContent = '3';
+            clearAll();
+            hint('已重置为默认样式，输入内容后自动生成');
+        };
+        var dlBtn = document.getElementById('mxDownloadBtn');
+        if (dlBtn) dlBtn.onclick = function () {
+            if (!hasResult) { hint('还没有可下载的 MaxiCode 图片', 'err'); return; }
+            canvas.toBlob(function (b) {
+                if (b) saveBlob(b, 'MaxiCode_' + stamp() + '.png');
+            }, 'image/png');
+        };
+        var svgBtn = document.getElementById('mxDownloadSvgBtn');
+        if (svgBtn) svgBtn.onclick = function () {
+            if (!hasResult) { hint('还没有可下载的 MaxiCode 图片', 'err'); return; }
+            try {
+                var text = (input && input.value || '').trim();
+                var svg = bwipjs.toSVG(mxOptions(text));
+                saveBlob(new Blob([svg], { type: 'image/svg+xml' }), 'MaxiCode_' + stamp() + '.svg');
+            } catch (e) {
+                hint('导出 SVG 失败：' + ((e && e.message) || '请稍后重试'), 'err');
+            }
+        };
+
+        window.__qrMxReset = function () {
+            if (input) input.value = '';
+            clearAll();
+            hint('输入内容后自动生成 MaxiCode');
+        };
+        window.__qrMxShow = function () {
+            show(hasResult);
+        };
+    })();
+    </script>
+
+    <!-- 上传卡片支持拖拽图片：拖入后复用 fileInput 的解码流程 -->
+    <script>
+    (function () {
+        function bind() {
+            var box = document.getElementById('uploadBox');
+            var fileInput = document.getElementById('fileInput');
+            var uploadView = document.getElementById('uploadView');
+            if (!box || !fileInput || !uploadView) return;
+            var depth = 0;
+            function inResolveMode() {
+                return uploadView.style.display !== 'none' && !uploadView.classList.contains('hidden');
+            }
+            function hasFiles(e) {
+                var dt = e.dataTransfer;
+                if (!dt) return false;
+                if (dt.types) {
+                    for (var i = 0; i < dt.types.length; i++) {
+                        if (dt.types[i] === 'Files') return true;
+                    }
+                }
+                return false;
+            }
+            function stop(e) { e.preventDefault(); e.stopPropagation(); }
+            box.addEventListener('dragenter', function (e) {
+                if (!inResolveMode() || !hasFiles(e)) return;
+                stop(e); depth++;
+                box.classList.add('is-dragover');
+            });
+            box.addEventListener('dragover', function (e) {
+                if (!inResolveMode() || !hasFiles(e)) return;
+                stop(e);
+                try { e.dataTransfer.dropEffect = 'copy'; } catch (err) {}
+                box.classList.add('is-dragover');
+            });
+            box.addEventListener('dragleave', function (e) {
+                if (!inResolveMode() || !hasFiles(e)) return;
+                stop(e); depth = Math.max(0, depth - 1);
+                if (depth === 0) box.classList.remove('is-dragover');
+            });
+            box.addEventListener('drop', function (e) {
+                if (!inResolveMode() || !hasFiles(e)) return;
+                stop(e); depth = 0;
+                box.classList.remove('is-dragover');
+                var files = e.dataTransfer.files;
+                if (!files || !files.length) return;
+                // 只挑图片
+                var picked = [];
+                for (var i = 0; i < files.length; i++) {
+                    if (!files[i].type || files[i].type.indexOf('image/') === 0 || /\.(png|jpe?g|gif|webp|bmp)$/i.test(files[i].name)) picked.push(files[i]);
+                }
+                if (!picked.length) { alert('请拖入图片文件（jpg / png / jpeg / gif 等）'); return; }
+                try {
+                    var dt = new DataTransfer();
+                    picked.forEach(function (f) { dt.items.add(f); });
+                    fileInput.files = dt.files;
+                    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                } catch (err) {
+                    // 兜底：某些浏览器不允许给 fileInput.files 赋值，直接走 onchange 逻辑不支持时提示
+                    alert('当前浏览器不支持拖拽上传，请点击上传区域重新选择图片');
+                }
+            });
+            // 指针进入/离开虚线框：描边变蓝 / 恢复（不只依赖 CSS :hover，兼容各浏览器/结果态）
+            function setHover(on) {
+                if (on && inResolveMode()) box.classList.add('is-hover');
+                else box.classList.remove('is-hover');
+            }
+            box.addEventListener('mouseenter', function () {
+                setHover(true);
+            });
+            box.addEventListener('mouseover', function () {
+                setHover(true);
+            });
+            box.addEventListener('mouseleave', function () { setHover(false); });
+            box.addEventListener('mouseout', function (e) {
+                if (!e.relatedTarget || !box.contains(e.relatedTarget)) setHover(false);
+            });
+            box.addEventListener('pointerenter', function () {
+                if (box.classList.contains('is-resolve')) setHover(true);
+            });
+            box.addEventListener('pointerleave', function () { setHover(false); });
+            // 兜底：按坐标判断指针是否还在框内（结果态重绘/子元素遮挡时也一定生效）
+            document.addEventListener('mousemove', function (e) {
+                if (!inResolveMode()) { setHover(false); return; }
+                var r = box.getBoundingClientRect();
+                var inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+                if (inside) { if (!box.classList.contains('is-hover')) setHover(true); }
+                else if (box.classList.contains('is-hover')) setHover(false);
+            }, { passive: true });
+            // 点整块虚线框（而非只点「选择图片」按钮）也能打开文件选择框
+            box.addEventListener('click', function (e) {
+                if (!inResolveMode()) return;
+                if (e.target.closest('button, a, input, label, select, textarea')) return;
+                fileInput.click();
+            });
+            // 防止图片被拖到页面其它区域时浏览器直接打开图片
+            ['dragover', 'drop'].forEach(function (t) {
+                document.addEventListener(t, function (e) {
+                    if (!box.contains(e.target)) { e.preventDefault(); }
+                });
+            });
+        }
+        // 解码成功后结果视图接管，虚线框恢复默认灰色，不再随鼠标变色
+        window.__qrUploadBoxRefreshHover = function () {
+            var box = document.getElementById('uploadBox');
+            if (!box) return;
+            var uv = document.getElementById('uploadView');
+            var uploadActive = uv && uv.style.display !== 'none' && !uv.classList.contains('hidden');
+            if (!uploadActive) box.classList.remove('is-hover');
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+        else bind();
+    })();
+    </script>
+
+    <!-- 上传超过 1 张图片：逐张解码后用「解码结果」弹窗展示（图片名称 + 解码内容） -->
+    <script>
+    (function () {
+        function decodeFile(file) {
+            return new Promise(function (resolve) {
+                var reader = new FileReader();
+                reader.onload = function (ev) {
+                    var img = new Image();
+                    img.onload = function () {
+                        var canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        var ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        try {
+                            var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            var qr = jsQR(data.data, data.width, data.height);
+                            resolve(qr ? qr.data : null);
+                        } catch (e) { resolve(null); }
+                    };
+                    img.onerror = function () { resolve(null); };
+                    img.src = ev.target.result;
+                };
+                reader.onerror = function () { resolve(null); };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function bind() {
+            var fileInput = document.getElementById('fileInput');
+            var modal = document.getElementById('decodeModal');
+            var tbody = document.getElementById('decodeTableBody');
+            var countEl = document.getElementById('decodeModalCount');
+            var copyBtn = document.getElementById('decodeCopyBtn');
+            var closeBtn = document.getElementById('decodeModalClose');
+            if (!fileInput || !modal || !tbody) return;
+            var lastRows = [];
+
+            function close() {
+                modal.classList.remove('is-open');
+                fileInput.value = '';
+            }
+            closeBtn.addEventListener('click', close);
+            modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('is-open')) close(); });
+
+            copyBtn.addEventListener('click', async function () {
+                var text = lastRows.map(function (r) { return r.content == null ? '' : r.content; }).filter(Boolean).join('\n');
+                if (!text) return;
+                try {
+                    await navigator.clipboard.writeText(text);
+                    copyBtn.textContent = '已复制';
+                    setTimeout(function () { copyBtn.textContent = '复制解码结果'; }, 1200);
+                } catch (err) { alert('复制失败，请手动选取表格内容'); }
+            });
+
+            fileInput.addEventListener('change', async function (e) {
+                var files = e.target.files;
+                if (!files || files.length < 2) return;
+                var rows = [];
+                for (var i = 0; i < files.length; i++) {
+                    rows.push({ name: files[i].name, content: await decodeFile(files[i]) });
+                }
+                lastRows = rows;
+                tbody.innerHTML = '';
+                rows.forEach(function (r) {
+                    var tr = document.createElement('tr');
+                    var td1 = document.createElement('td');
+                    td1.textContent = r.name;
+                    var td2 = document.createElement('td');
+                    if (r.content) td2.textContent = r.content;
+                    else { td2.textContent = '未识别到二维码'; td2.className = 'is-fail'; }
+                    tr.appendChild(td1); tr.appendChild(td2);
+                    tbody.appendChild(tr);
+                });
+                var ok = rows.filter(function (r) { return r.content; }).length;
+                countEl.textContent = '解码' + rows.length + '张图片' + (ok < rows.length ? '（成功 ' + ok + ' 张）' : '');
+                modal.classList.add('is-open');
+            });
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+        else bind();
+    })();
     </script>
 </body>
 
