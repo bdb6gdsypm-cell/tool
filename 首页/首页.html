@@ -69,11 +69,11 @@ overflow:hidden;
 <div class="bg-grad rounded-2xl p-5 text-white relative overflow-hidden mb-5">
 <div>
 <h2 class="text-[32px] font-bold">今日效率</h2>
-<p class="text-xl mt-1">已整理 16个工具</p>
-<p class="text-xl mt-1">常用 16 个入口</p>
+<p class="text-xl mt-1">已整理 17个工具</p>
+<p class="text-xl mt-1">常用 17 个入口</p>
 </div>
 <div class="absolute right-6 top-1/2 -translate-y-1/2">
-<div class="text-[70px] font-bold opacity-90">16</div>
+<div class="text-[70px] font-bold opacity-90">17</div>
 </div>
 </div>
 <!-- 搜索框 -->
@@ -142,13 +142,13 @@ overflow:hidden;
 </div>
 <span class="mt-2 text-sm text-gray-700">OCR识别</span>
 </a>
-<!-- ✅ 密码管理改为日历，使用图片图标，跳转日历页面 -->
 <a href="../日历/日历.html" class="flex flex-col items-center">
 <div class="icon-box bg-white">
 <img src="logo/日历.png" alt="日历" class="w-full h-full object-contain">
 </div>
 <span class="mt-2 text-sm text-gray-700">日历</span>
 </a>
+<!-- ✅ 密码管理改为日历，使用图片图标，跳转日历页面 -->
 </div>
 </div><!-- /page1 -->
 <div class="tools-page" aria-hidden="true">
@@ -195,6 +195,16 @@ overflow:hidden;
 </div>
 <span class="mt-2 text-sm text-gray-700">全国区号查询</span>
 </a>
+<a href="../全国邮编查询/全国邮编查询.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/全国邮编查询.png" alt="全国邮编查询" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
+</div>
+<span class="mt-2 text-sm text-gray-700">全国邮编查询</span>
+</a>
+</div>
+</div><!-- /page2 -->
+<div class="tools-page" aria-hidden="true">
+<div class="grid grid-cols-4 gap-y-5 gap-x-2">
 <a href="../全球孔院查询/全球孔院查询.html" class="flex flex-col items-center">
 <div class="icon-box bg-white">
 <img src="logo/全球孔院查询.png" alt="全球孔院查询" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
@@ -203,7 +213,7 @@ overflow:hidden;
 </a>
 </div>
 <p class="mt-5 text-xs text-gray-400 text-center">更多工具还在整理中</p>
-</div><!-- /page2 -->
+</div><!-- /page3 -->
 </div>
 </div>
 <!-- 小圆点指示器 -->
@@ -256,7 +266,7 @@ overflow:hidden;
 <h1 class="text-[26px] font-bold text-gray-800">工具箱</h1>
 <p class="text-sm text-gray-400 mt-1">全部工具，按分类整理</p>
 </div>
-<span class="text-sm text-gray-500">共 16 个</span>
+<span class="text-sm text-gray-500">共 17 个</span>
 </div>
 
 <div class="bg-white rounded-2xl p-5 shadow-sm mb-5">
@@ -326,6 +336,11 @@ overflow:hidden;
 <a href="../全国区号查询/全国区号查询.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
 <div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/全国区号查询.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
 <div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">全国区号查询</p><p class="text-xs text-gray-400 mt-0.5">340 个城市与地区 · 省 / 市 / 电信区号</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../全国邮编查询/全国邮编查询.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/全国邮编查询.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">全国邮编查询</p><p class="text-xs text-gray-400 mt-0.5">52,625 条街道级邮编 · 省 / 市 / 区县 / 邮编</p></div>
 <i class="fa fa-chevron-right text-gray-300"></i>
 </a>
 </div>
@@ -427,33 +442,38 @@ overflow:hidden;
     });
   });
 
-  // 常用工具分页：两个圆点切换 + 滑动同步
+  // 常用工具分页：每页 2×4 共 8 个，圆点数量随页数生成
   var viewport = document.getElementById('toolsViewport');
-  var dots = [document.getElementById('dot0'), document.getElementById('dot1'), document.getElementById('dot2')];
-  var pages = [0, 1, 1];
+  var dotBox = viewport ? viewport.parentNode.querySelector('.flex.justify-center.items-center') : null;
+  var pageEls = viewport ? viewport.querySelectorAll('.tools-page') : [];
+  var dots = [];
+  function markDots(i){
+    dots.forEach(function(d, idx){ d.classList.toggle('is-active', idx === i); });
+    Array.prototype.forEach.call(pageEls, function(pg, idx){
+      pg.setAttribute('aria-hidden', idx === i ? 'false' : 'true');
+    });
+  }
   function goPage(i){
     if (!viewport) return;
+    i = Math.max(0, Math.min(i, pageEls.length - 1));
     viewport.scrollTo({ left: viewport.clientWidth * i, behavior: 'smooth' });
     markDots(i);
   }
-  function markDots(i){
-    dots.forEach(function(d, idx){
-      if (!d) return;
-      var on = idx === 0 ? i === 0 : (idx === 1 ? i === 1 : false);
-      d.classList.toggle('is-active', on);
+  if (viewport && dotBox){
+    dotBox.innerHTML = '';
+    Array.prototype.forEach.call(pageEls, function(_, idx){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dot-btn' + (idx === 0 ? ' is-active' : '');
+      b.setAttribute('aria-label', '第 ' + (idx + 1) + ' 页');
+      b.addEventListener('click', function(){ goPage(idx); });
+      dotBox.appendChild(b);
+      dots.push(b);
     });
-  }
-  dots.forEach(function(d, idx){
-    if (!d) return;
-    d.addEventListener('click', function(){ goPage(pages[idx] || 0); });
-  });
-  if (viewport){
     viewport.addEventListener('scroll', function(){
       var w = viewport.clientWidth || 1;
       var i = Math.round(viewport.scrollLeft / w);
-      markDots(i === 0 ? 0 : 1);
-      var p2 = viewport.querySelectorAll('.tools-page')[1];
-      if (p2) p2.setAttribute('aria-hidden', i === 1 ? 'false' : 'true');
+      markDots(Math.max(0, Math.min(i, pageEls.length - 1)));
     }, { passive: true });
   }
 })();
@@ -462,7 +482,7 @@ overflow:hidden;
 <script>
 /* 分类超过 5 个工具时，第 5 个之后折叠，并提供「更多」展开 */
 (function(){
-  var LIMIT = 6;
+  var LIMIT = 5;
   document.querySelectorAll('#view-tools .divide-y').forEach(function(box){
     var items = Array.prototype.slice.call(box.querySelectorAll('a'));
     if(items.length <= LIMIT) return;
@@ -494,7 +514,9 @@ overflow:hidden;
       paint();
     });
     paint();
-    box.parentNode.insertBefore(btn, box.nextSibling);
+    // 按钮紧跟在第 5 条之后
+    var anchor = items[LIMIT - 1];
+    box.insertBefore(btn, anchor.nextSibling);
   });
 })();
 </script>
