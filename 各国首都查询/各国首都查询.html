@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>各国首都查询 · World Capitals</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f5f4c'/%3E%3Cpath d='M16 7c-3.3 0-6 2.6-6 5.9 0 4.4 6 12.1 6 12.1s6-7.7 6-12.1c0-3.3-2.7-5.9-6-5.9zm0 8.3a2.4 2.4 0 1 1 0-4.8 2.4 2.4 0 0 1 0 4.8z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f1f3f1; --card:#fff; --ink:#15181a; --muted:#5f6664; --faint:#8b918e;
+    --line:#dfe3e0; --accent:#135a4a; --accent-soft:#e8f1ed; --gold:#9a6b1f;
+    --radius:12px; --topbar-h:61px;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none;}
+  button{font:inherit;color:inherit;}
+  ::selection{background:#d7e8e0;}
+
+  .topbar{
+    position:sticky;top:0;z-index:30;height:var(--topbar-h);
+    display:flex;align-items:center;gap:12px;padding:0 18px;
+    background:var(--bg);border-bottom:1px solid var(--line);
+  }
+  .back{
+    flex:0 0 auto;width:32px;height:32px;border-radius:50%;
+    border:1px solid var(--line);background:var(--card);display:grid;place-items:center;
+    cursor:pointer;transition:border-color .15s,transform .15s;
+  }
+  .back:hover{border-color:var(--accent);}
+  .back:active{transform:scale(.94);}
+  .back svg{width:16px;height:16px;stroke:var(--ink);}
+  .brand{min-width:0;display:flex;flex-direction:column;gap:1px;}
+  .brand h1{margin:0;font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .brand h1 i{font-style:normal;color:var(--muted);font-weight:600;}
+  .brand p{margin:0;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .search{
+    margin-left:auto;flex:0 1 320px;display:flex;align-items:center;gap:8px;
+    height:36px;padding:0 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(19,90,74,.09);}
+  .search svg{width:15px;height:15px;stroke:var(--faint);flex:0 0 auto;}
+  .search input{
+    flex:1;min-width:0;border:0;outline:0;background:transparent;font-size:16px;color:var(--ink);
+  }
+  .search input::placeholder{color:var(--faint);}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(2,1fr);
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    margin:14px 18px 0;overflow:hidden;
+  }
+  .stat{padding:13px 15px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .stat:nth-child(2n){border-right:0;}
+  .stat:nth-last-child(-n+2){border-bottom:0;}
+  .stat label{display:block;font-size:11px;color:var(--muted);}
+  .stat label span{color:var(--faint);}
+  .stat b{display:block;margin-top:2px;font-size:22px;font-weight:700;font-family:var(--mono);letter-spacing:-.02em;}
+  .stat b i{font-style:normal;font-size:12px;color:var(--faint);font-family:inherit;margin-left:3px;font-weight:400;}
+
+  .layout{display:block;padding:14px 18px 24px;}
+  .rail{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;margin-bottom:14px;
+  }
+  .rail h3{margin:0 0 9px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;}
+  .rail h3 span{font-weight:400;font-size:11px;color:var(--faint);}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;
+    border:1px solid var(--line);background:#fbfcfb;color:var(--muted);font-size:12px;cursor:pointer;
+    transition:all .15s;
+  }
+  .chip:hover{border-color:#c9d3cd;color:var(--ink);}
+  .chip .n{font-family:var(--mono);font-size:10.5px;color:var(--faint);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip[aria-pressed="true"] .n{color:rgba(255,255,255,.75);}
+  .rail-note{
+    margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+    font-size:11px;line-height:1.65;color:var(--faint);
+  }
+
+  .content{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+  }
+  .content-head{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:11px 14px;border-bottom:1px solid var(--line);
+  }
+  .res-count{font-size:12.5px;color:var(--muted);}
+  .res-count b{font-family:var(--mono);color:var(--ink);font-size:14px;}
+  .res-count span{color:#b3b8b5;}
+  .sort-wrap{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--faint);}
+  select{
+    appearance:none;-webkit-appearance:none;height:30px;padding:0 26px 0 9px;
+    border:1px solid var(--line);border-radius:8px;background:#fbfcfb;
+    font-size:12px;color:var(--ink);cursor:pointer;outline:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b918e' stroke-width='2.4'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 8px center;
+  }
+  select:focus{border-color:var(--accent);}
+
+  .thead{
+    display:grid;grid-template-columns:minmax(0,1fr) 92px 214px 42px;gap:10px;
+    padding:8px 14px;border-bottom:1px solid var(--line);
+    font-size:11px;color:var(--faint);background:#fbfcfb;
+  }
+  .thead span:last-child{text-align:center;}
+  .thead i{font-style:normal;color:#b3b8b5;}
+  #rows{display:block;}
+  .row{
+    display:grid;grid-template-columns:minmax(0,1fr) 92px 214px 42px;gap:10px;align-items:center;
+    padding:10px 14px;border-bottom:1px solid #edf0ee;
+  }
+  .row:last-child{border-bottom:0;}
+  .row:hover{background:#f8faf9;}
+  .country{min-width:0;}
+  .country strong{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .country span{display:block;font-size:11.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .country .en{color:#7d8580;}
+  .cont{font-size:12px;color:var(--muted);white-space:nowrap;}
+  .cont i{font-style:normal;display:block;font-size:10.5px;color:var(--faint);}
+  .capital{display:flex;align-items:flex-start;gap:6px;min-width:0;color:var(--accent);}
+  .capital svg{width:13px;height:13px;flex:0 0 auto;stroke:var(--gold);margin-top:3px;}
+  .capital .cap-cn{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .capital .cap-en{display:block;font-size:11px;color:var(--faint);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .capital.missing{color:var(--faint);font-weight:400;}
+  .capital.missing svg{stroke:var(--faint);opacity:.55;}
+  .capital .cap-cn{cursor:pointer;border-bottom:1px dashed transparent;}
+  .capital .cap-cn:hover{border-bottom-color:currentColor;}
+  .copy{
+    width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:#fff;
+    display:grid;place-items:center;cursor:pointer;transition:all .15s;justify-self:center;
+  }
+  .copy:hover{border-color:var(--accent);background:var(--accent-soft);}
+  .copy svg{width:14px;height:14px;stroke:var(--muted);}
+  .copy:hover svg{stroke:var(--accent);}
+  .empty{padding:44px 18px;text-align:center;color:var(--muted);font-size:13px;}
+  .empty span{display:block;margin-top:4px;font-size:11.5px;color:var(--faint);}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);
+    background:rgba(21,24,26,.92);color:#fff;font-size:12.5px;padding:8px 14px;border-radius:999px;
+    opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:60;white-space:nowrap;
+  }
+  .toast.on{opacity:1;transform:translate(-50%,0);}
+
+  @media (min-width:760px){
+    .stats{grid-template-columns:repeat(4,1fr);margin:16px 22px 0;}
+    .stat{border-bottom:0;}
+    .stat:nth-child(2n){border-right:1px solid var(--line);}
+    .stat:last-child{border-right:0;}
+    .layout{padding:16px 22px 28px;}
+    .stat b{font-size:25px;}
+  }
+  @media (min-width:980px){
+    .topbar{padding:0 24px;}
+    .stats{margin:18px 28px 0;}
+    .layout{display:grid;grid-template-columns:228px minmax(0,1fr);gap:16px;padding:16px 28px 34px;align-items:start;}
+    .rail{position:sticky;top:calc(var(--topbar-h) + 14px);margin-bottom:0;}
+    .brand h1{font-size:18px;}
+  }
+  @media (max-width:759px){
+    .thead{display:none;}
+    #rows{display:grid;grid-template-columns:1fr;gap:0;}
+    .row{
+      grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"country copy" "capital capital";
+      row-gap:7px;padding:11px 14px;
+    }
+    .country{grid-area:country;}
+    .copy{grid-area:copy;}
+    .capital{grid-area:capital;}
+    .cont{
+      display:inline-block;margin-left:6px;font-size:10.5px;color:var(--faint);
+      border:1px solid var(--line);border-radius:5px;padding:0 5px;vertical-align:1px;
+    }
+    .cont i{display:none;}
+    .country .full{white-space:normal;}
+  }
+  @media (max-width:600px){
+    .brand h1{font-size:15px;}
+    .brand h1 i{display:none;}
+  }
+  @media (max-width:420px){
+    .search{flex-basis:150px;}
+    .brand p{display:none;}
+    .stats{margin:12px 12px 0;}
+    .layout{padding:12px 12px 20px;}
+    .topbar{padding:0 12px;gap:9px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back" href="../首页/首页.html" aria-label="返回首页 Back to home" title="返回首页 Back to home">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <div class="brand">
+    <h1><span>各国首都查询</span><i> · World Capitals</i></h1>
+    <p>250 个国家与地区 · 首都速查 · Capitals by country</p>
+  </div>
+  <div class="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+    <input id="q" type="search" autocomplete="off" placeholder="搜索国家、首都 / Country or capital" aria-label="搜索国家、首都 / Country or capital">
+  </div>
+</header>
+
+<section class="stats">
+  <div class="stat"><label>国家与地区 <span>Countries</span></label><b>250<i>条</i></b></div>
+  <div class="stat"><label>含首都记录 <span>With capital</span></label><b>246<i>条</i></b></div>
+  <div class="stat"><label>不重复首都 <span>Unique capitals</span></label><b>243<i>个</i></b></div>
+  <div class="stat"><label>覆盖大洲 <span>Continents</span></label><b>6<i>个</i></b></div>
+</section>
+
+<div class="layout">
+  <aside class="rail">
+    <h3>按大洲筛选 <span>Continents</span></h3>
+    <div class="chips" id="contChips"></div>
+    <div class="rail-note">
+      首都取各国法定或实际行政中心；南极洲及部分属地无常驻首都，显示为「—」。点击首都名称或右侧按钮即可复制。
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="content-head">
+      <div class="res-count">共 <b id="count">250</b> 个国家与地区 <span>countries</span></div>
+      <div class="sort-wrap">
+        <span>排序 Sort</span>
+        <select id="sort" aria-label="排序方式">
+          <option value="country">国家 A→Z · Country</option>
+          <option value="capital">首都 A→Z · Capital</option>
+          <option value="continent">按大洲 · Continent</option>
+        </select>
+      </div>
+    </div>
+    <div class="thead">
+      <span>国家 / 地区 <i>Country</i></span>
+      <span>大洲 <i>Continent</i></span>
+      <span>首都 <i>Capital</i></span>
+      <span></span>
+    </div>
+    <div id="rows"></div>
+  </main>
+</div>
+
+<div class="toast" id="toast">已复制 Copied</div>
+
+<script>
+var DATA = [["不丹","不丹王国","亚洲","廷布","Bhutan","Thimphu","Kingdom of Bhutan"],["东帝汶","东帝汶民主共和国","亚洲","帝力","Timor-Leste","Dili","Democratic Republic of Timor-Leste"],["中国","中华人民共和国","亚洲","北京","China","Beijing","People's Republic of China"],["乌兹别克斯坦","乌兹别克斯坦共和国","亚洲","塔什干","Uzbekistan","Tashkent","Republic of Uzbekistan"],["也门","也门共和国","亚洲","萨那","Yemen","Sana'a","Republic of Yemen"],["亚美尼亚","亚美尼亚共和国","亚洲","埃里温","Armenia","Yerevan","Republic of Armenia"],["以色列","以色列国","亚洲","耶路撒冷","Israel","Jerusalem","State of Israel"],["伊拉克","伊拉克共和国","亚洲","巴格达","Iraq","Baghdad","Republic of Iraq"],["伊朗","伊朗伊斯兰共和国","亚洲","德黑兰","Iran","Tehran","Islamic Republic of Iran"],["卡塔尔","卡塔尔国","亚洲","多哈","Qatar","Doha","State of Qatar"],["印度","印度共和国","亚洲","新德里","India","New Delhi","Republic of India"],["印度尼西亚","印度尼西亚共和国","亚洲","雅加达","Indonesia","Jakarta","Republic of Indonesia"],["叙利亚","叙利亚阿拉伯共和国","亚洲","大马士革","Syria","Damascus","Syrian Arab Republic"],["中国台湾","中国台湾地区","亚洲","北京","Taiwan, China","Beijing","Taiwan, China"],["吉尔吉斯斯坦","吉尔吉斯斯坦共和国","亚洲","比什凯克","Kyrgyzstan","Bishkek","Kyrgyz Republic"],["哈萨克斯坦","哈萨克斯坦共和国","亚洲","阿斯塔纳","Kazakhstan","Astana","Republic of Kazakhstan"],["土库曼斯坦","土库曼斯坦","亚洲","阿什哈巴德","Turkmenistan","Ashgabat","Turkmenistan"],["土耳其","土耳其共和国","亚洲","安卡拉","Türkiye","Ankara","Republic of Türkiye"],["塔吉克斯坦","塔吉克斯坦共和国","亚洲","杜尚别","Tajikistan","Dushanbe","Republic of Tajikistan"],["孟加拉国","孟加拉人民共和国","亚洲","达卡","Bangladesh","Dhaka","People's Republic of Bangladesh"],["尼泊尔","尼泊尔联邦民主共和国","亚洲","加德满都","Nepal","Kathmandu","Federal Democratic Republic of Nepal"],["巴勒斯坦","巴勒斯坦国","亚洲","拉马拉","Palestine","Ramallah","State of Palestine"],["巴基斯坦","巴基斯坦伊斯兰共和国","亚洲","伊斯兰堡","Pakistan","Islamabad","Islamic Republic of Pakistan"],["巴林","巴林王国","亚洲","麦纳麦","Bahrain","Manama","Kingdom of Bahrain"],["文莱","文莱和平之国","亚洲","斯里巴加湾市","Brunei","Bandar Seri Begawan","Nation of Brunei, Abode of Peace"],["斯里兰卡","斯里兰卡民主社会主义共和国","亚洲","科伦坡","Sri Lanka","Colombo","Democratic Socialist Republic of Sri Lanka"],["新加坡","新加坡共和国","亚洲","新加坡","Singapore","Singapore","Republic of Singapore"],["日本","日本国","亚洲","东京","Japan","Tokyo","Japan"],["朝鲜","朝鲜民主主义人民共和国","亚洲","平壤","North Korea","Pyongyang","Democratic People's Republic of Korea"],["柬埔寨","柬埔寨王国","亚洲","金边","Cambodia","Phnom Penh","Kingdom of Cambodia"],["格鲁吉亚","格鲁吉亚","亚洲","第比利斯","Georgia","Tbilisi","Georgia"],["沙特阿拉伯","沙特阿拉伯王国","亚洲","利雅得","Saudi Arabia","Riyadh","Kingdom of Saudi Arabia"],["泰国","泰王国","亚洲","曼谷","Thailand","Bangkok","Kingdom of Thailand"],["中国澳门","中华人民共和国澳门特别行政区","亚洲","北京","Macao, China","Beijing","Macao Special Administrative Region of the People's Republic of China"],["科威特","科威特国","亚洲","科威特城","Kuwait","Kuwait City","State of Kuwait"],["约旦","约旦哈希姆王国","亚洲","安曼","Jordan","Amman","Hashemite Kingdom of Jordan"],["缅甸","缅甸联邦共和国","亚洲","内比都","Myanmar","Naypyidaw","Republic of the Union of Myanmar"],["老挝","老挝人民民主共和国","亚洲","万象","Laos","Vientiane","Lao People's Democratic Republic"],["菲律宾","菲律宾共和国","亚洲","马尼拉","Philippines","Manila","Republic of the Philippines"],["蒙古","蒙古","亚洲","乌兰巴托","Mongolia","Ulan Bator","Mongolia"],["越南","越南社会主义共和国","亚洲","河内","Vietnam","Hanoi","Socialist Republic of Vietnam"],["阿塞拜疆","阿塞拜疆共和国","亚洲","巴库","Azerbaijan","Baku","Republic of Azerbaijan"],["阿富汗","阿富汗伊斯兰共和国","亚洲","喀布尔","Afghanistan","Kabul","Islamic Republic of Afghanistan"],["阿拉伯联合酋长国","阿拉伯联合酋长国","亚洲","阿布扎比","United Arab Emirates","Abu Dhabi","United Arab Emirates"],["阿曼","阿曼苏丹国","亚洲","马斯喀特","Oman","Muscat","Sultanate of Oman"],["韩国","大韩民国","亚洲","首尔","South Korea","Seoul","Republic of Korea"],["中国香港","中华人民共和国香港特别行政区","亚洲","北京","Hong Kong, China","Beijing","Hong Kong Special Administrative Region of the People's Republic of China"],["马尔代夫","马尔代夫共和国","亚洲","马累","Maldives","Malé","Republic of the Maldives"],["马来西亚","马来西亚","亚洲","吉隆坡","Malaysia","Kuala Lumpur","Malaysia"],["黎巴嫩","黎巴嫩共和国","亚洲","贝鲁特","Lebanon","Beirut","Lebanese Republic"],["丹麦","丹麦王国","欧洲","哥本哈根","Denmark","Copenhagen","Kingdom of Denmark"],["乌克兰","乌克兰","欧洲","基辅","Ukraine","Kyiv","Ukraine"],["俄罗斯","俄罗斯联邦","欧洲","莫斯科","Russia","Moscow","Russian Federation"],["保加利亚","保加利亚共和国","欧洲","索非亚","Bulgaria","Sofia","Republic of Bulgaria"],["克罗地亚","克罗地亚共和国","欧洲","萨格勒布","Croatia","Zagreb","Republic of Croatia"],["冰岛","冰岛","欧洲","雷克雅未克","Iceland","Reykjavik","Iceland"],["列支敦士登","列支敦士登公国","欧洲","瓦杜兹","Liechtenstein","Vaduz","Principality of Liechtenstein"],["匈牙利","匈牙利","欧洲","布达佩斯","Hungary","Budapest","Hungary"],["北马其顿","北马其顿共和国","欧洲","斯科普里","North Macedonia","Skopje","Republic of North Macedonia"],["卢森堡","卢森堡大公国","欧洲","卢森堡","Luxembourg","Luxembourg","Grand Duchy of Luxembourg"],["圣马力诺","圣马力诺共和国","欧洲","圣马力诺","San Marino","City of San Marino","Most Serene Republic of San Marino"],["塞尔维亚","塞尔维亚共和国","欧洲","贝尔格莱德","Serbia","Belgrade","Republic of Serbia"],["塞浦路斯","塞浦路斯共和国","欧洲","尼科西亚","Cyprus","Nicosia","Republic of Cyprus"],["奥兰群岛","奥兰群岛","欧洲","玛丽港","Åland Islands","Mariehamn","Åland Islands"],["奥地利","奥地利共和国","欧洲","维也纳","Austria","Vienna","Republic of Austria"],["安道尔","安道尔公国","欧洲","安道尔城","Andorra","Andorra la Vella","Principality of Andorra"],["希腊","希腊共和国","欧洲","雅典","Greece","Athens","Hellenic Republic"],["德国","德意志联邦共和国","欧洲","柏林","Germany","Berlin","Federal Republic of Germany"],["意大利","意大利共和国","欧洲","罗马","Italy","Rome","Italian Republic"],["拉脱维亚","拉脱维亚共和国","欧洲","里加","Latvia","Riga","Republic of Latvia"],["挪威","挪威王国","欧洲","奥斯陆","Norway","Oslo","Kingdom of Norway"],["捷克","捷克共和国","欧洲","布拉格","Czechia","Prague","Czech Republic"],["摩尔多瓦","摩尔多瓦共和国","欧洲","基希讷乌","Moldova","Chișinău","Republic of Moldova"],["摩纳哥","摩纳哥公国","欧洲","摩纳哥","Monaco","Monaco","Principality of Monaco"],["斯洛伐克","斯洛伐克共和国","欧洲","布拉迪斯拉发","Slovakia","Bratislava","Slovak Republic"],["斯洛文尼亚","斯洛文尼亚共和国","欧洲","卢布尔雅那","Slovenia","Ljubljana","Republic of Slovenia"],["斯瓦尔巴特","斯瓦尔巴特","欧洲","朗伊尔城","Svalbard and Jan Mayen","Longyearbyen","Svalbard og Jan Mayen"],["根西岛","根西岛","欧洲","圣彼得港","Guernsey","St. Peter Port","Bailiwick of Guernsey"],["梵蒂冈","梵蒂冈城国","欧洲","梵蒂冈城","Vatican City","Vatican City","Vatican City State"],["比利时","比利时王国","欧洲","布鲁塞尔","Belgium","Brussels","Kingdom of Belgium"],["法国","法兰西共和国","欧洲","巴黎","France","Paris","French Republic"],["法罗群岛","法罗群岛","欧洲","托尔斯港","Faroe Islands","Tórshavn","Faroe Islands"],["波兰","波兰共和国","欧洲","华沙","Poland","Warsaw","Republic of Poland"],["波斯尼亚和黑塞哥维那","波斯尼亚和黑塞哥维那","欧洲","萨拉热窝","Bosnia and Herzegovina","Sarajevo","Bosnia and Herzegovina"],["泽西岛","泽西岛","欧洲","圣赫利尔","Jersey","Saint Helier","Bailiwick of Jersey"],["爱尔兰","爱尔兰共和国","欧洲","都柏林","Ireland","Dublin","Republic of Ireland"],["爱沙尼亚","爱沙尼亚共和国","欧洲","塔林","Estonia","Tallinn","Republic of Estonia"],["瑞典","瑞典王国","欧洲","斯德哥尔摩","Sweden","Stockholm","Kingdom of Sweden"],["瑞士","瑞士联邦","欧洲","伯尔尼","Switzerland","Bern","Swiss Confederation"],["白俄罗斯","白俄罗斯共和国","欧洲","明斯克","Belarus","Minsk","Republic of Belarus"],["直布罗陀","直布罗陀","欧洲","直布罗陀","Gibraltar","Gibraltar","Gibraltar"],["科索沃","科索沃共和国","欧洲","普里什蒂纳","Kosovo","Pristina","Republic of Kosovo"],["立陶宛","立陶宛共和国","欧洲","维尔纽斯","Lithuania","Vilnius","Republic of Lithuania"],["罗马尼亚","罗马尼亚","欧洲","布加勒斯特","Romania","Bucharest","Romania"],["芬兰","芬兰共和国","欧洲","赫尔辛基","Finland","Helsinki","Republic of Finland"],["英国","大不列颠及北爱尔兰联合王国","欧洲","伦敦","United Kingdom","London","United Kingdom of Great Britain and Northern Ireland"],["荷兰","荷兰","欧洲","阿姆斯特丹","Netherlands","Amsterdam","Kingdom of the Netherlands"],["葡萄牙","葡萄牙共和国","欧洲","里斯本","Portugal","Lisbon","Portuguese Republic"],["西班牙","西班牙王国","欧洲","马德里","Spain","Madrid","Kingdom of Spain"],["阿尔巴尼亚","阿尔巴尼亚共和国","欧洲","地拉那","Albania","Tirana","Republic of Albania"],["马恩岛","马恩岛","欧洲","道格拉斯","Isle of Man","Douglas","Isle of Man"],["马耳他","马耳他共和国","欧洲","瓦莱塔","Malta","Valletta","Republic of Malta"],["黑山","黑山","欧洲","波德戈里察","Montenegro","Podgorica","Montenegro"],["中非共和国","中非共和国","非洲","班吉","Central African Republic","Bangui","Central African Republic"],["乌干达","乌干达共和国","非洲","坎帕拉","Uganda","Kampala","Republic of Uganda"],["乍得","乍得共和国","非洲","恩贾梅纳","Chad","N'Djamena","Republic of Chad"],["佛得角","佛得角共和国","非洲","普拉亚","Cape Verde","Praia","Republic of Cabo Verde"],["冈比亚","冈比亚共和国","非洲","班珠尔","Gambia","Banjul","Republic of the Gambia"],["几内亚","几内亚共和国","非洲","科纳克里","Guinea","Conakry","Republic of Guinea"],["几内亚比绍","几内亚比绍共和国","非洲","比绍","Guinea-Bissau","Bissau","Republic of Guinea-Bissau"],["刚果（布）","刚果共和国","非洲","布拉柴维尔","Congo","Brazzaville","Republic of the Congo"],["刚果（金）","刚果民主共和国","非洲","金沙萨","DR Congo","Kinshasa","Democratic Republic of the Congo"],["利比亚","利比亚国","非洲","的黎波里","Libya","Tripoli","State of Libya"],["利比里亚","利比里亚共和国","非洲","蒙罗维亚","Liberia","Monrovia","Republic of Liberia"],["加纳","加纳共和国","非洲","阿克拉","Ghana","Accra","Republic of Ghana"],["加蓬","加蓬共和国","非洲","利伯维尔","Gabon","Libreville","Gabonese Republic"],["南苏丹","南苏丹共和国","非洲","朱巴","South Sudan","Juba","Republic of South Sudan"],["南非","南非共和国","非洲","比勒陀利亚、布隆方丹、开普敦","South Africa","Pretoria / Bloemfontein / Cape Town","Republic of South Africa"],["博茨瓦纳","博茨瓦纳共和国","非洲","哈博罗内","Botswana","Gaborone","Republic of Botswana"],["卢旺达","卢旺达共和国","非洲","基加利","Rwanda","Kigali","Republic of Rwanda"],["厄立特里亚","厄立特里亚","非洲","阿斯马拉","Eritrea","Asmara","State of Eritrea"],["吉布提","吉布提共和国","非洲","吉布提市","Djibouti","Djibouti","Republic of Djibouti"],["喀麦隆","喀麦隆共和国","非洲","雅温得","Cameroon","Yaoundé","Republic of Cameroon"],["圣多美和普林西比","圣多美和普林西比民主共和国","非洲","圣多美","São Tomé and Príncipe","São Tomé","Democratic Republic of São Tomé and Príncipe"],["圣赫勒拿、阿森松和特里斯坦-达库尼亚","圣赫勒拿、阿森松和特里斯坦-达库尼亚","非洲","詹姆斯敦","Saint Helena, Ascension and Tristan da Cunha","Jamestown","Saint Helena, Ascension and Tristan da Cunha"],["坦桑尼亚","坦桑尼亚联合共和国","非洲","多多马","Tanzania","Dodoma","United Republic of Tanzania"],["埃及","阿拉伯埃及共和国","非洲","开罗","Egypt","Cairo","Arab Republic of Egypt"],["埃塞俄比亚","埃塞俄比亚联邦民主共和国","非洲","亚的斯亚贝巴","Ethiopia","Addis Ababa","Federal Democratic Republic of Ethiopia"],["塞内加尔","塞内加尔共和国","非洲","达喀尔","Senegal","Dakar","Republic of Senegal"],["塞拉利昂","塞拉利昂共和国","非洲","弗里敦","Sierra Leone","Freetown","Republic of Sierra Leone"],["塞舌尔","塞舌尔共和国","非洲","维多利亚","Seychelles","Victoria","Republic of Seychelles"],["多哥","多哥共和国","非洲","洛美","Togo","Lomé","Togolese Republic"],["安哥拉","安哥拉共和国","非洲","罗安达","Angola","Luanda","Republic of Angola"],["尼日利亚","尼日利亚联邦共和国","非洲","阿布贾","Nigeria","Abuja","Federal Republic of Nigeria"],["尼日尔","尼日尔共和国","非洲","尼亚美","Niger","Niamey","Republic of Niger"],["布基纳法索","布基纳法索","非洲","瓦加杜古","Burkina Faso","Ouagadougou","Burkina Faso"],["布隆迪","布隆迪共和国","非洲","基特加","Burundi","Gitega","Republic of Burundi"],["摩洛哥","摩洛哥王国","非洲","拉巴特","Morocco","Rabat","Kingdom of Morocco"],["斯威士兰","斯威士兰王国","非洲","洛班巴","Eswatini","Lobamba","Kingdom of Eswatini"],["毛里塔尼亚","毛里塔尼亚伊斯兰共和国","非洲","努瓦克肖特","Mauritania","Nouakchott","Islamic Republic of Mauritania"],["毛里求斯","毛里求斯共和国","非洲","路易港","Mauritius","Port Louis","Republic of Mauritius"],["津巴布韦","津巴布韦共和国","非洲","哈拉雷","Zimbabwe","Harare","Republic of Zimbabwe"],["留尼旺岛","留尼旺岛","非洲","圣但尼","Réunion","Saint-Denis","Réunion Island"],["科摩罗","科摩罗联盟","非洲","莫罗尼","Comoros","Moroni","Union of the Comoros"],["科特迪瓦","科特迪瓦共和国","非洲","亚穆苏克罗","Ivory Coast","Yamoussoukro","Republic of Côte d'Ivoire"],["突尼斯","突尼斯共和国","非洲","突尼斯","Tunisia","Tunis","Tunisian Republic"],["索马里","索马里共和国","非洲","摩加迪沙","Somalia","Mogadishu","Federal Republic of Somalia"],["纳米比亚","纳米比亚共和国","非洲","温得和克","Namibia","Windhoek","Republic of Namibia"],["肯尼亚","肯尼亚共和国","非洲","内罗毕","Kenya","Nairobi","Republic of Kenya"],["苏丹","苏丹共和国","非洲","喀土穆","Sudan","Khartoum","Republic of the Sudan"],["英属印度洋领地","英属印度洋领地","非洲","迪戈加西亚","British Indian Ocean Territory","Diego Garcia","British Indian Ocean Territory"],["莫桑比克","莫桑比克共和国","非洲","马普托","Mozambique","Maputo","Republic of Mozambique"],["莱索托","莱索托王国","非洲","马塞卢","Lesotho","Maseru","Kingdom of Lesotho"],["西撒哈拉","阿拉伯撒哈拉民主共和国","非洲","阿尤恩","Western Sahara","El Aaiún","Sahrawi Arab Democratic Republic"],["贝宁","贝宁共和国","非洲","波多诺伏","Benin","Porto-Novo","Republic of Benin"],["赞比亚","赞比亚共和国","非洲","卢萨卡","Zambia","Lusaka","Republic of Zambia"],["赤道几内亚","赤道几内亚共和国","非洲","马拉博（新首都和平城）","Equatorial Guinea","Malabo","Republic of Equatorial Guinea"],["阿尔及利亚","阿尔及利亚人民民主共和国","非洲","阿尔及尔","Algeria","Algiers","People's Democratic Republic of Algeria"],["马拉维","马拉维共和国","非洲","利隆圭","Malawi","Lilongwe","Republic of Malawi"],["马约特","马约特","非洲","马穆楚","Mayotte","Mamoudzou","Department of Mayotte"],["马达加斯加","马达加斯加共和国","非洲","塔那那利佛","Madagascar","Antananarivo","Republic of Madagascar"],["马里","马里共和国","非洲","巴马科","Mali","Bamako","Republic of Mali"],["乌拉圭","乌拉圭东岸共和国","美洲","蒙得维的亚","Uruguay","Montevideo","Oriental Republic of Uruguay"],["伯利兹","伯利兹","美洲","贝尔莫潘","Belize","Belmopan","Belize"],["加拿大","加拿大","美洲","渥太华","Canada","Ottawa","Canada"],["危地马拉","危地马拉共和国","美洲","危地马拉城","Guatemala","Guatemala City","Republic of Guatemala"],["厄瓜多尔","厄瓜多尔共和国","美洲","基多","Ecuador","Quito","Republic of Ecuador"],["古巴","古巴共和国","美洲","哈瓦那","Cuba","Havana","Republic of Cuba"],["哥伦比亚","哥伦比亚共和国","美洲","波哥大","Colombia","Bogotá","Republic of Colombia"],["哥斯达黎加","哥斯达黎加共和国","美洲","圣何塞","Costa Rica","San José","Republic of Costa Rica"],["圣卢西亚","圣卢西亚","美洲","卡斯特里","Saint Lucia","Castries","Saint Lucia"],["圣基茨和尼维斯","圣克里斯托弗和尼维斯联邦","美洲","巴斯特尔","Saint Kitts and Nevis","Basseterre","Federation of Saint Christopher and Nevis"],["圣巴泰勒米","圣巴泰勒米集体","美洲","居斯塔维亚","Saint Barthélemy","Gustavia","Collectivity of Saint Barthélemy"],["圣文森特和格林纳丁斯","圣文森特和格林纳丁斯","美洲","金斯敦","Saint Vincent and the Grenadines","Kingstown","Saint Vincent and the Grenadines"],["圣皮埃尔和密克隆","圣皮埃尔和密克隆","美洲","圣皮埃尔","Saint Pierre and Miquelon","Saint-Pierre","Saint Pierre and Miquelon"],["圣马丁","圣马丁","美洲","马里戈特","Saint Martin","Marigot","Saint Martin"],["圣马丁岛","圣马丁岛","美洲","菲利普斯堡","Sint Maarten","Philipsburg","Sint Maarten"],["圭亚那","圭亚那共和国","美洲","乔治敦","Guyana","Georgetown","Co-operative Republic of Guyana"],["墨西哥","墨西哥合众国","美洲","墨西哥城","Mexico","Mexico City","United Mexican States"],["多米尼克","多米尼加共和国","美洲","罗索","Dominica","Roseau","Commonwealth of Dominica"],["多米尼加","多明尼加共和国","美洲","圣多明各","Dominica","Roseau","Commonwealth of Dominica"],["委内瑞拉","委内瑞拉玻利瓦尔共和国","美洲","加拉加斯","Venezuela","Caracas","Bolivarian Republic of Venezuela"],["安圭拉","安圭拉","美洲","瓦利","Anguilla","The Valley","Anguilla"],["安提瓜和巴布达","安提瓜和巴布达","美洲","圣约翰","Antigua and Barbuda","Saint John's","Antigua and Barbuda"],["尼加拉瓜","尼加拉瓜共和国","美洲","马那瓜","Nicaragua","Managua","Republic of Nicaragua"],["巴哈马","巴哈马联邦","美洲","拿骚","Bahamas","Nassau","Commonwealth of the Bahamas"],["巴巴多斯","巴巴多斯","美洲","布里奇敦","Barbados","Bridgetown","Barbados"],["巴拉圭","巴拉圭共和国","美洲","亚松森","Paraguay","Asunción","Republic of Paraguay"],["巴拿马","巴拿马共和国","美洲","巴拿马城","Panama","Panama City","Republic of Panama"],["巴西","巴西联邦共和国","美洲","巴西利亚","Brazil","Brasília","Federative Republic of Brazil"],["库拉索","库拉索","美洲","威廉斯塔德","Curaçao","Willemstad","Country of Curaçao"],["开曼群岛","开曼群岛","美洲","乔治敦","Cayman Islands","George Town","Cayman Islands"],["智利","智利共和国","美洲","圣地亚哥","Chile","Santiago","Republic of Chile"],["格林纳达","格林纳达","美洲","圣乔治","Grenada","St. George's","Grenada"],["格陵兰","格陵兰","美洲","努克","Greenland","Nuuk","Greenland"],["法属圭亚那","法属圭亚那","美洲","卡宴","French Guiana","Cayenne","Guiana"],["波多黎各","波多黎各联邦","美洲","圣胡安","Puerto Rico","San Juan","Commonwealth of Puerto Rico"],["洪都拉斯","洪都拉斯共和国","美洲","特古西加尔巴","Honduras","Tegucigalpa","Republic of Honduras"],["海地","海地共和国","美洲","太子港","Haiti","Port-au-Prince","Republic of Haiti"],["牙买加","牙买加","美洲","金斯敦","Jamaica","Kingston","Jamaica"],["特克斯和凯科斯群岛","特克斯和凯科斯群岛","美洲","科克本城","Turks and Caicos Islands","Cockburn Town","Turks and Caicos Islands"],["特立尼达和多巴哥","特立尼达和多巴哥共和国","美洲","西班牙港","Trinidad and Tobago","Port of Spain","Republic of Trinidad and Tobago"],["玻利维亚","多民族玻利维亚国","美洲","苏克雷","Bolivia","Sucre","Plurinational State of Bolivia"],["瓜德罗普岛","瓜德罗普岛","美洲","巴斯特尔","Guadeloupe","Basse-Terre","Guadeloupe"],["百慕大","百慕大","美洲","汉密尔顿","Bermuda","Hamilton","Bermuda"],["福克兰群岛","福克兰群岛","美洲","斯坦利","Falkland Islands","Stanley","Falkland Islands"],["秘鲁","秘鲁共和国","美洲","利马","Peru","Lima","Republic of Peru"],["美国","美利坚合众国","美洲","华盛顿","United States","Washington D.C.","United States of America"],["美国本土外小岛屿","美国本土外小岛屿","美洲","","United States Minor Outlying Islands","","United States Minor Outlying Islands"],["美属维尔京群岛","美属维尔京群岛","美洲","夏洛特阿马利亚","United States Virgin Islands","Charlotte Amalie","Virgin Islands of the United States"],["苏里南","苏里南共和国","美洲","帕拉马里博","Suriname","Paramaribo","Republic of Suriname"],["英属维尔京群岛","英属维尔京群岛","美洲","罗德城","British Virgin Islands","Road Town","Virgin Islands"],["荷兰加勒比区","荷兰加勒比区","美洲","克拉伦代克、奥拉涅斯塔德、博托姆","Caribbean Netherlands","Kralendijk / Oranjestad / The Bottom","Bonaire, Sint Eustatius and Saba"],["萨尔瓦多","萨尔瓦多共和国","美洲","圣萨尔瓦多","El Salvador","San Salvador","Republic of El Salvador"],["蒙特塞拉特","蒙特塞拉特","美洲","普利茅斯","Montserrat","Plymouth","Montserrat"],["阿根廷","阿根廷共和国","美洲","布宜诺斯艾利斯","Argentina","Buenos Aires","Argentine Republic"],["阿鲁巴","阿鲁巴","美洲","奥拉涅斯塔德","Aruba","Oranjestad","Aruba"],["马提尼克","马提尼克","美洲","法兰西堡","Martinique","Fort-de-France","Martinique"],["关岛","关岛","大洋洲","阿加尼亚","Guam","Hagåtña","Guam"],["北马里亚纳群岛","北马里亚纳群岛","大洋洲","塞班","Northern Mariana Islands","Saipan","Commonwealth of the Northern Mariana Islands"],["图瓦卢","图瓦卢","大洋洲","富纳富提","Tuvalu","Funafuti","Tuvalu"],["圣诞岛","圣诞岛","大洋洲","飞鱼湾","Christmas Island","Flying Fish Cove","Territory of Christmas Island"],["基里巴斯","基里巴斯共和国","大洋洲","南塔拉瓦","Kiribati","South Tarawa","Independent and Sovereign Republic of Kiribati"],["密克罗尼西亚","密克罗尼西亚联邦","大洋洲","帕利基尔","Micronesia","Palikir","Federated States of Micronesia"],["巴布亚新几内亚","巴布亚新几内亚","大洋洲","莫尔兹比港","Papua New Guinea","Port Moresby","Independent State of Papua New Guinea"],["帕劳","帕劳共和国","大洋洲","恩吉鲁穆德","Palau","Ngerulmud","Republic of Palau"],["库克群岛","库克群岛","大洋洲","阿瓦鲁阿","Cook Islands","Avarua","Cook Islands"],["所罗门群岛","所罗门群岛","大洋洲","霍尼亚拉","Solomon Islands","Honiara","Solomon Islands"],["托克劳","托克劳","大洋洲","法考福","Tokelau","Fakaofo","Tokelau"],["斐济","斐济共和国","大洋洲","苏瓦","Fiji","Suva","Republic of Fiji"],["新喀里多尼亚","新喀里多尼亚","大洋洲","努美阿","New Caledonia","Nouméa","New Caledonia"],["新西兰","新西兰","大洋洲","惠灵顿","New Zealand","Wellington","New Zealand"],["汤加","汤加王国","大洋洲","努库阿洛法","Tonga","Nuku'alofa","Kingdom of Tonga"],["法属波利尼西亚","法属波利尼西亚","大洋洲","帕皮提","French Polynesia","Papeetē","French Polynesia"],["澳大利亚","澳大利亚联邦","大洋洲","堪培拉","Australia","Canberra","Commonwealth of Australia"],["瑙鲁","瑙鲁共和国","大洋洲","亚伦","Nauru","Yaren","Republic of Nauru"],["瓦利斯和富图纳群岛","瓦利斯和富图纳群岛","大洋洲","马塔乌图","Wallis and Futuna","Mata-Utu","Territory of the Wallis and Futuna Islands"],["瓦努阿图","瓦努阿图共和国","大洋洲","维拉港","Vanuatu","Port Vila","Republic of Vanuatu"],["皮特凯恩群岛","皮特凯恩群岛","大洋洲","亚当斯敦","Pitcairn Islands","Adamstown","Pitcairn Group of Islands"],["科科斯","科科斯","大洋洲","西岛","Cocos (Keeling) Islands","West Island","Territory of the Cocos (Keeling) Islands"],["纽埃","纽埃","大洋洲","阿洛菲","Niue","Alofi","Niue"],["美属萨摩亚","美属萨摩亚","大洋洲","帕果帕果","American Samoa","Pago Pago","American Samoa"],["萨摩亚","萨摩亚独立国","大洋洲","阿皮亚","Samoa","Apia","Independent State of Samoa"],["诺福克岛","诺福克岛","大洋洲","金斯敦","Norfolk Island","Kingston","Territory of Norfolk Island"],["马绍尔群岛","马绍尔群岛共和国","大洋洲","马朱罗","Marshall Islands","Majuro","Republic of the Marshall Islands"],["南乔治亚","南乔治亚岛和南桑威奇群岛","南极洲","爱德华王角","South Georgia","King Edward Point","South Georgia and the South Sandwich Islands"],["南极洲","南极洲","南极洲","","Antarctica","","Antarctica"],["布维岛","布维岛","南极洲","","Bouvet Island","","Bouvet Island"],["法国南部和南极土地","法国南部和南极土地","南极洲","法兰西港","French Southern and Antarctic Lands","Port-aux-Français","Territory of the French Southern and Antarctic Lands"],["赫德岛和麦当劳群岛","赫德岛和麦当劳群岛","南极洲","","Heard Island and McDonald Islands","","Heard Island and McDonald Islands"]];
+var CONT_EN = {亚洲:'Asia',欧洲:'Europe',非洲:'Africa',美洲:'Americas',大洋洲:'Oceania',南极洲:'Antarctica'};
+var CONT_ORDER = ['亚洲','欧洲','非洲','美洲','大洋洲','南极洲'];
+var contCounts = {};
+DATA.forEach(function(r){ contCounts[r[2]] = (contCounts[r[2]]||0)+1; });
+
+var state = { q:'', cont:'全部', sort:'country' };
+
+var $q = document.getElementById('q');
+var $rows = document.getElementById('rows');
+var $count = document.getElementById('count');
+var $sort = document.getElementById('sort');
+var $chips = document.getElementById('contChips');
+var $toast = document.getElementById('toast');
+
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function pin(){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.3 7-12a7 7 0 1 0-14 0c0 5.7 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>';
+}
+function copyIcon(){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h9"/></svg>';
+}
+
+function buildChips(){
+  var html = '<button class="chip" data-cont="全部" aria-pressed="true">全部 All <span class="n">250</span></button>';
+  CONT_ORDER.forEach(function(c){
+    html += '<button class="chip" data-cont="'+esc(c)+'" aria-pressed="false">'
+      + esc(c) + ' ' + esc(CONT_EN[c]) + ' <span class="n">' + contCounts[c] + '</span></button>';
+  });
+  $chips.innerHTML = html;
+}
+
+function filtered(){
+  var q = state.q.trim().toLowerCase();
+  return DATA.filter(function(r){
+    if(state.cont!=='全部' && r[2]!==state.cont) return false;
+    if(!q) return true;
+    var hay = [r[0],r[1],r[2],r[3],r[4],r[5],r[6],CONT_EN[r[2]]].join(' ').toLowerCase();
+    return hay.indexOf(q) > -1;
+  });
+}
+
+function sorted(list){
+  var l = list.slice();
+  if(state.sort==='capital'){
+    l.sort(function(a,b){
+      if(!a[3] && !b[3]) return a[0].localeCompare(b[0],'zh-Hans-CN');
+      if(!a[3]) return 1;
+      if(!b[3]) return -1;
+      return (a[5]||a[3]).localeCompare(b[5]||b[3],'en');
+    });
+  } else if(state.sort==='continent'){
+    l.sort(function(a,b){
+      var d = CONT_ORDER.indexOf(a[2]) - CONT_ORDER.indexOf(b[2]);
+      return d || a[4].localeCompare(b[4],'en');
+    });
+  } else {
+    l.sort(function(a,b){ return a[4].localeCompare(b[4],'en'); });
+  }
+  return l;
+}
+
+function render(){
+  var list = sorted(filtered());
+  $count.textContent = list.length;
+  if(!list.length){
+    $rows.innerHTML = '<div class="empty">没有匹配的国家或首都<span>No results · 试试其他国家名、首都名，或切换到「全部 All」</span></div>';
+    return;
+  }
+  $rows.innerHTML = list.map(function(r){
+    var hasCap = !!r[3];
+    var capCn = hasCap
+      ? '<span class="cap-cn" data-copy="'+esc(r[3])+'" title="复制首都">'+esc(r[3])+'</span>'
+      : '<span class="cap-cn" style="cursor:default">—</span>';
+    var capEn = hasCap ? '<span class="cap-en">'+esc(r[5]||'')+'</span>' : '';
+    return '<div class="row">'
+      + '<div class="country"><strong>'+esc(r[0])+'</strong>'
+      + '<span class="en">'+esc(r[4])+'</span>'
+      + '<span class="full">'+esc(r[1])+' · '+esc(r[6]||'')+'</span></div>'
+      + '<div class="cont">'+esc(r[2])+'<i>'+esc(CONT_EN[r[2]]||'')+'</i></div>'
+      + '<div class="capital'+(hasCap?'':' missing')+'">'+pin()+'<div style="min-width:0">'+capCn+capEn+'</div></div>'
+      + '<button class="copy" data-all="'+esc(r[0])+' / '+esc(r[4])+' · '+(hasCap?esc(r[3])+' / '+esc(r[5]):'No capital record')+'" aria-label="复制'+esc(r[0])+'的首都" title="复制整行 Copy row">'+copyIcon()+'</button>'
+      + '</div>';
+  }).join('');
+  if(window.innerWidth < 760){
+    Array.prototype.forEach.call($rows.querySelectorAll('.row'), function(row){
+      var cont = row.querySelector('.cont');
+      var country = row.querySelector('.country');
+      var en = country.querySelector('.en');
+      if(cont && country) country.insertBefore(cont, en);
+    });
+  }
+}
+
+var toastTimer;
+function toast(msg){
+  $toast.textContent = msg;
+  $toast.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ $toast.classList.remove('on'); }, 1600);
+}
+function copyText(text){
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast('已复制 Copied · '+text); }catch(e){ toast('复制失败 Copy failed'); }
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(function(){ toast('已复制 Copied · '+text); }, fallback);
+  } else fallback();
+}
+
+var timer;
+$q.addEventListener('input', function(){
+  clearTimeout(timer);
+  timer = setTimeout(function(){ state.q = $q.value; render(); }, 140);
+});
+$sort.addEventListener('change', function(){ state.sort = $sort.value; render(); });
+$chips.addEventListener('click', function(e){
+  var btn = e.target.closest('.chip');
+  if(!btn) return;
+  state.cont = btn.dataset.cont;
+  Array.prototype.forEach.call($chips.querySelectorAll('.chip'), function(b){
+    b.setAttribute('aria-pressed', b===btn ? 'true' : 'false');
+  });
+  render();
+});
+$rows.addEventListener('click', function(e){
+  var cap = e.target.closest('[data-copy]');
+  if(cap){ copyText(cap.dataset.copy); return; }
+  var all = e.target.closest('[data-all]');
+  if(all){ copyText(all.dataset.all); }
+});
+var resizeTimer;
+window.addEventListener('resize', function(){
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 150);
+});
+
+buildChips();
+render();
+</script>
+</body>
+</html>
