@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>各国时区查询 · World Time Zones</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f5f4c'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M16 11v5l3.5 2' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f1f3f1; --card:#fff; --ink:#15181a; --muted:#5f6664; --faint:#8b918e;
+    --line:#dfe3e0; --accent:#135a4a; --accent-soft:#e8f1ed; --gold:#9a6b1f;
+    --radius:12px; --topbar-h:61px;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none;}
+  button{font:inherit;color:inherit;}
+  ::selection{background:#d7e8e0;}
+
+  .topbar{
+    position:sticky;top:0;z-index:30;height:var(--topbar-h);
+    display:flex;align-items:center;gap:12px;padding:0 18px;
+    background:var(--bg);border-bottom:1px solid var(--line);
+  }
+  .back{
+    flex:0 0 auto;width:32px;height:32px;border-radius:50%;
+    border:1px solid var(--line);background:var(--card);display:grid;place-items:center;
+    cursor:pointer;transition:border-color .15s,transform .15s;
+  }
+  .back:hover{border-color:var(--accent);}
+  .back:active{transform:scale(.94);}
+  .back svg{width:16px;height:16px;stroke:var(--ink);}
+  .brand{min-width:0;display:flex;flex-direction:column;gap:1px;}
+  .brand h1{margin:0;font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .brand h1 i{font-style:normal;color:var(--muted);font-weight:600;}
+  .brand p{margin:0;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .search{
+    margin-left:auto;flex:0 1 320px;display:flex;align-items:center;gap:8px;
+    height:36px;padding:0 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(19,90,74,.09);}
+  .search svg{width:15px;height:15px;stroke:var(--faint);flex:0 0 auto;}
+  .search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-size:16px;color:var(--ink);}
+  .search input::placeholder{color:var(--faint);}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(2,1fr);
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    margin:14px 18px 0;overflow:hidden;
+  }
+  .stat{padding:13px 15px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .stat:nth-child(2n){border-right:0;}
+  .stat:nth-last-child(-n+2){border-bottom:0;}
+  .stat label{display:block;font-size:11px;color:var(--muted);}
+  .stat label span{color:var(--faint);}
+  .stat b{display:block;margin-top:2px;font-size:22px;font-weight:700;font-family:var(--mono);letter-spacing:-.02em;}
+  .stat b i{font-style:normal;font-size:12px;color:var(--faint);font-family:inherit;margin-left:3px;font-weight:400;}
+
+  .layout{display:block;padding:14px 18px 24px;}
+  .rail{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px;}
+  .rail h3{margin:0 0 9px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;}
+  .rail h3 span{font-weight:400;font-size:11px;color:var(--faint);}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;
+    border:1px solid var(--line);background:#fbfcfb;color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s;
+  }
+  .chip:hover{border-color:#c9d3cd;color:var(--ink);}
+  .chip .n{font-family:var(--mono);font-size:10.5px;color:var(--faint);}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .chip[aria-pressed="true"] .n{color:rgba(255,255,255,.75);}
+  .rail-note{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:11px;line-height:1.65;color:var(--faint);}
+  .live{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:11px;color:var(--faint);}
+  .live .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+  .content{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+  .content-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 14px;border-bottom:1px solid var(--line);}
+  .res-count{font-size:12.5px;color:var(--muted);}
+  .res-count b{font-family:var(--mono);color:var(--ink);font-size:14px;}
+  .res-count span{color:#b3b8b5;}
+  .sort-wrap{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--faint);}
+  select{
+    appearance:none;-webkit-appearance:none;height:30px;padding:0 26px 0 9px;
+    border:1px solid var(--line);border-radius:8px;background:#fbfcfb;font-size:12px;color:var(--ink);cursor:pointer;outline:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b918e' stroke-width='2.4'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 8px center;
+  }
+  select:focus{border-color:var(--accent);}
+
+  .thead{
+    display:grid;grid-template-columns:minmax(0,1fr) 78px minmax(156px,1fr) 148px 128px;gap:10px;
+    padding:8px 14px;border-bottom:1px solid var(--line);font-size:11px;color:var(--faint);background:#fbfcfb;
+  }
+  .thead i{font-style:normal;color:#b3b8b5;}
+  .thead span:last-child{text-align:right;}
+  #rows{display:block;}
+  .row{
+    display:grid;grid-template-columns:minmax(0,1fr) 78px minmax(156px,1fr) 148px 128px;gap:10px;align-items:center;
+    padding:10px 14px;border-bottom:1px solid #edf0ee;
+  }
+  .row:last-child{border-bottom:0;}
+  .row:hover{background:#f8faf9;}
+  .country{min-width:0;}
+  .country strong{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .country .en{display:block;font-size:11.5px;color:#7d8580;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .country .full{display:block;font-size:11.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .cont{font-size:12px;color:var(--muted);white-space:nowrap;}
+  .cont i{font-style:normal;display:block;font-size:10.5px;color:var(--faint);}
+  .tz{min-width:0;}
+  .tz-id{
+    display:inline-block;max-width:100%;padding:1px 6px;border-radius:6px;background:var(--accent-soft);
+    color:var(--accent);font-family:var(--mono);font-size:11px;cursor:pointer;border:1px solid transparent;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:top;
+  }
+  .tz-id:hover{border-color:var(--accent);}
+  .tz-meta{display:block;font-size:11px;color:var(--faint);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .offset{font-size:11.5px;color:var(--muted);line-height:1.35;min-width:0;}
+  .offset b{display:block;font-family:var(--mono);font-size:12px;line-height:1.4;color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .offset.multi b{font-size:11.5px;color:var(--ink);white-space:normal;overflow:visible;line-height:1.35;}
+  .offset .dst{display:inline-block;font-style:normal;font-size:10px;color:var(--gold);border:1px solid #e6dcc8;background:#fbf6ec;border-radius:4px;padding:0 4px;margin:2px 0 0;line-height:1.45;}
+  .offset .range{display:block;font-size:10.5px;color:var(--faint);line-height:1.35;}
+  .clock{display:flex;align-items:flex-start;justify-content:flex-end;}
+  .clock .dot,.sz-time .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 auto;display:inline-block;}
+  .clock .dot.night,.sz-time .dot.night{background:#39424b;}
+  .clock .stamp{text-align:right;min-width:0;}
+  .clock .stamp .tl{display:flex;align-items:center;justify-content:flex-end;gap:6px;}
+  .clock .stamp time{font-family:var(--mono);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1.2;}
+  .clock .stamp .dt{display:block;font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:0px;}
+  .clock.multi time{font-size:11px;font-weight:500;color:var(--gold);}
+  .subzones{padding:2px 14px 12px;border-bottom:1px solid #edf0ee;background:#fafcfb;}
+  .subzones-h{font-size:11px;color:var(--faint);padding:4px 0 7px;}
+  .subzones-h span{color:var(--gold);font-family:var(--mono);margin-left:4px;}
+  .sz{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,1fr) 78px auto;gap:10px;align-items:center;padding:5px 0;border-top:1px dashed #e7ebe8;}
+  .sz-region{min-width:0;}
+  .sz-region strong{display:block;font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sz-region span{display:block;font-size:11px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sz .tz-id{justify-self:start;}
+  .sz-off{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;}
+  .sz-off i{font-style:normal;color:var(--gold);font-size:10px;margin-left:3px;}
+  .sz-time{display:flex;align-items:center;gap:6px;justify-content:flex-end;}
+  .sz-time .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  .sz-time .dot.night{background:#39424b;}
+  .sz-time time{font-family:var(--mono);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
+  .sz-time em{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--faint);}
+  .empty{padding:44px 18px;text-align:center;color:var(--muted);font-size:13px;}
+  .empty span{display:block;margin-top:4px;font-size:11.5px;color:var(--faint);}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);
+    background:rgba(21,24,26,.92);color:#fff;font-size:12.5px;padding:8px 14px;border-radius:999px;
+    opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:60;white-space:nowrap;max-width:86vw;overflow:hidden;text-overflow:ellipsis;
+  }
+  .toast.on{opacity:1;transform:translate(-50%,0);}
+
+  @media (min-width:760px){
+    .stats{grid-template-columns:repeat(4,1fr);margin:16px 22px 0;}
+    .stat{border-bottom:0;}
+    .stat:nth-child(2n){border-right:1px solid var(--line);}
+    .stat:last-child{border-right:0;}
+    .layout{padding:16px 22px 28px;}
+    .stat b{font-size:25px;}
+  }
+  @media (min-width:980px){
+    .topbar{padding:0 24px;}
+    .stats{margin:18px 28px 0;}
+    .layout{display:grid;grid-template-columns:228px minmax(0,1fr);gap:16px;padding:16px 28px 34px;align-items:start;}
+    .rail{position:sticky;top:calc(var(--topbar-h) + 14px);margin-bottom:0;}
+    .brand h1{font-size:18px;}
+  }
+  @media (max-width:759px){
+    .thead{display:none;}
+    #rows{display:grid;grid-template-columns:1fr;gap:0;}
+    .row{
+      grid-template-columns:minmax(0,1fr) auto;grid-template-areas:
+        "country clock" "tz tz" "offset offset";
+      row-gap:7px;padding:11px 14px;
+    }
+    .country{grid-area:country;}
+    .clock{grid-area:clock;align-self:start;}
+    .tz{grid-area:tz;padding-top:2px;}
+    .offset{grid-area:offset;display:flex;gap:6px;align-items:baseline;}
+    .offset b{display:inline;white-space:normal;}
+    .cont{
+      display:inline-block;margin-left:6px;font-size:10.5px;color:var(--faint);
+      border:1px solid var(--line);border-radius:5px;padding:0 5px;vertical-align:1px;
+    }
+    .cont i{display:none;}
+    .country .full{white-space:normal;}
+  }
+  @media (max-width:759px){
+    .sz{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"region time" "zone off";row-gap:4px;}
+    .sz-region{grid-area:region;}
+    .sz-time{grid-area:time;text-align:right;flex-wrap:wrap;justify-content:flex-end;}
+    .sz .tz-id{grid-area:zone;justify-self:start;}
+    .sz-off{grid-area:off;justify-self:end;}
+    .sz-region strong{white-space:normal;}
+  }
+  @media (max-width:600px){
+    .brand h1{font-size:15px;}
+    .brand h1 i{display:none;}
+  }
+  @media (max-width:420px){
+    .search{flex-basis:150px;}
+    .brand p{display:none;}
+    .stats{margin:12px 12px 0;}
+    .layout{padding:12px 12px 20px;}
+    .topbar{padding:0 12px;gap:9px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back" href="../首页/首页.html" aria-label="返回首页 Back to home" title="返回首页 Back to home">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <div class="brand">
+    <h1><span>各国时区查询</span><i> · World Time Zones</i></h1>
+    <p>250 个国家与地区 · 时区与当地时间 · Time zones & local time</p>
+  </div>
+  <div class="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+    <input id="q" type="search" autocomplete="off" placeholder="搜索国家、时区 / Country or zone" aria-label="搜索国家、时区 / Country or zone">
+  </div>
+</header>
+
+<section class="stats">
+  <div class="stat"><label>国家与地区 <span>Countries</span></label><b><span id="stTotal">250</span><i>条</i></b></div>
+  <div class="stat"><label>IANA 时区 <span>Zones</span></label><b><span id="stZones">271</span><i>个</i></b></div>
+  <div class="stat"><label>时区偏移种类 <span>Offsets</span></label><b><span id="stOffsets">57</span><i>种</i></b></div>
+  <div class="stat"><label>多时区国家 <span>Multi-zone</span></label><b><span id="stMulti">31</span><i>个</i></b></div>
+</section>
+
+<div class="layout">
+  <aside class="rail">
+    <h3>按大洲筛选 <span>Continents</span></h3>
+    <div class="chips" id="contChips"></div>
+    <div class="live"><span class="dot"></span><span id="liveText">当地时间实时更新 · Live local time</span></div>
+    <div class="rail-note">
+      时区来自 IANA 数据库；多时区国家取列表中首个时区显示当地时间，偏移区间以数据为准。点击时区名可复制。
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="content-head">
+      <div class="res-count">共 <b id="count">250</b> 个国家与地区 <span>countries</span></div>
+      <div class="sort-wrap">
+        <span>排序 Sort</span>
+        <select id="sort" aria-label="排序方式">
+          <option value="country">国家 A→Z · Country</option>
+          <option value="offset">按 UTC 偏移 · Offset</option>
+          <option value="continent">按大洲 · Continent</option>
+        </select>
+      </div>
+    </div>
+    <div class="thead">
+      <span>国家 / 地区 <i>Country</i></span>
+      <span>大洲 <i>Continent</i></span>
+      <span>时区 <i>Time zone</i></span>
+      <span>UTC 偏移 <i>Offset</i></span>
+      <span>当地时间 <i>Local</i></span>
+    </div>
+    <div id="rows"></div>
+  </main>
+</div>
+
+<div class="toast" id="toast">已复制 Copied</div>
+
+<script>
+var DATA = [["不丹","不丹王国","亚洲","Asia/Thimphu（UTC+6）","Bhutan","Kingdom of Bhutan"],["东帝汶","东帝汶民主共和国","亚洲","Asia/Dili（UTC+9）","Timor-Leste","Democratic Republic of Timor-Leste"],["中国","中华人民共和国","亚洲","Asia/Shanghai（UTC+8）","China","People's Republic of China"],["乌兹别克斯坦","乌兹别克斯坦共和国","亚洲","Asia/Samarkand、Asia/Tashkent（UTC+5）","Uzbekistan","Republic of Uzbekistan"],["也门","也门共和国","亚洲","Asia/Aden（UTC+3）","Yemen","Republic of Yemen"],["亚美尼亚","亚美尼亚共和国","亚洲","Asia/Yerevan（UTC+4）","Armenia","Republic of Armenia"],["以色列","以色列国","亚洲","Asia/Jerusalem（UTC+2，夏令时 UTC+3）","Israel","State of Israel"],["伊拉克","伊拉克共和国","亚洲","Asia/Baghdad（UTC+3）","Iraq","Republic of Iraq"],["伊朗","伊朗伊斯兰共和国","亚洲","Asia/Tehran（UTC+3:30）","Iran","Islamic Republic of Iran"],["卡塔尔","卡塔尔国","亚洲","Asia/Qatar（UTC+3）","Qatar","State of Qatar"],["印度","印度共和国","亚洲","Asia/Kolkata（UTC+5:30）","India","Republic of India"],["印度尼西亚","印度尼西亚共和国","亚洲","Asia/Jakarta 等 4 个时区（UTC+7 至 UTC+9）","Indonesia","Republic of Indonesia"],["叙利亚","叙利亚阿拉伯共和国","亚洲","Asia/Damascus（UTC+3）","Syria","Syrian Arab Republic"],["中国台湾","中国台湾地区","亚洲","Asia/Taipei（UTC+8）","Taiwan, China","Taiwan, China"],["吉尔吉斯斯坦","吉尔吉斯斯坦共和国","亚洲","Asia/Bishkek（UTC+6）","Kyrgyzstan","Kyrgyz Republic"],["哈萨克斯坦","哈萨克斯坦共和国","亚洲","Asia/Almaty 等 7 个时区（UTC+5）","Kazakhstan","Republic of Kazakhstan"],["土库曼斯坦","土库曼斯坦","亚洲","Asia/Ashgabat（UTC+5）","Turkmenistan","Turkmenistan"],["土耳其","土耳其共和国","亚洲","Europe/Istanbul（UTC+3）","Türkiye","Republic of Türkiye"],["塔吉克斯坦","塔吉克斯坦共和国","亚洲","Asia/Dushanbe（UTC+5）","Tajikistan","Republic of Tajikistan"],["孟加拉国","孟加拉人民共和国","亚洲","Asia/Dhaka（UTC+6）","Bangladesh","People's Republic of Bangladesh"],["尼泊尔","尼泊尔联邦民主共和国","亚洲","Asia/Kathmandu（UTC+5:45）","Nepal","Federal Democratic Republic of Nepal"],["巴勒斯坦","巴勒斯坦国","亚洲","Asia/Gaza、Asia/Hebron（UTC+2，夏令时 UTC+3）","Palestine","State of Palestine"],["巴基斯坦","巴基斯坦伊斯兰共和国","亚洲","Asia/Karachi（UTC+5）","Pakistan","Islamic Republic of Pakistan"],["巴林","巴林王国","亚洲","Asia/Bahrain（UTC+3）","Bahrain","Kingdom of Bahrain"],["文莱","文莱和平之国","亚洲","Asia/Brunei（UTC+8）","Brunei","Nation of Brunei, Abode of Peace"],["斯里兰卡","斯里兰卡民主社会主义共和国","亚洲","Asia/Colombo（UTC+5:30）","Sri Lanka","Democratic Socialist Republic of Sri Lanka"],["新加坡","新加坡共和国","亚洲","Asia/Singapore（UTC+8）","Singapore","Republic of Singapore"],["日本","日本国","亚洲","Asia/Tokyo（UTC+9）","Japan","Japan"],["朝鲜","朝鲜民主主义人民共和国","亚洲","Asia/Pyongyang（UTC+9）","North Korea","Democratic People's Republic of Korea"],["柬埔寨","柬埔寨王国","亚洲","Asia/Phnom_Penh（UTC+7）","Cambodia","Kingdom of Cambodia"],["格鲁吉亚","格鲁吉亚","亚洲","Asia/Tbilisi（UTC+4）","Georgia","Georgia"],["沙特阿拉伯","沙特阿拉伯王国","亚洲","Asia/Riyadh（UTC+3）","Saudi Arabia","Kingdom of Saudi Arabia"],["泰国","泰王国","亚洲","Asia/Bangkok（UTC+7）","Thailand","Kingdom of Thailand"],["中国澳门","中华人民共和国澳门特别行政区","亚洲","Asia/Macau（UTC+8）","Macao, China","Macao Special Administrative Region of the People's Republic of China"],["科威特","科威特国","亚洲","Asia/Kuwait（UTC+3）","Kuwait","State of Kuwait"],["约旦","约旦哈希姆王国","亚洲","Asia/Amman（UTC+3）","Jordan","Hashemite Kingdom of Jordan"],["缅甸","缅甸联邦共和国","亚洲","Asia/Yangon（UTC+6:30）","Myanmar","Republic of the Union of Myanmar"],["老挝","老挝人民民主共和国","亚洲","Asia/Vientiane（UTC+7）","Laos","Lao People's Democratic Republic"],["菲律宾","菲律宾共和国","亚洲","Asia/Manila（UTC+8）","Philippines","Republic of the Philippines"],["蒙古","蒙古","亚洲","Asia/Ulaanbaatar、Asia/Hovd（UTC+7 至 UTC+8）","Mongolia","Mongolia"],["越南","越南社会主义共和国","亚洲","Asia/Ho_Chi_Minh（UTC+7）","Vietnam","Socialist Republic of Vietnam"],["阿塞拜疆","阿塞拜疆共和国","亚洲","Asia/Baku（UTC+4）","Azerbaijan","Republic of Azerbaijan"],["阿富汗","阿富汗伊斯兰共和国","亚洲","Asia/Kabul（UTC+4:30）","Afghanistan","Islamic Republic of Afghanistan"],["阿拉伯联合酋长国","阿拉伯联合酋长国","亚洲","Asia/Dubai（UTC+4）","United Arab Emirates","United Arab Emirates"],["阿曼","阿曼苏丹国","亚洲","Asia/Muscat（UTC+4）","Oman","Sultanate of Oman"],["韩国","大韩民国","亚洲","Asia/Seoul（UTC+9）","South Korea","Republic of Korea"],["中国香港","中华人民共和国香港特别行政区","亚洲","Asia/Hong_Kong（UTC+8）","Hong Kong, China","Hong Kong Special Administrative Region of the People's Republic of China"],["马尔代夫","马尔代夫共和国","亚洲","Indian/Maldives（UTC+5）","Maldives","Republic of the Maldives"],["马来西亚","马来西亚","亚洲","Asia/Kuala_Lumpur、Asia/Kuching（UTC+8）","Malaysia","Malaysia"],["黎巴嫩","黎巴嫩共和国","亚洲","Asia/Beirut（UTC+2，夏令时 UTC+3）","Lebanon","Lebanese Republic"],["丹麦","丹麦王国","欧洲","Europe/Copenhagen（UTC+1，夏令时 UTC+2）","Denmark","Kingdom of Denmark"],["乌克兰","乌克兰","欧洲","Europe/Simferopol、Europe/Kyiv（UTC+2 至 UTC+3，夏令时 UTC+3）","Ukraine","Ukraine"],["俄罗斯","俄罗斯联邦","欧洲","Europe/Kaliningrad 等 26 个时区（UTC+2 至 UTC+12）","Russia","Russian Federation"],["保加利亚","保加利亚共和国","欧洲","Europe/Sofia（UTC+2，夏令时 UTC+3）","Bulgaria","Republic of Bulgaria"],["克罗地亚","克罗地亚共和国","欧洲","Europe/Zagreb（UTC+1，夏令时 UTC+2）","Croatia","Republic of Croatia"],["冰岛","冰岛","欧洲","Atlantic/Reykjavik（UTC+0）","Iceland","Iceland"],["列支敦士登","列支敦士登公国","欧洲","Europe/Vaduz（UTC+1，夏令时 UTC+2）","Liechtenstein","Principality of Liechtenstein"],["匈牙利","匈牙利","欧洲","Europe/Budapest（UTC+1，夏令时 UTC+2）","Hungary","Hungary"],["北马其顿","北马其顿共和国","欧洲","Europe/Skopje（UTC+1，夏令时 UTC+2）","North Macedonia","Republic of North Macedonia"],["卢森堡","卢森堡大公国","欧洲","Europe/Luxembourg（UTC+1，夏令时 UTC+2）","Luxembourg","Grand Duchy of Luxembourg"],["圣马力诺","圣马力诺共和国","欧洲","Europe/San_Marino（UTC+1，夏令时 UTC+2）","San Marino","Most Serene Republic of San Marino"],["塞尔维亚","塞尔维亚共和国","欧洲","Europe/Belgrade（UTC+1，夏令时 UTC+2）","Serbia","Republic of Serbia"],["塞浦路斯","塞浦路斯共和国","欧洲","Asia/Nicosia、Asia/Famagusta（UTC+2，夏令时 UTC+3）","Cyprus","Republic of Cyprus"],["奥兰群岛","奥兰群岛","欧洲","Europe/Mariehamn（UTC+2，夏令时 UTC+3）","Åland Islands","Åland Islands"],["奥地利","奥地利共和国","欧洲","Europe/Vienna（UTC+1，夏令时 UTC+2）","Austria","Republic of Austria"],["安道尔","安道尔公国","欧洲","Europe/Andorra（UTC+1，夏令时 UTC+2）","Andorra","Principality of Andorra"],["希腊","希腊共和国","欧洲","Europe/Athens（UTC+2，夏令时 UTC+3）","Greece","Hellenic Republic"],["德国","德意志联邦共和国","欧洲","Europe/Berlin、Europe/Busingen（UTC+1，夏令时 UTC+2）","Germany","Federal Republic of Germany"],["意大利","意大利共和国","欧洲","Europe/Rome（UTC+1，夏令时 UTC+2）","Italy","Italian Republic"],["拉脱维亚","拉脱维亚共和国","欧洲","Europe/Riga（UTC+2，夏令时 UTC+3）","Latvia","Republic of Latvia"],["挪威","挪威王国","欧洲","Europe/Oslo（UTC+1，夏令时 UTC+2）","Norway","Kingdom of Norway"],["捷克","捷克共和国","欧洲","Europe/Prague（UTC+1，夏令时 UTC+2）","Czechia","Czech Republic"],["摩尔多瓦","摩尔多瓦共和国","欧洲","Europe/Chisinau（UTC+2，夏令时 UTC+3）","Moldova","Republic of Moldova"],["摩纳哥","摩纳哥公国","欧洲","Europe/Monaco（UTC+1，夏令时 UTC+2）","Monaco","Principality of Monaco"],["斯洛伐克","斯洛伐克共和国","欧洲","Europe/Bratislava（UTC+1，夏令时 UTC+2）","Slovakia","Slovak Republic"],["斯洛文尼亚","斯洛文尼亚共和国","欧洲","Europe/Ljubljana（UTC+1，夏令时 UTC+2）","Slovenia","Republic of Slovenia"],["斯瓦尔巴特","斯瓦尔巴特","欧洲","Arctic/Longyearbyen（UTC+1，夏令时 UTC+2）","Svalbard and Jan Mayen","Svalbard og Jan Mayen"],["根西岛","根西岛","欧洲","Europe/Guernsey（UTC+0，夏令时 UTC+1）","Guernsey","Bailiwick of Guernsey"],["梵蒂冈","梵蒂冈城国","欧洲","Europe/Vatican（UTC+1，夏令时 UTC+2）","Vatican City","Vatican City State"],["比利时","比利时王国","欧洲","Europe/Brussels（UTC+1，夏令时 UTC+2）","Belgium","Kingdom of Belgium"],["法国","法兰西共和国","欧洲","Europe/Paris（UTC+1，夏令时 UTC+2）","France","French Republic"],["法罗群岛","法罗群岛","欧洲","Atlantic/Faroe（UTC+0，夏令时 UTC+1）","Faroe Islands","Faroe Islands"],["波兰","波兰共和国","欧洲","Europe/Warsaw（UTC+1，夏令时 UTC+2）","Poland","Republic of Poland"],["波斯尼亚和黑塞哥维那","波斯尼亚和黑塞哥维那","欧洲","Europe/Sarajevo（UTC+1，夏令时 UTC+2）","Bosnia and Herzegovina","Bosnia and Herzegovina"],["泽西岛","泽西岛","欧洲","Europe/Jersey（UTC+0，夏令时 UTC+1）","Jersey","Bailiwick of Jersey"],["爱尔兰","爱尔兰共和国","欧洲","Europe/Dublin（UTC+0，夏令时 UTC+1）","Ireland","Republic of Ireland"],["爱沙尼亚","爱沙尼亚共和国","欧洲","Europe/Tallinn（UTC+2，夏令时 UTC+3）","Estonia","Republic of Estonia"],["瑞典","瑞典王国","欧洲","Europe/Stockholm（UTC+1，夏令时 UTC+2）","Sweden","Kingdom of Sweden"],["瑞士","瑞士联邦","欧洲","Europe/Zurich（UTC+1，夏令时 UTC+2）","Switzerland","Swiss Confederation"],["白俄罗斯","白俄罗斯共和国","欧洲","Europe/Minsk（UTC+3）","Belarus","Republic of Belarus"],["直布罗陀","直布罗陀","欧洲","Europe/Gibraltar（UTC+1，夏令时 UTC+2）","Gibraltar","Gibraltar"],["科索沃","科索沃共和国","欧洲","Europe/Belgrade（UTC+1，夏令时 UTC+2）","Kosovo","Republic of Kosovo"],["立陶宛","立陶宛共和国","欧洲","Europe/Vilnius（UTC+2，夏令时 UTC+3）","Lithuania","Republic of Lithuania"],["罗马尼亚","罗马尼亚","欧洲","Europe/Bucharest（UTC+2，夏令时 UTC+3）","Romania","Romania"],["芬兰","芬兰共和国","欧洲","Europe/Helsinki（UTC+2，夏令时 UTC+3）","Finland","Republic of Finland"],["英国","大不列颠及北爱尔兰联合王国","欧洲","Europe/London（UTC+0，夏令时 UTC+1）","United Kingdom","United Kingdom of Great Britain and Northern Ireland"],["荷兰","荷兰","欧洲","Europe/Amsterdam（UTC+1，夏令时 UTC+2）","Netherlands","Kingdom of the Netherlands"],["葡萄牙","葡萄牙共和国","欧洲","Europe/Lisbon、Atlantic/Madeira、Atlantic/Azores（UTC−1 至 UTC+0，夏令时 UTC+0 至 UTC+1）","Portugal","Portuguese Republic"],["西班牙","西班牙王国","欧洲","Europe/Madrid、Africa/Ceuta、Atlantic/Canary（UTC+0 至 UTC+1，夏令时 UTC+1 至 UTC+2）","Spain","Kingdom of Spain"],["阿尔巴尼亚","阿尔巴尼亚共和国","欧洲","Europe/Tirane（UTC+1，夏令时 UTC+2）","Albania","Republic of Albania"],["马恩岛","马恩岛","欧洲","Europe/Isle_of_Man（UTC+0，夏令时 UTC+1）","Isle of Man","Isle of Man"],["马耳他","马耳他共和国","欧洲","Europe/Malta（UTC+1，夏令时 UTC+2）","Malta","Republic of Malta"],["黑山","黑山","欧洲","Europe/Podgorica（UTC+1，夏令时 UTC+2）","Montenegro","Montenegro"],["中非共和国","中非共和国","非洲","Africa/Bangui（UTC+1）","Central African Republic","Central African Republic"],["乌干达","乌干达共和国","非洲","Africa/Kampala（UTC+3）","Uganda","Republic of Uganda"],["乍得","乍得共和国","非洲","Africa/Ndjamena（UTC+1）","Chad","Republic of Chad"],["佛得角","佛得角共和国","非洲","Atlantic/Cape_Verde（UTC−1）","Cape Verde","Republic of Cabo Verde"],["冈比亚","冈比亚共和国","非洲","Africa/Banjul（UTC+0）","Gambia","Republic of the Gambia"],["几内亚","几内亚共和国","非洲","Africa/Conakry（UTC+0）","Guinea","Republic of Guinea"],["几内亚比绍","几内亚比绍共和国","非洲","Africa/Bissau（UTC+0）","Guinea-Bissau","Republic of Guinea-Bissau"],["刚果（布）","刚果共和国","非洲","Africa/Brazzaville（UTC+1）","Congo","Republic of the Congo"],["刚果（金）","刚果民主共和国","非洲","Africa/Kinshasa、Africa/Lubumbashi（UTC+1 至 UTC+2）","DR Congo","Democratic Republic of the Congo"],["利比亚","利比亚国","非洲","Africa/Tripoli（UTC+2）","Libya","State of Libya"],["利比里亚","利比里亚共和国","非洲","Africa/Monrovia（UTC+0）","Liberia","Republic of Liberia"],["加纳","加纳共和国","非洲","Africa/Accra（UTC+0）","Ghana","Republic of Ghana"],["加蓬","加蓬共和国","非洲","Africa/Libreville（UTC+1）","Gabon","Gabonese Republic"],["南苏丹","南苏丹共和国","非洲","Africa/Juba（UTC+2）","South Sudan","Republic of South Sudan"],["南非","南非共和国","非洲","Africa/Johannesburg（UTC+2）","South Africa","Republic of South Africa"],["博茨瓦纳","博茨瓦纳共和国","非洲","Africa/Gaborone（UTC+2）","Botswana","Republic of Botswana"],["卢旺达","卢旺达共和国","非洲","Africa/Kigali（UTC+2）","Rwanda","Republic of Rwanda"],["厄立特里亚","厄立特里亚","非洲","Africa/Asmara（UTC+3）","Eritrea","State of Eritrea"],["吉布提","吉布提共和国","非洲","Africa/Djibouti（UTC+3）","Djibouti","Republic of Djibouti"],["喀麦隆","喀麦隆共和国","非洲","Africa/Douala（UTC+1）","Cameroon","Republic of Cameroon"],["圣多美和普林西比","圣多美和普林西比民主共和国","非洲","Africa/Sao_Tome（UTC+0）","São Tomé and Príncipe","Democratic Republic of São Tomé and Príncipe"],["圣赫勒拿、阿森松和特里斯坦-达库尼亚","圣赫勒拿、阿森松和特里斯坦-达库尼亚","非洲","Atlantic/St_Helena（UTC+0）","Saint Helena, Ascension and Tristan da Cunha","Saint Helena, Ascension and Tristan da Cunha"],["坦桑尼亚","坦桑尼亚联合共和国","非洲","Africa/Dar_es_Salaam（UTC+3）","Tanzania","United Republic of Tanzania"],["埃及","阿拉伯埃及共和国","非洲","Africa/Cairo（UTC+2，夏令时 UTC+3）","Egypt","Arab Republic of Egypt"],["埃塞俄比亚","埃塞俄比亚联邦民主共和国","非洲","Africa/Addis_Ababa（UTC+3）","Ethiopia","Federal Democratic Republic of Ethiopia"],["塞内加尔","塞内加尔共和国","非洲","Africa/Dakar（UTC+0）","Senegal","Republic of Senegal"],["塞拉利昂","塞拉利昂共和国","非洲","Africa/Freetown（UTC+0）","Sierra Leone","Republic of Sierra Leone"],["塞舌尔","塞舌尔共和国","非洲","Indian/Mahe（UTC+4）","Seychelles","Republic of Seychelles"],["多哥","多哥共和国","非洲","Africa/Lome（UTC+0）","Togo","Togolese Republic"],["安哥拉","安哥拉共和国","非洲","Africa/Luanda（UTC+1）","Angola","Republic of Angola"],["尼日利亚","尼日利亚联邦共和国","非洲","Africa/Lagos（UTC+1）","Nigeria","Federal Republic of Nigeria"],["尼日尔","尼日尔共和国","非洲","Africa/Niamey（UTC+1）","Niger","Republic of Niger"],["布基纳法索","布基纳法索","非洲","Africa/Ouagadougou（UTC+0）","Burkina Faso","Burkina Faso"],["布隆迪","布隆迪共和国","非洲","Africa/Bujumbura（UTC+2）","Burundi","Republic of Burundi"],["摩洛哥","摩洛哥王国","非洲","Africa/Casablanca（UTC+1）","Morocco","Kingdom of Morocco"],["斯威士兰","斯威士兰王国","非洲","Africa/Mbabane（UTC+2）","Eswatini","Kingdom of Eswatini"],["毛里塔尼亚","毛里塔尼亚伊斯兰共和国","非洲","Africa/Nouakchott（UTC+0）","Mauritania","Islamic Republic of Mauritania"],["毛里求斯","毛里求斯共和国","非洲","Indian/Mauritius（UTC+4）","Mauritius","Republic of Mauritius"],["津巴布韦","津巴布韦共和国","非洲","Africa/Harare（UTC+2）","Zimbabwe","Republic of Zimbabwe"],["留尼旺岛","留尼旺岛","非洲","Indian/Reunion（UTC+4）","Réunion","Réunion Island"],["科摩罗","科摩罗联盟","非洲","Indian/Comoro（UTC+3）","Comoros","Union of the Comoros"],["科特迪瓦","科特迪瓦共和国","非洲","Africa/Abidjan（UTC+0）","Ivory Coast","Republic of Côte d'Ivoire"],["突尼斯","突尼斯共和国","非洲","Africa/Tunis（UTC+1）","Tunisia","Tunisian Republic"],["索马里","索马里共和国","非洲","Africa/Mogadishu（UTC+3）","Somalia","Federal Republic of Somalia"],["纳米比亚","纳米比亚共和国","非洲","Africa/Windhoek（UTC+2）","Namibia","Republic of Namibia"],["肯尼亚","肯尼亚共和国","非洲","Africa/Nairobi（UTC+3）","Kenya","Republic of Kenya"],["苏丹","苏丹共和国","非洲","Africa/Khartoum（UTC+2）","Sudan","Republic of the Sudan"],["英属印度洋领地","英属印度洋领地","非洲","Indian/Chagos（UTC+6）","British Indian Ocean Territory","British Indian Ocean Territory"],["莫桑比克","莫桑比克共和国","非洲","Africa/Maputo（UTC+2）","Mozambique","Republic of Mozambique"],["莱索托","莱索托王国","非洲","Africa/Maseru（UTC+2）","Lesotho","Kingdom of Lesotho"],["西撒哈拉","阿拉伯撒哈拉民主共和国","非洲","Africa/El_Aaiun（UTC+1）","Western Sahara","Sahrawi Arab Democratic Republic"],["贝宁","贝宁共和国","非洲","Africa/Porto-Novo（UTC+1）","Benin","Republic of Benin"],["赞比亚","赞比亚共和国","非洲","Africa/Lusaka（UTC+2）","Zambia","Republic of Zambia"],["赤道几内亚","赤道几内亚共和国","非洲","Africa/Malabo（UTC+1）","Equatorial Guinea","Republic of Equatorial Guinea"],["阿尔及利亚","阿尔及利亚人民民主共和国","非洲","Africa/Algiers（UTC+1）","Algeria","People's Democratic Republic of Algeria"],["马拉维","马拉维共和国","非洲","Africa/Blantyre（UTC+2）","Malawi","Republic of Malawi"],["马约特","马约特","非洲","Indian/Mayotte（UTC+3）","Mayotte","Department of Mayotte"],["马达加斯加","马达加斯加共和国","非洲","Indian/Antananarivo（UTC+3）","Madagascar","Republic of Madagascar"],["马里","马里共和国","非洲","Africa/Bamako（UTC+0）","Mali","Republic of Mali"],["乌拉圭","乌拉圭东岸共和国","美洲","America/Montevideo（UTC−3）","Uruguay","Oriental Republic of Uruguay"],["伯利兹","伯利兹","美洲","America/Belize（UTC−6）","Belize","Belize"],["加拿大","加拿大","美洲","America/St_Johns 等 23 个时区（UTC−8 至 UTC−3:30，夏令时 UTC−7 至 UTC−2:30）","Canada","Canada"],["危地马拉","危地马拉共和国","美洲","America/Guatemala（UTC−6）","Guatemala","Republic of Guatemala"],["厄瓜多尔","厄瓜多尔共和国","美洲","America/Guayaquil、Pacific/Galapagos（UTC−6 至 UTC−5）","Ecuador","Republic of Ecuador"],["古巴","古巴共和国","美洲","America/Havana（UTC−5，夏令时 UTC−4）","Cuba","Republic of Cuba"],["哥伦比亚","哥伦比亚共和国","美洲","America/Bogota（UTC−5）","Colombia","Republic of Colombia"],["哥斯达黎加","哥斯达黎加共和国","美洲","America/Costa_Rica（UTC−6）","Costa Rica","Republic of Costa Rica"],["圣卢西亚","圣卢西亚","美洲","America/St_Lucia（UTC−4）","Saint Lucia","Saint Lucia"],["圣基茨和尼维斯","圣克里斯托弗和尼维斯联邦","美洲","America/St_Kitts（UTC−4）","Saint Kitts and Nevis","Federation of Saint Christopher and Nevis"],["圣巴泰勒米","圣巴泰勒米集体","美洲","America/St_Barthelemy（UTC−4）","Saint Barthélemy","Collectivity of Saint Barthélemy"],["圣文森特和格林纳丁斯","圣文森特和格林纳丁斯","美洲","America/St_Vincent（UTC−4）","Saint Vincent and the Grenadines","Saint Vincent and the Grenadines"],["圣皮埃尔和密克隆","圣皮埃尔和密克隆","美洲","America/Miquelon（UTC−3，夏令时 UTC−2）","Saint Pierre and Miquelon","Saint Pierre and Miquelon"],["圣马丁","圣马丁","美洲","America/Marigot（UTC−4）","Saint Martin","Saint Martin"],["圣马丁岛","圣马丁岛","美洲","America/Lower_Princes（UTC−4）","Sint Maarten","Sint Maarten"],["圭亚那","圭亚那共和国","美洲","America/Guyana（UTC−4）","Guyana","Co-operative Republic of Guyana"],["墨西哥","墨西哥合众国","美洲","America/Mexico_City 等 12 个时区（UTC−8 至 UTC−5，夏令时 UTC−7 至 UTC−5）","Mexico","United Mexican States"],["多米尼克","多米尼加共和国","美洲","America/Dominica（UTC−4）","Dominica","Commonwealth of Dominica"],["多米尼加","多明尼加共和国","美洲","America/Santo_Domingo（UTC−4）","Dominica","Commonwealth of Dominica"],["委内瑞拉","委内瑞拉玻利瓦尔共和国","美洲","America/Caracas（UTC−4）","Venezuela","Bolivarian Republic of Venezuela"],["安圭拉","安圭拉","美洲","America/Anguilla（UTC−4）","Anguilla","Anguilla"],["安提瓜和巴布达","安提瓜和巴布达","美洲","America/Antigua（UTC−4）","Antigua and Barbuda","Antigua and Barbuda"],["尼加拉瓜","尼加拉瓜共和国","美洲","America/Managua（UTC−6）","Nicaragua","Republic of Nicaragua"],["巴哈马","巴哈马联邦","美洲","America/Nassau（UTC−5，夏令时 UTC−4）","Bahamas","Commonwealth of the Bahamas"],["巴巴多斯","巴巴多斯","美洲","America/Barbados（UTC−4）","Barbados","Barbados"],["巴拉圭","巴拉圭共和国","美洲","America/Asuncion（UTC−3）","Paraguay","Republic of Paraguay"],["巴拿马","巴拿马共和国","美洲","America/Panama（UTC−5）","Panama","Republic of Panama"],["巴西","巴西联邦共和国","美洲","America/Noronha 等 16 个时区（UTC−5 至 UTC−2）","Brazil","Federative Republic of Brazil"],["库拉索","库拉索","美洲","America/Curacao（UTC−4）","Curaçao","Country of Curaçao"],["开曼群岛","开曼群岛","美洲","America/Cayman（UTC−5）","Cayman Islands","Cayman Islands"],["智利","智利共和国","美洲","America/Santiago 等 4 个时区（UTC−5 至 UTC−3，夏令时 UTC−6 至 UTC−3）","Chile","Republic of Chile"],["格林纳达","格林纳达","美洲","America/Grenada（UTC−4）","Grenada","Grenada"],["格陵兰","格陵兰","美洲","America/Nuuk 等 4 个时区（UTC−4 至 UTC+0，夏令时 UTC−3 至 UTC+0）","Greenland","Greenland"],["法属圭亚那","法属圭亚那","美洲","America/Cayenne（UTC−3）","French Guiana","Guiana"],["波多黎各","波多黎各联邦","美洲","America/Puerto_Rico（UTC−4）","Puerto Rico","Commonwealth of Puerto Rico"],["洪都拉斯","洪都拉斯共和国","美洲","America/Tegucigalpa（UTC−6）","Honduras","Republic of Honduras"],["海地","海地共和国","美洲","America/Port-au-Prince（UTC−5，夏令时 UTC−4）","Haiti","Republic of Haiti"],["牙买加","牙买加","美洲","America/Jamaica（UTC−5）","Jamaica","Jamaica"],["特克斯和凯科斯群岛","特克斯和凯科斯群岛","美洲","America/Grand_Turk（UTC−5，夏令时 UTC−4）","Turks and Caicos Islands","Turks and Caicos Islands"],["特立尼达和多巴哥","特立尼达和多巴哥共和国","美洲","America/Port_of_Spain（UTC−4）","Trinidad and Tobago","Republic of Trinidad and Tobago"],["玻利维亚","多民族玻利维亚国","美洲","America/La_Paz（UTC−4）","Bolivia","Plurinational State of Bolivia"],["瓜德罗普岛","瓜德罗普岛","美洲","America/Guadeloupe（UTC−4）","Guadeloupe","Guadeloupe"],["百慕大","百慕大","美洲","Atlantic/Bermuda（UTC−4，夏令时 UTC−3）","Bermuda","Bermuda"],["福克兰群岛","福克兰群岛","美洲","Atlantic/Stanley（UTC−3）","Falkland Islands","Falkland Islands"],["秘鲁","秘鲁共和国","美洲","America/Lima（UTC−5）","Peru","Republic of Peru"],["美国","美利坚合众国","美洲","America/New_York 等 29 个时区（UTC−10 至 UTC−5，夏令时 UTC−10 至 UTC−4）","United States","United States of America"],["美国本土外小岛屿","美国本土外小岛屿","美洲","Pacific/Midway、Pacific/Wake（UTC−11 至 UTC+12）","United States Minor Outlying Islands","United States Minor Outlying Islands"],["美属维尔京群岛","美属维尔京群岛","美洲","America/St_Thomas（UTC−4）","United States Virgin Islands","Virgin Islands of the United States"],["苏里南","苏里南共和国","美洲","America/Paramaribo（UTC−3）","Suriname","Republic of Suriname"],["英属维尔京群岛","英属维尔京群岛","美洲","America/Tortola（UTC−4）","British Virgin Islands","Virgin Islands"],["荷兰加勒比区","荷兰加勒比区","美洲","America/Kralendijk（UTC−4）","Caribbean Netherlands","Bonaire, Sint Eustatius and Saba"],["萨尔瓦多","萨尔瓦多共和国","美洲","America/El_Salvador（UTC−6）","El Salvador","Republic of El Salvador"],["蒙特塞拉特","蒙特塞拉特","美洲","America/Montserrat（UTC−4）","Montserrat","Montserrat"],["阿根廷","阿根廷共和国","美洲","America/Argentina/Buenos_Aires 等 12 个时区（UTC−3）","Argentina","Argentine Republic"],["阿鲁巴","阿鲁巴","美洲","America/Aruba（UTC−4）","Aruba","Aruba"],["马提尼克","马提尼克","美洲","America/Martinique（UTC−4）","Martinique","Martinique"],["关岛","关岛","大洋洲","Pacific/Guam（UTC+10）","Guam","Guam"],["北马里亚纳群岛","北马里亚纳群岛","大洋洲","Pacific/Saipan（UTC+10）","Northern Mariana Islands","Commonwealth of the Northern Mariana Islands"],["图瓦卢","图瓦卢","大洋洲","Pacific/Funafuti（UTC+12）","Tuvalu","Tuvalu"],["圣诞岛","圣诞岛","大洋洲","Indian/Christmas（UTC+7）","Christmas Island","Territory of Christmas Island"],["基里巴斯","基里巴斯共和国","大洋洲","Pacific/Tarawa、Pacific/Kanton、Pacific/Kiritimati（UTC+12 至 UTC+14）","Kiribati","Independent and Sovereign Republic of Kiribati"],["密克罗尼西亚","密克罗尼西亚联邦","大洋洲","Pacific/Chuuk、Pacific/Pohnpei、Pacific/Kosrae（UTC+10 至 UTC+11）","Micronesia","Federated States of Micronesia"],["巴布亚新几内亚","巴布亚新几内亚","大洋洲","Pacific/Port_Moresby、Pacific/Bougainville（UTC+10 至 UTC+11）","Papua New Guinea","Independent State of Papua New Guinea"],["帕劳","帕劳共和国","大洋洲","Pacific/Palau（UTC+9）","Palau","Republic of Palau"],["库克群岛","库克群岛","大洋洲","Pacific/Rarotonga（UTC−10）","Cook Islands","Cook Islands"],["所罗门群岛","所罗门群岛","大洋洲","Pacific/Guadalcanal（UTC+11）","Solomon Islands","Solomon Islands"],["托克劳","托克劳","大洋洲","Pacific/Fakaofo（UTC+13）","Tokelau","Tokelau"],["斐济","斐济共和国","大洋洲","Pacific/Fiji（UTC+12）","Fiji","Republic of Fiji"],["新喀里多尼亚","新喀里多尼亚","大洋洲","Pacific/Noumea（UTC+11）","New Caledonia","New Caledonia"],["新西兰","新西兰","大洋洲","Pacific/Auckland、Pacific/Chatham（UTC+13 至 UTC+13:45，夏令时 UTC+12 至 UTC+12:45）","New Zealand","New Zealand"],["汤加","汤加王国","大洋洲","Pacific/Tongatapu（UTC+13）","Tonga","Kingdom of Tonga"],["法属波利尼西亚","法属波利尼西亚","大洋洲","Pacific/Tahiti、Pacific/Marquesas、Pacific/Gambier（UTC−10 至 UTC−9）","French Polynesia","French Polynesia"],["澳大利亚","澳大利亚联邦","大洋洲","Australia/Lord_Howe 等 12 个时区（UTC+8 至 UTC+11，夏令时 UTC+8 至 UTC+10:30）","Australia","Commonwealth of Australia"],["瑙鲁","瑙鲁共和国","大洋洲","Pacific/Nauru（UTC+12）","Nauru","Republic of Nauru"],["瓦利斯和富图纳群岛","瓦利斯和富图纳群岛","大洋洲","Pacific/Wallis（UTC+12）","Wallis and Futuna","Territory of the Wallis and Futuna Islands"],["瓦努阿图","瓦努阿图共和国","大洋洲","Pacific/Efate（UTC+11）","Vanuatu","Republic of Vanuatu"],["皮特凯恩群岛","皮特凯恩群岛","大洋洲","Pacific/Pitcairn（UTC−8）","Pitcairn Islands","Pitcairn Group of Islands"],["科科斯","科科斯","大洋洲","Indian/Cocos（UTC+6:30）","Cocos (Keeling) Islands","Territory of the Cocos (Keeling) Islands"],["纽埃","纽埃","大洋洲","Pacific/Niue（UTC−11）","Niue","Niue"],["美属萨摩亚","美属萨摩亚","大洋洲","Pacific/Pago_Pago（UTC−11）","American Samoa","American Samoa"],["萨摩亚","萨摩亚独立国","大洋洲","Pacific/Apia（UTC+13）","Samoa","Independent State of Samoa"],["诺福克岛","诺福克岛","大洋洲","Pacific/Norfolk（UTC+12，夏令时 UTC+11）","Norfolk Island","Territory of Norfolk Island"],["马绍尔群岛","马绍尔群岛共和国","大洋洲","Pacific/Majuro、Pacific/Kwajalein（UTC+12）","Marshall Islands","Republic of the Marshall Islands"],["南乔治亚","南乔治亚岛和南桑威奇群岛","南极洲","Atlantic/South_Georgia（UTC−2）","South Georgia","South Georgia and the South Sandwich Islands"],["南极洲","南极洲","南极洲","Antarctica/McMurdo 等 10 个时区（UTC−3 至 UTC+13，夏令时 UTC−3 至 UTC+12）","Antarctica","Antarctica"],["布维岛","布维岛","南极洲","UTC（UTC+0）","Bouvet Island","Bouvet Island"],["法国南部和南极土地","法国南部和南极土地","南极洲","Indian/Kerguelen（UTC+5）","French Southern and Antarctic Lands","Territory of the French Southern and Antarctic Lands"],["赫德岛和麦当劳群岛","赫德岛和麦当劳群岛","南极洲","UTC（UTC+0）","Heard Island and McDonald Islands","Heard Island and McDonald Islands"]];
+var CONT_EN = {亚洲:'Asia',欧洲:'Europe',非洲:'Africa',美洲:'Americas',大洋洲:'Oceania',南极洲:'Antarctica'};
+var CONT_ORDER = ['亚洲','欧洲','非洲','美洲','大洋洲','南极洲'];
+var contCounts = {};
+DATA.forEach(function(r){ contCounts[r[2]] = (contCounts[r[2]]||0)+1; });
+
+(function computeStats(){
+  var ids = {}, offsets = {}, multi = 0;
+  DATA.forEach(function(r){
+    (parseIDs(r[3])||[]).forEach(function(z){ ids[z] = 1; });
+    offsets[parseOffset(r[3]) || '-'] = 1;
+    if(parseBig(r[3]) || (parseIDs(r[3])||[]).length > 1) multi++;
+  });
+  document.getElementById('stTotal').textContent = DATA.length;
+  document.getElementById('stZones').textContent = Object.keys(ids).length;
+  document.getElementById('stOffsets').textContent = Object.keys(offsets).length;
+  document.getElementById('stMulti').textContent = multi;
+})();
+
+var ZONE_DETAIL = {
+  "Indonesia": [
+    ["Asia/Jakarta", "雅加达及爪哇、苏门答腊", "Java, Sumatra"],
+    ["Asia/Pontianak", "坤甸及加里曼丹西部", "Borneo (west, central)"],
+    ["Asia/Makassar", "望加锡及苏拉威西、巴厘", "Borneo (east, south), Sulawesi/Celebes, Bali, Nusa Tengarra, Timor (west)"],
+    ["Asia/Jayapura", "查亚普拉及巴布亚、马鲁古", "New Guinea (West Papua / Irian Jaya), Malukus/Moluccas"]
+  ],
+  "Kazakhstan": [
+    ["Asia/Almaty", "阿拉木图及哈萨克斯坦大部", "most of Kazakhstan"],
+    ["Asia/Qyzylorda", "克孜勒奥尔达", "Qyzylorda/Kyzylorda/Kzyl-Orda"],
+    ["Asia/Qostanay", "科斯塔奈", "Qostanay/Kostanay/Kustanay"],
+    ["Asia/Aqtobe", "阿克托别", "Aqtobe/Aktobe"],
+    ["Asia/Aqtau", "阿克套及曼吉斯套", "Mangghystau/Mankistau"],
+    ["Asia/Atyrau", "阿特劳", "Atyrau/Atirau/Gur'yev"],
+    ["Asia/Oral", "乌拉尔及西哈萨克斯坦", "West Kazakhstan"]
+  ],
+  "Russia": [
+    ["Europe/Kaliningrad", "加里宁格勒", "MSK-01 - Kaliningrad"],
+    ["Europe/Moscow", "莫斯科", "MSK+00 - Moscow area"],
+    ["Europe/Kirov", "基洛夫", "MSK+00 - Kirov"],
+    ["Europe/Volgograd", "伏尔加格勒", "MSK+00 - Volgograd"],
+    ["Europe/Astrakhan", "阿斯特拉罕", "MSK+01 - Astrakhan"],
+    ["Europe/Saratov", "萨拉托夫", "MSK+01 - Saratov"],
+    ["Europe/Ulyanovsk", "乌里扬诺夫斯克", "MSK+01 - Ulyanovsk"],
+    ["Europe/Samara", "萨马拉", "MSK+01 - Samara, Udmurtia"],
+    ["Asia/Yekaterinburg", "叶卡捷琳堡及乌拉尔", "MSK+02 - Urals"],
+    ["Asia/Omsk", "鄂木斯克", "MSK+03 - Omsk"],
+    ["Asia/Novosibirsk", "新西伯利亚", "MSK+04 - Novosibirsk"],
+    ["Asia/Barnaul", "巴尔瑙尔及阿尔泰", "MSK+04 - Altai"],
+    ["Asia/Tomsk", "托木斯克", "MSK+04 - Tomsk"],
+    ["Asia/Novokuznetsk", "新库兹涅茨克", "MSK+04 - Kemerovo"],
+    ["Asia/Krasnoyarsk", "克拉斯诺亚尔斯克", "MSK+04 - Krasnoyarsk area"],
+    ["Asia/Irkutsk", "伊尔库茨克及布里亚特", "MSK+05 - Irkutsk, Buryatia"],
+    ["Asia/Chita", "赤塔及外贝加尔", "MSK+06 - Zabaykalsky"],
+    ["Asia/Yakutsk", "雅库茨克及勒拿河", "MSK+06 - Lena River"],
+    ["Asia/Khandyga", "汉德加", "MSK+06 - Tomponsky, Ust-Maysky"],
+    ["Asia/Vladivostok", "符拉迪沃斯托克及阿穆尔", "MSK+07 - Amur River"],
+    ["Asia/Ust-Nera", "乌斯季涅拉", "MSK+07 - Oymyakonsky"],
+    ["Asia/Magadan", "马加丹", "MSK+08 - Magadan"],
+    ["Asia/Sakhalin", "萨哈林岛", "MSK+08 - Sakhalin Island"],
+    ["Asia/Srednekolymsk", "中科雷姆斯克及千岛群岛", "MSK+08 - Sakha (E), N Kuril Is"],
+    ["Asia/Kamchatka", "堪察加", "MSK+09 - Kamchatka"],
+    ["Asia/Anadyr", "阿纳德尔及白令海", "MSK+09 - Bering Sea"]
+  ],
+  "Canada": [
+    ["America/St_Johns", "纽芬兰与拉布拉多东南部", "Newfoundland, Labrador (SE)"],
+    ["America/Halifax", "哈利法克斯及新斯科舍", "Atlantic - NS (most areas), PE"],
+    ["America/Glace_Bay", "格莱斯贝（布雷顿角）", "Atlantic - NS (Cape Breton)"],
+    ["America/Moncton", "蒙克顿及新不伦瑞克", "Atlantic - New Brunswick"],
+    ["America/Goose_Bay", "古斯贝及拉布拉多", "Atlantic - Labrador (most areas)"],
+    ["America/Blanc-Sablon", "布朗萨布隆", "AST - QC (Lower North Shore)"],
+    ["America/Toronto", "多伦多及东部地区", "Eastern - ON & QC (most areas)"],
+    ["America/Iqaluit", "伊卡卢伊特及努纳武特东部", "Eastern - NU (most areas)"],
+    ["America/Atikokan", "阿蒂科肯", "EST - ON (Atikokan), NU (Coral H)"],
+    ["America/Winnipeg", "温尼伯及曼尼托巴", "EST - Manitoba, ON (northwest)"],
+    ["America/Resolute", "雷索卢特", "Central - NU (Resolute)"],
+    ["America/Rankin_Inlet", "兰金因莱特", "Central - NU (central)"],
+    ["America/Regina", "里贾纳及萨斯喀彻温", "CST - SK (most areas)"],
+    ["America/Swift_Current", "斯威夫特卡伦特", "CST - SK (midwest)"],
+    ["America/Edmonton", "埃德蒙顿及艾伯塔", "CST - AB, BC(E), NT(E), SK(W)"],
+    ["America/Cambridge_Bay", "剑桥湾", "Mountain - NU (west)"],
+    ["America/Inuvik", "伊努维克及西北地区西部", "CST - NT (west)"],
+    ["America/Vancouver", "温哥华及不列颠哥伦比亚", "MST - BC (most areas)"],
+    ["America/Creston", "克雷斯顿", "MST - BC (Creston)"],
+    ["America/Dawson_Creek", "道森克里克与圣约翰堡", "MST - BC (Dawson Cr, Ft St John)"],
+    ["America/Fort_Nelson", "纳尔逊堡", "MST - BC (Ft Nelson)"],
+    ["America/Whitehorse", "怀特霍斯及育空东部", "MST - Yukon (east)"],
+    ["America/Dawson", "道森及育空西部", "MST - Yukon (west)"]
+  ],
+  "Mexico": [
+    ["America/Mexico_City", "墨西哥城及中部", "Central Mexico"],
+    ["America/Cancun", "坎昆及金塔纳罗奥", "Quintana Roo"],
+    ["America/Merida", "梅里达及尤卡坦", "Campeche, Yucatan"],
+    ["America/Monterrey", "蒙特雷及东北部", "Durango; Coahuila, Nuevo Leon, Tamaulipas (most areas)"],
+    ["America/Matamoros", "马塔莫罗斯及美墨边境", "Coahuila, Nuevo Leon, Tamaulipas (US border)"],
+    ["America/Chihuahua", "奇瓦瓦", "Chihuahua (most areas)"],
+    ["America/Ciudad_Juarez", "华雷斯城", "Chihuahua (US border - west)"],
+    ["America/Ojinaga", "奥希纳加", "Chihuahua (US border - east)"],
+    ["America/Mazatlan", "马萨特兰及锡那罗亚", "Baja California Sur, Nayarit (most areas), Sinaloa"],
+    ["America/Bahia_Banderas", "班德拉斯湾", "Bahia de Banderas"],
+    ["America/Hermosillo", "埃莫西约及索诺拉", "Sonora"],
+    ["America/Tijuana", "蒂华纳及下加利福尼亚", "Baja California"]
+  ],
+  "Brazil": [
+    ["America/Noronha", "费尔南多-迪诺罗尼亚等大西洋岛屿", "Atlantic islands"],
+    ["America/Belem", "贝伦及帕拉东部", "Para (east), Amapa"],
+    ["America/Fortaleza", "福塔莱萨及东北部", "Brazil (northeast: MA, PI, CE, RN, PB)"],
+    ["America/Recife", "累西腓及伯南布哥", "Pernambuco"],
+    ["America/Araguaina", "阿拉瓜伊纳及托坎廷斯", "Tocantins"],
+    ["America/Maceio", "马塞约及塞尔希培", "Alagoas, Sergipe"],
+    ["America/Bahia", "巴伊亚", "Bahia"],
+    ["America/Sao_Paulo", "圣保罗及东南部", "Brazil (southeast: GO, DF, MG, ES, RJ, SP, PR, SC, RS)"],
+    ["America/Campo_Grande", "大坎普及南马托格罗索", "Mato Grosso do Sul"],
+    ["America/Cuiaba", "库亚巴及马托格罗索", "Mato Grosso"],
+    ["America/Santarem", "圣塔伦及帕拉西部", "Para (west)"],
+    ["America/Porto_Velho", "波多韦柳及朗多尼亚", "Rondonia"],
+    ["America/Boa_Vista", "博阿维斯塔及罗赖马", "Roraima"],
+    ["America/Manaus", "马瑙斯及亚马孙东部", "Amazonas (east)"],
+    ["America/Eirunepe", "埃鲁内佩及亚马孙西部", "Amazonas (west)"],
+    ["America/Rio_Branco", "里奥布兰科及阿克里", "Acre"]
+  ],
+  "Chile": [
+    ["America/Santiago", "圣地亚哥及智利本土", "most of Chile"],
+    ["America/Coyhaique", "艾森大区", "Aysen Region"],
+    ["America/Punta_Arenas", "麦哲伦-智利南极大区", "Magallanes Region"],
+    ["Pacific/Easter", "复活节岛", "Easter Island"]
+  ],
+  "Greenland": [
+    ["America/Nuuk", "努克及格陵兰大部", "most of Greenland"],
+    ["America/Danmarkshavn", "丹马克港及东北部国家公园", "National Park (east coast)"],
+    ["America/Scoresbysund", "斯科斯比松", "Scoresbysund/Ittoqqortoormiit"],
+    ["America/Thule", "图勒（皮图菲克）", "Thule/Pituffik"]
+  ],
+  "United States": [
+    ["America/New_York", "纽约及东部地区", "Eastern (most areas)"],
+    ["America/Detroit", "底特律及密歇根东部", "Eastern - MI (most areas)"],
+    ["America/Kentucky/Louisville", "路易斯维尔", "Eastern - KY (Louisville area)"],
+    ["America/Kentucky/Monticello", "蒙蒂塞洛", "Eastern - KY (Wayne)"],
+    ["America/Indiana/Indianapolis", "印第安纳波利斯", "Eastern - IN (most areas)"],
+    ["America/Indiana/Vincennes", "文森斯", "Eastern - IN (Da, Du, K, Mn)"],
+    ["America/Indiana/Winamac", "威纳马克", "Eastern - IN (Pulaski)"],
+    ["America/Indiana/Marengo", "马伦戈", "Eastern - IN (Crawford)"],
+    ["America/Indiana/Petersburg", "彼得斯堡", "Eastern - IN (Pike)"],
+    ["America/Indiana/Vevay", "韦韦", "Eastern - IN (Switzerland)"],
+    ["America/Chicago", "芝加哥及中部地区", "Central (most areas)"],
+    ["America/Indiana/Tell_City", "特尔城", "Central - IN (Perry)"],
+    ["America/Indiana/Knox", "诺克斯", "Central - IN (Starke)"],
+    ["America/Menominee", "梅诺米尼", "Central - MI (Wisconsin border)"],
+    ["America/North_Dakota/Center", "北达科他州中部", "Central - ND (Oliver)"],
+    ["America/North_Dakota/New_Salem", "新塞勒姆", "Central - ND (Morton rural)"],
+    ["America/North_Dakota/Beulah", "比乌拉", "Central - ND (Mercer)"],
+    ["America/Denver", "丹佛及山地地区", "Mountain (most areas)"],
+    ["America/Boise", "博伊西", "Mountain - ID (south), OR (east)"],
+    ["America/Phoenix", "凤凰城及亚利桑那", "MST - AZ (except Navajo)"],
+    ["America/Los_Angeles", "洛杉矶及太平洋沿岸", "Pacific"],
+    ["America/Anchorage", "安克雷奇", "Alaska (most areas)"],
+    ["America/Juneau", "朱诺", "Alaska - Juneau area"],
+    ["America/Sitka", "锡特卡", "Alaska - Sitka area"],
+    ["America/Metlakatla", "梅特拉克特拉", "Alaska - Annette Island"],
+    ["America/Yakutat", "亚库塔特", "Alaska - Yakutat"],
+    ["America/Nome", "诺姆", "Alaska (west)"],
+    ["America/Adak", "阿达克", "Alaska - western Aleutians"],
+    ["Pacific/Honolulu", "檀香山及夏威夷", "Hawaii"]
+  ],
+  "Argentina": [
+    ["America/Argentina/Buenos_Aires", "布宜诺斯艾利斯", "Buenos Aires (BA, CF)"],
+    ["America/Argentina/Cordoba", "科尔多瓦及中部", "Argentina (most areas: CB, CC, CN, ER, FM, MN, SE, SF)"],
+    ["America/Argentina/Salta", "萨尔塔", "Salta (SA, LP, NQ, RN)"],
+    ["America/Argentina/Jujuy", "胡胡伊", "Jujuy (JY)"],
+    ["America/Argentina/Tucuman", "图库曼", "Tucuman (TM)"],
+    ["America/Argentina/Catamarca", "卡塔马卡与丘布特", "Catamarca (CT), Chubut (CH)"],
+    ["America/Argentina/La_Rioja", "拉里奥哈", "La Rioja (LR)"],
+    ["America/Argentina/San_Juan", "圣胡安", "San Juan (SJ)"],
+    ["America/Argentina/Mendoza", "门多萨", "Mendoza (MZ)"],
+    ["America/Argentina/San_Luis", "圣路易斯", "San Luis (SL)"],
+    ["America/Argentina/Rio_Gallegos", "里奥加耶戈斯及圣克鲁斯", "Santa Cruz (SC)"],
+    ["America/Argentina/Ushuaia", "乌斯怀亚及火地岛", "Tierra del Fuego (TF)"]
+  ],
+  "Australia": [
+    ["Australia/Lord_Howe", "豪勋爵岛", "Lord Howe Island"],
+    ["Antarctica/Macquarie", "麦夸里岛", "Macquarie Island"],
+    ["Australia/Hobart", "霍巴特及塔斯马尼亚", "Tasmania"],
+    ["Australia/Melbourne", "墨尔本及维多利亚", "Victoria"],
+    ["Australia/Sydney", "悉尼及新南威尔士", "New South Wales (most areas)"],
+    ["Australia/Broken_Hill", "布罗肯希尔", "New South Wales (Yancowinna)"],
+    ["Australia/Brisbane", "布里斯班及昆士兰", "Queensland (most areas)"],
+    ["Australia/Lindeman", "林德曼岛", "Queensland (Whitsunday Islands)"],
+    ["Australia/Adelaide", "阿德莱德及南澳大利亚", "South Australia"],
+    ["Australia/Darwin", "达尔文及北领地", "Northern Territory"],
+    ["Australia/Perth", "珀斯及西澳大利亚", "Western Australia (most areas)"],
+    ["Australia/Eucla", "尤克拉", "Western Australia (Eucla)"]
+  ],
+  "Antarctica": [
+    ["Antarctica/McMurdo", "麦克默多站与南极点", "New Zealand time - McMurdo, South Pole"],
+    ["Antarctica/Casey", "凯西站", "Casey"],
+    ["Antarctica/Davis", "戴维斯站", "Davis"],
+    ["Antarctica/DumontDUrville", "迪蒙·迪维尔站", "Dumont-d'Urville"],
+    ["Antarctica/Mawson", "莫森站", "Mawson"],
+    ["Antarctica/Palmer", "帕默站", "Palmer"],
+    ["Antarctica/Rothera", "罗瑟拉站", "Rothera"],
+    ["Antarctica/Syowa", "昭和站", "Syowa"],
+    ["Antarctica/Troll", "特罗尔站", "Troll"],
+    ["Antarctica/Vostok", "东方站", "Vostok"]
+  ],
+};
+
+var state = { q:'', cont:'全部', sort:'country' };
+
+var $q = document.getElementById('q');
+var $rows = document.getElementById('rows');
+var $count = document.getElementById('count');
+var $sort = document.getElementById('sort');
+var $chips = document.getElementById('contChips');
+var $toast = document.getElementById('toast');
+
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function parseIDs(raw){ return raw.match(/[A-Za-z]+\/[A-Za-z0-9_+\-]+(?:\/[A-Za-z0-9_+\-]+)?/g) || []; }
+function parseOffset(raw){ var m = raw.match(/（(.+)）\s*$/); return m ? m[1] : ''; }
+function parseBig(raw){ var m = raw.match(/等\s*(\d+)\s*个时区/); return m ? parseInt(m[1],10) : 0; }
+function offsetNum(raw){
+  var m = raw.match(/UTC([+−-])(\d+)(?::(\d+))?/);
+  if(!m) return 0;
+  var v = parseInt(m[2],10) + (m[3] ? parseInt(m[3],10)/60 : 0);
+  return m[1]==='+' ? v : -v;
+}
+function clockFor(zone){
+  try{
+    var parts = new Intl.DateTimeFormat('en-CA',{
+      timeZone:zone, year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+    }).formatToParts(new Date());
+    var o = {};
+    parts.forEach(function(p){ o[p.type] = p.value; });
+    var h = parseInt(o.hour,10)%24;
+    var hh = ('0'+h).slice(-2);
+    return { date:o.year+'-'+o.month+'-'+o.day, time:hh+':'+o.minute+':'+o.second, hour:h };
+  }catch(e){ return null; }
+}
+function isNight(c){ return !!(c && (c.hour<6 || c.hour>=18)); }
+function offsetMinutes(zone, t){
+  try{
+    var p = new Intl.DateTimeFormat('en-GB',{timeZone:zone, timeZoneName:'longOffset'}).formatToParts(t || new Date());
+    var name = (p.find(function(x){return x.type==='timeZoneName';})||{}).value || '';
+    var m = name.match(/GMT([+−-])(\d{1,2})(?::(\d{2}))?/);
+    if(!m) return 0;
+    var v = parseInt(m[2],10)*60 + (m[3]?parseInt(m[3],10):0);
+    return (m[1]==='-' || m[1]==='−') ? -v : v;
+  }catch(e){ return 0; }
+}
+function fmtOffset(min){
+  var sign = min<0 ? '−' : '+';
+  var abs = Math.abs(min);
+  var h = Math.floor(abs/60), mm = abs%60;
+  return 'UTC' + sign + h + (mm ? ':' + ('0'+mm).slice(-2) : '');
+}
+function dstInfo(zone){
+  var now = new Date();
+  var y = now.getFullYear();
+  var jan = offsetMinutes(zone, new Date(Date.UTC(y,0,15,12)));
+  var jul = offsetMinutes(zone, new Date(Date.UTC(y,6,15,12)));
+  var cur = offsetMinutes(zone, now);
+  var base = Math.min(jan,jul), best = Math.max(jan,jul);
+  return { cur:cur, text:fmtOffset(cur), active:(jan!==jul && cur===best) };
+}
+function szOff(zone){
+  var d = dstInfo(zone);
+  return '<div class="sz-off">'+esc(d.text)+(d.active?' <i>DST</i>':'')+'</div>';
+}
+function subZones(r){
+  var list = ZONE_DETAIL[r[4]];
+  if(!list) return '';
+  var html = '<div class="subzones"><div class="subzones-h">该国全部时区 · All time zones in '+esc(r[4])+' <span>'+list.length+'</span></div>';
+  list.forEach(function(z){
+    var c = clockFor(z[0]);
+    html += '<div class="sz" data-zone="'+esc(z[0])+'">'
+      + '<div class="sz-region"><strong>'+esc(z[1])+'</strong><span>'+esc(z[2])+'</span></div>'
+      + '<span class="tz-id" data-copy="'+esc(z[0])+'">'+esc(z[0])+'</span>'
+      + szOff(z[0])
+      + '<div class="sz-time"><span class="dot'+(isNight(c)?' night':'')+'"></span><time>'+(c?c.time:'—')+'</time><em>'+(c?c.date:'')+'</em></div>'
+      + '</div>';
+  });
+  return html + '</div>';
+}
+
+function singleOffset(raw){ return !/至/.test(parseOffset(raw)); }
+
+function liveCell(r){
+  var ids = parseIDs(r[3]);
+  var big = parseBig(r[3]);
+  if(big && !ids.length){
+    return '<div class="clock multi"><span class="dot night"></span><time>'+big+' 个时区</time></div>';
+  }
+  if(big){
+    var mc = clockFor(ids[0]);
+    return '<div class="clock"><div class="stamp">'
+      + '<span class="tl"><span class="dot'+(isNight(mc)?' night':'')+'"></span><time>'+(mc?mc.time:'—')+'</time></span>'
+      + '<span class="dt">'+(mc?mc.date:big+' 个时区')+'</span></div></div>';
+  }
+  var zone = ids.length ? ids[0] : 'UTC';
+  var c = clockFor(zone);
+  return '<div class="clock"><div class="stamp">'
+    + '<span class="tl"><span class="dot'+(isNight(c)?' night':'')+'"></span><time>'+(c?c.time:'—')+'</time></span>'
+    + '<span class="dt">'+(c?c.date:'')+'</span></div></div>';
+}
+
+function buildChips(){
+  var html = '<button class="chip" data-cont="全部" aria-pressed="true">全部 All <span class="n">250</span></button>';
+  CONT_ORDER.forEach(function(c){
+    html += '<button class="chip" data-cont="'+esc(c)+'" aria-pressed="false">'+esc(c)+' '+esc(CONT_EN[c])+' <span class="n">'+contCounts[c]+'</span></button>';
+  });
+  $chips.innerHTML = html;
+}
+function filtered(){
+  var q = state.q.trim().toLowerCase();
+  return DATA.filter(function(r){
+    if(state.cont!=='全部' && r[2]!==state.cont) return false;
+    if(!q) return true;
+    var hay = [r[0],r[1],r[2],r[3],r[4],r[5],CONT_EN[r[2]].toLowerCase(),parseOffset(r[3]).toLowerCase()].join(' ').toLowerCase();
+    return hay.indexOf(q) > -1;
+  });
+}
+function sorted(list){
+  var l = list.slice();
+  if(state.sort==='offset'){
+    l.sort(function(a,b){ var d = offsetNum(a[3]) - offsetNum(b[3]); return d || a[4].localeCompare(b[4],'en'); });
+  } else if(state.sort==='continent'){
+    l.sort(function(a,b){ var d = CONT_ORDER.indexOf(a[2]) - CONT_ORDER.indexOf(b[2]); return d || a[4].localeCompare(b[4],'en'); });
+  } else {
+    l.sort(function(a,b){ return a[4].localeCompare(b[4],'en'); });
+  }
+  return l;
+}
+
+function offCell(r, ids){
+  var zone = ids.length ? ids[0] : 'UTC';
+  var d = dstInfo(zone);
+  var raw = parseOffset(r[3]);
+  var range = /至/.test(raw);
+  var html = '<div class="offset'+(range?' multi':'')+'">';
+  html += '<b>'+esc(d.text)+'</b>';
+  if(d.active) html += '<em class="dst">夏令时 DST</em>';
+  if(range) html += '<span class="range">'+esc(raw)+'</span>';
+  html += '</div>';
+  return html;
+}
+
+function render(){
+  var list = sorted(filtered());
+  $count.textContent = list.length;
+  if(!list.length){
+    $rows.innerHTML = '<div class="empty">没有匹配的国家或时区<span>No results · 试试其他国家名、IANA 时区名（如 Asia/Shanghai）</span></div>';
+    return;
+  }
+  $rows.innerHTML = list.map(function(r){
+    var ids = parseIDs(r[3]);
+    var big = parseBig(r[3]);
+    var offset = parseOffset(r[3]);
+    var tzHtml;
+    if(big && ids.length){
+      tzHtml = '<span class="tz-id" data-copy="'+esc(ids[0])+'" title="复制时区 Copy zone">'+esc(ids[0])+'</span>';
+      tzHtml += '<span class="tz-meta">首列时区 · '+big+' 个时区 / zones</span>';
+    } else if(big){
+      tzHtml = '<span class="tz-meta" style="margin-top:0">'+esc(r[3])+'</span>';
+    } else if(ids.length){
+      tzHtml = '<span class="tz-id" data-copy="'+esc(ids[0])+'" title="复制时区 Copy zone">'+esc(ids[0])+'</span>';
+      tzHtml += ids.length>1
+        ? '<span class="tz-meta">+ '+(ids.length-1)+' 个时区 / more</span>'
+        : '<span class="tz-meta">IANA time zone</span>';
+    } else {
+      tzHtml = '<span class="tz-id" data-copy="UTC" title="复制时区 Copy zone">UTC</span><span class="tz-meta">Fixed offset</span>';
+    }
+    return '<div class="row">'
+      + '<div class="country"><strong>'+esc(r[0])+'</strong>'
+      + '<span class="en">'+esc(r[4])+'</span>'
+      + '<span class="full">'+esc(r[1])+' · '+esc(r[5]||'')+'</span></div>'
+      + '<div class="cont">'+esc(r[2])+'<i>'+esc(CONT_EN[r[2]]||'')+'</i></div>'
+      + '<div class="tz">'+tzHtml+'</div>'
+      + offCell(r, ids)
+      + liveCell(r)
+      + '</div>'
+      + subZones(r);
+  }).join('');
+  if(window.innerWidth < 760){
+    Array.prototype.forEach.call($rows.querySelectorAll('.row'), function(row){
+      var cont = row.querySelector('.cont');
+      var country = row.querySelector('.country');
+      var en = country.querySelector('.en');
+      if(cont && country) country.insertBefore(cont, en);
+    });
+  }
+  tick();
+}
+
+var toastTimer;
+function toast(msg){
+  $toast.textContent = msg;
+  $toast.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ $toast.classList.remove('on'); }, 1600);
+}
+function copyText(text){
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast('已复制 Copied · '+text); }catch(e){ toast('复制失败 Copy failed'); }
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(function(){ toast('已复制 Copied · '+text); }, fallback);
+  } else fallback();
+}
+
+var timer;
+$q.addEventListener('input', function(){
+  clearTimeout(timer);
+  timer = setTimeout(function(){ state.q = $q.value; render(); }, 140);
+});
+$sort.addEventListener('change', function(){ state.sort = $sort.value; render(); });
+$chips.addEventListener('click', function(e){
+  var btn = e.target.closest('.chip');
+  if(!btn) return;
+  state.cont = btn.dataset.cont;
+  Array.prototype.forEach.call($chips.querySelectorAll('.chip'), function(b){
+    b.setAttribute('aria-pressed', b===btn ? 'true' : 'false');
+  });
+  render();
+});
+$rows.addEventListener('click', function(e){
+  var id = e.target.closest('.tz-id');
+  if(id && id.dataset.copy){ copyText(id.dataset.copy); }
+});
+var resizeTimer;
+window.addEventListener('resize', function(){
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 150);
+});
+
+function tick(){
+  var list = sorted(filtered());
+  var cells = $rows.querySelectorAll('.row');
+  if(cells.length !== list.length) return;
+  for(var i=0;i<list.length;i++){
+    var ids = parseIDs(list[i][3]);
+    if(!ids.length) continue;
+    var zone = ids.length ? ids[0] : 'UTC';
+    var c = clockFor(zone);
+    if(!c) continue;
+    var cell = cells[i].querySelector('.clock');
+    if(!cell) continue;
+    var t = cell.querySelector('.stamp time');
+    var d = cell.querySelector('.stamp .dt');
+    var dot = cell.querySelector('.dot');
+    if(t) t.textContent = c.time;
+    if(d) d.textContent = c.date;
+    if(dot) dot.classList.toggle('night', isNight(c));
+  }
+  Array.prototype.forEach.call($rows.querySelectorAll('.subzones .sz'), function(el){
+    var zone = el.dataset.zone;
+    if(!zone) return;
+    var c = clockFor(zone);
+    if(!c) return;
+    var t = el.querySelector('time'), d = el.querySelector('em'), dot = el.querySelector('.dot');
+    if(t) t.textContent = c.time;
+    if(d) d.textContent = c.date;
+    if(dot) dot.classList.toggle('night', isNight(c));
+  });
+  var utc = clockFor('UTC');
+  if(utc) document.getElementById('liveText').textContent = 'UTC ' + utc.time + ' · 当地时间实时更新';
+}
+setInterval(tick, 1000);
+
+buildChips();
+render();
+</script>
+</body>
+</html>
