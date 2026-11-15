@@ -1,4 +1,4 @@
-、<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -35,10 +35,29 @@ color:#fff;
 overflow:hidden;
             }
         }
+
+        .tools-viewport{
+            overflow-x:auto;
+            scroll-snap-type:x mandatory;
+            -webkit-overflow-scrolling:touch;
+            scrollbar-width:none;
+            -ms-overflow-style:none;
+        }
+        .tools-viewport::-webkit-scrollbar{display:none}
+        .tools-viewport > .flex{width:100%}
+        .tools-page{flex:0 0 100%;width:100%;min-width:0;scroll-snap-align:start}
+        .tools-page + .tools-page{padding-left:2px;display:flex;flex-direction:column;justify-content:center}
+        .dot-btn{
+            width:8px;height:8px;border-radius:9999px;border:0;padding:0;
+            background:#d1d5db;cursor:pointer;transition:background-color .2s ease,width .2s ease;
+        }
+        .dot-btn.is-active{background:#3b82f6;width:18px}
+        .dot-btn:focus-visible{outline:2px solid #4060f0;outline-offset:3px}
 </style>
 </head>
 <body class="bg-slate-50 pb-20">
 <div class="px-5 pt-6">
+<section id="view-home">
 <!-- 顶部标题+头像 -->
 <div class="flex justify-between items-center mb-5">
 <h1 class="text-[26px] font-bold text-gray-800">实用工具汇总</h1>
@@ -50,11 +69,11 @@ overflow:hidden;
 <div class="bg-grad rounded-2xl p-5 text-white relative overflow-hidden mb-5">
 <div>
 <h2 class="text-[32px] font-bold">今日效率</h2>
-<p class="text-xl mt-1">已整理 18 个工具</p>
-<p class="text-xl mt-1">常用 6 个入口</p>
+<p class="text-xl mt-1">已整理 9个工具</p>
+<p class="text-xl mt-1">常用 9 个入口</p>
 </div>
 <div class="absolute right-6 top-1/2 -translate-y-1/2">
-<div class="text-[70px] font-bold opacity-90">18</div>
+<div class="text-[70px] font-bold opacity-90">9</div>
 </div>
 </div>
 <!-- 搜索框 -->
@@ -65,9 +84,12 @@ overflow:hidden;
 <!-- 常用工具宫格 -->
 <div class="bg-white rounded-2xl p-5 shadow-sm mb-7">
 <div class="flex justify-between items-center mb-4">
-<h3 class="text-xl font-semibold text-gray-800">常用工具宫格</h3>
-<i class="fa fa-chevron-right text-gray-400"></i>
+<h3 class="text-xl font-semibold text-gray-800">常用工具</h3>
+<i id="moreToolsBtn" role="button" tabindex="0" aria-label="查看全部工具" class="fa fa-chevron-right text-gray-400 cursor-pointer p-1 -m-1"></i>
 </div>
+<div class="tools-viewport" id="toolsViewport">
+<div class="flex">
+<div class="tools-page">
 <div class="grid grid-cols-4 gap-y-5 gap-x-2">
 <!-- 第1行 -->
 <!-- 二维码解析（原「文件转换」位置，改为图片图标 + 跳转） -->
@@ -128,11 +150,25 @@ overflow:hidden;
 <span class="mt-2 text-sm text-gray-700">日历</span>
 </a>
 </div>
+</div><!-- /page1 -->
+<div class="tools-page" aria-hidden="true">
+<div class="grid grid-cols-4 gap-y-5 gap-x-2">
+<a href="../进制转换/进制转换.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/进制转换.png" alt="进制转换" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
+</div>
+<span class="mt-2 text-sm text-gray-700">进制转换</span>
+</a>
+</div>
+<p class="mt-5 text-xs text-gray-400 text-center">更多工具还在整理中</p>
+</div><!-- /page2 -->
+</div>
+</div>
 <!-- 小圆点指示器 -->
-<div class="flex justify-center gap-1.5 mt-4">
-<span class="w-2 h-2 rounded-full bg-blue-500"></span>
-<span class="w-2 h-2 rounded-full bg-gray-300"></span>
-<span class="w-2 h-2 rounded-full bg-gray-300"></span>
+<div class="flex justify-center items-center gap-1.5 mt-4">
+<button class="dot-btn is-active" id="dot0" type="button" aria-label="第 1 页"></button>
+<button class="dot-btn" id="dot1" type="button" aria-label="第 2 页"></button>
+<button class="dot-btn" id="dot2" type="button" aria-label="第 3 页"></button>
 </div>
 </div>
 <!-- 工具分类 -->
@@ -169,16 +205,90 @@ overflow:hidden;
 </div>
 </div>
 </div>
+</section>
+
+<!-- 工具箱视图 -->
+<section id="view-tools" class="hidden px-5 pt-6">
+<div class="flex justify-between items-end mb-5">
+<div>
+<h1 class="text-[26px] font-bold text-gray-800">工具箱</h1>
+<p class="text-sm text-gray-400 mt-1">全部工具，按分类整理</p>
+</div>
+<span class="text-sm text-gray-500">共 9 个</span>
+</div>
+
+<div class="bg-white rounded-2xl p-5 shadow-sm mb-5">
+<h3 class="text-lg font-semibold text-gray-800 mb-1">办公效率</h3>
+<div class="divide-y divide-gray-100">
+<a href="../二维码解析/二维码解析.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/二维码解析.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">二维码解析</p><p class="text-xs text-gray-400 mt-0.5">识别图片中的二维码内容</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../二维码/二维码.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/二维码生成.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">二维码生成</p><p class="text-xs text-gray-400 mt-0.5">文本、网址、名片等多种类型</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../OCR识别/OCR识别.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/ocr识别.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">OCR 识别</p><p class="text-xs text-gray-400 mt-0.5">图片提取文字，支持批量</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../单位换算/单位换算.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/单位换算.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">单位换算</p><p class="text-xs text-gray-400 mt-0.5">长度、重量、温度等常用单位</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../进制转换/进制转换.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/进制转换.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">进制转换</p><p class="text-xs text-gray-400 mt-0.5">2 / 8 / 10 / 16 及自定义进制</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+</div>
+</div>
+
+<div class="bg-white rounded-2xl p-5 shadow-sm mb-5">
+<h3 class="text-lg font-semibold text-gray-800 mb-1">生活助手</h3>
+<div class="divide-y divide-gray-100">
+<a href="../计算器/计算器.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/计算器.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">计算器</p><p class="text-xs text-gray-400 mt-0.5">日常计算与科学运算</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../汇率换算/汇率换算.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/汇率换算.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">汇率换算</p><p class="text-xs text-gray-400 mt-0.5">多币种实时汇率对照</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../拼音生成/拼音生成.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/拼音生成.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">拼音转换</p><p class="text-xs text-gray-400 mt-0.5">汉字转拼音，带声调可选</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../日历/日历.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/日历.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">日历</p><p class="text-xs text-gray-400 mt-0.5">日程查看与提醒</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+</div>
+</div>
+
+<div class="bg-white rounded-2xl p-4 shadow-sm">
+<p class="text-xs text-gray-400 leading-relaxed">更多工具正在整理中，入口会持续补充到这里。</p>
+</div>
+</section>
+
 <!-- 底部Tab栏 -->
 <div class="fixed bottom-0 left-0 w-full bg-white flex h-[72px] border-t border-gray-100">
-<div class="flex-1 flex flex-col items-center justify-center text-white bg-primaryBlue rounded-tl-2xl rounded-tr-2xl">
+<div id="navHome" role="button" tabindex="0" class="nav-item flex-1 flex flex-col items-center justify-center cursor-pointer text-white bg-primaryBlue rounded-tl-2xl rounded-tr-2xl">
 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
 <polyline points="9 22 9 12 15 12 15 22"/>
 </svg>
 <span class="text-sm mt-1">首页</span>
 </div>
-<div class="flex-1 flex flex-col items-center justify-center text-gray-600">
+<div id="navTools" role="button" tabindex="0" class="nav-item flex-1 flex flex-col items-center justify-center cursor-pointer text-gray-600">
 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
 </svg>
@@ -198,5 +308,72 @@ overflow:hidden;
 <span class="text-sm mt-1">我的</span>
 </div>
 </div>
+<script>
+(function(){
+  var home = document.getElementById('view-home');
+  var tools = document.getElementById('view-tools');
+  var navHome = document.getElementById('navHome');
+  var navTools = document.getElementById('navTools');
+  var activeCls = ['text-white','bg-primaryBlue','rounded-tl-2xl','rounded-tr-2xl'];
+  var idleCls = ['text-gray-600'];
+
+  function setActive(el, on){
+    activeCls.forEach(function(c){ el.classList.toggle(c, on); });
+    idleCls.forEach(function(c){ el.classList.toggle(c, !on); });
+  }
+  function showTab(name){
+    var isHome = name === 'home';
+    home.classList.toggle('hidden', !isHome);
+    tools.classList.toggle('hidden', isHome);
+    setActive(navHome, isHome);
+    setActive(navTools, !isHome);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  navHome.addEventListener('click', function(){ showTab('home'); });
+  navTools.addEventListener('click', function(){ showTab('tools'); });
+  var moreBtn = document.getElementById('moreToolsBtn');
+  if (moreBtn){
+    moreBtn.addEventListener('click', function(){ showTab('tools'); });
+    moreBtn.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); showTab('tools'); }
+    });
+  }
+  [navHome, navTools].forEach(function(el){
+    el.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); el.click(); }
+    });
+  });
+
+  // 常用工具分页：两个圆点切换 + 滑动同步
+  var viewport = document.getElementById('toolsViewport');
+  var dots = [document.getElementById('dot0'), document.getElementById('dot1'), document.getElementById('dot2')];
+  var pages = [0, 1, 1];
+  function goPage(i){
+    if (!viewport) return;
+    viewport.scrollTo({ left: viewport.clientWidth * i, behavior: 'smooth' });
+    markDots(i);
+  }
+  function markDots(i){
+    dots.forEach(function(d, idx){
+      if (!d) return;
+      var on = idx === 0 ? i === 0 : (idx === 1 ? i === 1 : false);
+      d.classList.toggle('is-active', on);
+    });
+  }
+  dots.forEach(function(d, idx){
+    if (!d) return;
+    d.addEventListener('click', function(){ goPage(pages[idx] || 0); });
+  });
+  if (viewport){
+    viewport.addEventListener('scroll', function(){
+      var w = viewport.clientWidth || 1;
+      var i = Math.round(viewport.scrollLeft / w);
+      markDots(i === 0 ? 0 : 1);
+      var p2 = viewport.querySelectorAll('.tools-page')[1];
+      if (p2) p2.setAttribute('aria-hidden', i === 1 ? 'false' : 'true');
+    }, { passive: true });
+  }
+})();
+</script>
 </body>
 </html>
