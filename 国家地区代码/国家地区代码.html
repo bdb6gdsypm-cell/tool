@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>国家地区代码 · ISO 3166-1 查询</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f5f4c'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23fff' stroke-width='1.6'/%3E%3Cpath d='M7 16h18M16 7c3 3 3 15 0 18' fill='none' stroke='%23fff' stroke-width='1.4'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f1f4f2;--card:#fff;--ink:#12201c;--muted:#5c6764;--faint:#8a938f;
+  --line:#dfe5e1;--line-soft:#ecf0ed;--accent:#0f5f4c;--accent-soft:#e7f2ee;
+  --gold:#8a611a;--gold-soft:#faf1df;--blue:#24557f;--blue-soft:#e9f0f7;
+  --radius:12px;--topbar-h:64px;--mono:"SFMono-Regular",ui-monospace,"Menlo","Consolas",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.55}
+button,input,select{font-family:inherit}
+button{cursor:pointer}
+a{color:inherit}
+
+/* 顶栏 */
+.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.94);border-bottom:1px solid var(--line);backdrop-filter:saturate(1.2) blur(8px)}
+.topbar-inner{max-width:1320px;margin:0 auto;height:var(--topbar-h);display:flex;align-items:center;gap:14px;padding:0 20px}
+.back-btn{flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);display:grid;place-items:center;text-decoration:none;transition:.16s}
+.back-btn:hover{border-color:#b9c8c1;background:#fafcfb}
+.brand{min-width:0}
+.brand h1{font-size:19px;font-weight:600;letter-spacing:-.2px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand p{font-size:12px;color:var(--faint);margin:1px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-search{margin-left:auto;flex:0 1 330px;min-width:0;display:flex;align-items:center;gap:8px;background:#f6f8f6;border:1px solid var(--line);border-radius:9px;padding:0 12px;height:38px}
+.top-search:focus-within{border-color:#a7c5b9;background:#fff}
+.top-search svg{flex:0 0 auto;color:var(--faint)}
+.top-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-size:14px;color:var(--ink)}
+.top-search input::placeholder{color:#a3aaa6}
+
+/* 统计条 */
+.hero{max-width:1320px;margin:0 auto;padding:18px 20px 0}
+.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{padding:13px 18px;border-right:1px solid var(--line-soft)}
+.stat:last-child{border-right:0}
+.stat dt{font-size:12px;color:var(--faint);letter-spacing:.2px}
+.stat dd{font-family:var(--mono);font-size:23px;font-weight:600;letter-spacing:-.5px;margin:2px 0 0}
+.stat dd span{font-family:inherit;font-size:12px;color:var(--faint);font-weight:400;margin-left:4px}
+
+/* 主区 */
+.main{max-width:1320px;margin:0 auto;padding:16px 20px 40px}
+.layout{display:grid;grid-template-columns:216px minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:1120px){.layout{grid-template-columns:224px minmax(0,1fr)}}
+
+/* 筛选栏 */
+.rail{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);position:sticky;top:calc(var(--topbar-h) + 16px)}
+.rail-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--line-soft)}
+.rail-head h2{font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--muted);margin:0}
+.rail-reset{border:0;background:none;font-size:12px;color:var(--accent);padding:2px}
+.rail-reset:hover{text-decoration:underline}
+.rail-body{padding:4px 16px 14px;max-height:calc(100vh - var(--topbar-h) - 190px);overflow:auto;scrollbar-width:thin}
+.fgroup{padding-top:10px}
+.fgroup h3{font-size:12px;color:var(--faint);margin:0 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:7px;padding:3px 9px;font-size:12.5px;color:var(--muted);transition:.15s;line-height:1.5}
+.chip:hover{border-color:#b8c6bf;color:var(--ink)}
+.chip.is-on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip em{font-style:normal;opacity:.62;margin-left:5px;font-family:var(--mono);font-size:11.5px}
+.chip.is-on em{opacity:.8}
+.note{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line-soft);font-size:12px;line-height:1.75;color:var(--faint)}
+.note b{color:var(--muted);font-weight:600}
+
+/* 结果列表 */
+.list-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.list-head{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.res-count{font-size:13px;color:var(--muted);margin:0 auto 0 0}
+.res-count b{font-family:var(--mono);font-size:15px;color:var(--ink);font-weight:600}
+.sort-wrap{display:flex;align-items:center;gap:8px}
+.sort-wrap span{font-size:12px;color:var(--faint)}
+.select{border:1px solid var(--line);border-radius:8px;background:#fff;padding:6px 10px;font-size:13px;color:var(--ink);outline:none}
+.select:focus{border-color:#a9c6ba}
+
+.thead,.row{display:grid;grid-template-columns:minmax(0,1fr) 336px 32px;gap:10px;align-items:center;padding-left:16px;padding-right:16px}
+.head-codes{display:grid;grid-template-columns:78px 82px 82px 94px;gap:6px}
+.thead{padding-top:9px;padding-bottom:9px;border-bottom:1px solid var(--line-soft);font-size:11.5px;letter-spacing:.4px;color:var(--faint)}
+.thead .head-codes span{text-align:center}
+.rows{min-height:120px}
+.row{padding-top:11px;padding-bottom:11px;border-bottom:1px solid var(--line-soft);transition:background .12s}
+.row:last-child{border-bottom:0}
+.row:hover{background:#fafcfb}
+.cell-name{min-width:0}
+.cell-name b{display:block;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell-name span{display:block;font-size:11.5px;color:var(--faint);margin-top:1px}
+.cell-name .en-line{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+.en-inline{font-size:11.5px;color:var(--faint);font-weight:400;letter-spacing:.2px}
+.chip-en{font-size:10.5px;color:var(--faint);margin-left:4px;letter-spacing:.2px}
+.chip.is-on .chip-en{color:rgba(255,255,255,.78)}
+.codes{display:grid;grid-template-columns:78px 82px 82px 94px;gap:6px}
+.code{display:flex;justify-content:center;min-width:0}
+.lab{display:none;font-size:10.5px;color:var(--faint);letter-spacing:.3px;white-space:nowrap}
+.pill{font-family:var(--mono);font-size:12.5px;letter-spacing:.3px;border:1px solid var(--line);background:#fbfcfb;border-radius:6px;padding:2px 8px;color:var(--ink);transition:.13s;min-width:0;white-space:nowrap}
+.pill:hover{border-color:#a9c6ba;background:var(--accent-soft);color:var(--accent)}
+.pill.c2{color:var(--accent);border-color:#cadfd7;background:#f3f8f6}
+.pill.c3{color:var(--blue);border-color:#d3e0ec;background:var(--blue-soft)}
+.pill.num{color:var(--muted);background:#f7f8f7;border-color:var(--line-soft)}
+.pill.dial{color:var(--gold);border-color:#eadfbe;background:var(--gold-soft)}
+.pill.is-empty{border-style:dashed;color:#b3bab6;cursor:default;background:#fff}
+.pill.is-empty:hover{border-color:#d9dfdb;color:#b3bab6;background:#fff}
+.row-copy{width:30px;height:30px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--muted);display:grid;place-items:center;justify-self:end;transition:.13s}
+.row-copy:hover{border-color:#a9c6ba;color:var(--accent);background:var(--accent-soft)}
+
+.empty{padding:56px 20px;text-align:center;color:var(--faint);font-size:13px}
+.empty svg{display:block;margin:0 auto 10px;color:#b9c3be}
+
+/* 提示 */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:#12211c;color:#fff;font-size:13px;padding:9px 16px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;pointer-events:none;transition:.22s;z-index:80;max-width:86vw}
+.toast.is-on{opacity:1;transform:translate(-50%,0)}
+
+/* 窄屏 */
+@media (max-width:900px){
+  .brand p{display:none}
+  .topbar-inner{gap:10px;padding:0 14px}
+  .top-search{flex:1 1 auto;max-width:none}
+  .hero{padding:14px 14px 0}
+  .stat-strip{grid-template-columns:repeat(2,1fr)}
+  .stat{padding:11px 14px}
+  .stat:nth-child(2n){border-right:0}
+  .stat:nth-child(-n+2){border-bottom:1px solid var(--line-soft)}
+  .main{padding:14px 14px 32px}
+  .layout{grid-template-columns:1fr;gap:12px}
+  .rail{position:static}
+  .rail-body{max-height:none;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px 12px}
+  .fgroup{padding-top:0}
+  .fgroup h3{display:none}
+  .note{display:none}
+}
+@media (max-width:760px){
+  .thead{display:none}
+  .row{grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:13px 14px 14px;align-items:start}
+  .cell-name b{font-size:15px}
+  .row-copy{grid-column:2;grid-row:1;align-self:start;margin-top:2px}
+  .codes{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-start}
+  .code{justify-content:flex-start;gap:5px;align-items:center}
+  .code .lab{display:inline}
+}
+@media (max-width:360px){
+  .stat dd{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 顶栏 ===== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="back-btn" href="../首页/首页.html" aria-label="返回首页" title="返回首页">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H6"/><path d="M12 19l-7-7 7-7"/></svg>
+    </a>
+    <div class="brand">
+      <h1>国家地区代码</h1>
+      <p>ISO 3166-1 · Country &amp; Region Codes · 国家地区代码速查</p>
+    </div>
+    <label class="top-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/></svg>
+      <input id="searchInput" type="search" placeholder="搜索国家 / Country or code" autocomplete="off" aria-label="搜索国家、地区、代码或英文名">
+    </label>
+  </div>
+</header>
+
+<!-- ===== 统计条 ===== -->
+<div class="hero">
+  <dl class="stat-strip">
+    <div class="stat"><dt>国家与地区 · Countries</dt><dd id="sTotal">—<span>个</span></dd></div>
+    <div class="stat"><dt>ISO 两位代码 · alpha-2</dt><dd id="sA2">—<span>个</span></dd></div>
+    <div class="stat"><dt>ISO 三位代码 · alpha-3</dt><dd id="sA3">—<span>个</span></dd></div>
+    <div class="stat"><dt>含电信代码 · Dial codes</dt><dd id="sDial">—<span>个</span></dd></div>
+  </dl>
+</div>
+
+<!-- ===== 主区 ===== -->
+<main class="main">
+  <div class="layout">
+    <aside class="rail">
+      <div class="rail-head">
+        <h2>按大洲筛选 · Continents</h2>
+        <button class="rail-reset" id="resetBtn" type="button">重置</button>
+      </div>
+      <div class="rail-body">
+        <div class="fgroup">
+          <h3>大洲</h3>
+          <div class="chips" id="contChips"></div>
+        </div>
+        <p class="note">
+          <b>ISO 3166-1</b> 国家代码标准：两位字母（alpha-2）、三位字母（alpha-3）与三位数字代码。<br>
+          <span style="color:var(--muted)">ISO 3166-1 country codes. Dial codes are international calling prefixes; some territories share or have no assigned code.</span>
+        </p>
+      </div>
+    </aside>
+
+    <section class="list-wrap">
+      <div class="list-head">
+        <p class="res-count"><b id="resCount">0</b> 个国家与地区 <span class="en-inline">countries &amp; regions</span></p>
+        <div class="sort-wrap">
+          <span>排序</span>
+          <select class="select" id="sortSelect" aria-label="排序方式">
+            <option value="name">名称 A→Z</option>
+            <option value="cont">按大洲 · Continent</option>
+            <option value="a2">两位代码 · alpha-2</option>
+          </select>
+        </div>
+      </div>
+      <div class="thead" aria-hidden="true">
+        <span>国家 / 地区 · Country</span>
+        <div class="head-codes"><span>两位</span><span>三位</span><span>数字</span><span>电信</span></div>
+        <span></span>
+      </div>
+      <div class="rows" id="rows"></div>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+var DATA = [["阿拉伯联合酋长国","亚洲","AE","ARE","784","+971","United Arab Emirates"],["阿富汗","亚洲","AF","AFG","004","+93","Afghanistan"],["亚美尼亚","亚洲","AM","ARM","051","+374","Armenia"],["阿塞拜疆","亚洲","AZ","AZE","031","+994","Azerbaijan"],["孟加拉国","亚洲","BD","BGD","050","+880","Bangladesh"],["巴林","亚洲","BH","BHR","048","+973","Bahrain"],["文莱","亚洲","BN","BRN","096","+673","Brunei"],["不丹","亚洲","BT","BTN","064","+975","Bhutan"],["中国","亚洲","CN","CHN","156","+86","China"],["格鲁吉亚","亚洲","GE","GEO","268","+995","Georgia"],["香港","亚洲","HK","HKG","344","+852","Hong Kong SAR China"],["印度尼西亚","亚洲","ID","IDN","360","+62","Indonesia"],["以色列","亚洲","IL","ISR","376","+972","Israel"],["印度","亚洲","IN","IND","356","+91","India"],["伊拉克","亚洲","IQ","IRQ","368","+964","Iraq"],["伊朗","亚洲","IR","IRN","364","+98","Iran"],["约旦","亚洲","JO","JOR","400","+962","Jordan"],["日本","亚洲","JP","JPN","392","+81","Japan"],["吉尔吉斯斯坦","亚洲","KG","KGZ","417","+996","Kyrgyzstan"],["柬埔寨","亚洲","KH","KHM","116","+855","Cambodia"],["朝鲜","亚洲","KP","PRK","408","+850","North Korea"],["韩国","亚洲","KR","KOR","410","+82","South Korea"],["科威特","亚洲","KW","KWT","414","+965","Kuwait"],["哈萨克斯坦","亚洲","KZ","KAZ","398","+7","Kazakhstan"],["老挝","亚洲","LA","LAO","418","+856","Laos"],["黎巴嫩","亚洲","LB","LBN","422","+961","Lebanon"],["斯里兰卡","亚洲","LK","LKA","144","+94","Sri Lanka"],["缅甸","亚洲","MM","MMR","104","+95","Myanmar (Burma)"],["蒙古","亚洲","MN","MNG","496","+976","Mongolia"],["澳门","亚洲","MO","MAC","446","+853","Macao SAR China"],["马尔代夫","亚洲","MV","MDV","462","+960","Maldives"],["马来西亚","亚洲","MY","MYS","458","+60","Malaysia"],["尼泊尔","亚洲","NP","NPL","524","+977","Nepal"],["阿曼","亚洲","OM","OMN","512","+968","Oman"],["菲律宾","亚洲","PH","PHL","608","+63","Philippines"],["巴基斯坦","亚洲","PK","PAK","586","+92","Pakistan"],["巴勒斯坦","亚洲","PS","PSE","275","+970","Palestinian Territories"],["卡塔尔","亚洲","QA","QAT","634","+974","Qatar"],["沙特阿拉伯","亚洲","SA","SAU","682","+966","Saudi Arabia"],["新加坡","亚洲","SG","SGP","702","+65","Singapore"],["叙利亚","亚洲","SY","SYR","760","+963","Syria"],["泰国","亚洲","TH","THA","764","+66","Thailand"],["塔吉克斯坦","亚洲","TJ","TJK","762","+992","Tajikistan"],["东帝汶","亚洲","TL","TLS","626","+670","Timor-Leste"],["土库曼斯坦","亚洲","TM","TKM","795","+993","Turkmenistan"],["土耳其","亚洲","TR","TUR","792","+90","Türkiye"],["中国台湾","亚洲","TW","TWN","158","+886","Taiwan, China"],["乌兹别克斯坦","亚洲","UZ","UZB","860","+998","Uzbekistan"],["越南","亚洲","VN","VNM","704","+84","Vietnam"],["也门","亚洲","YE","YEM","887","+967","Yemen"],["安道尔","欧洲","AD","AND","020","+376","Andorra"],["阿尔巴尼亚","欧洲","AL","ALB","008","+355","Albania"],["奥地利","欧洲","AT","AUT","040","+43","Austria"],["奥兰群岛","欧洲","AX","ALA","248","+35818","Åland Islands"],["波斯尼亚和黑塞哥维那","欧洲","BA","BIH","070","+387","Bosnia & Herzegovina"],["比利时","欧洲","BE","BEL","056","+32","Belgium"],["保加利亚","欧洲","BG","BGR","100","+359","Bulgaria"],["白俄罗斯","欧洲","BY","BLR","112","+375","Belarus"],["瑞士","欧洲","CH","CHE","756","+41","Switzerland"],["塞浦路斯","欧洲","CY","CYP","196","+357","Cyprus"],["捷克","欧洲","CZ","CZE","203","+420","Czechia"],["德国","欧洲","DE","DEU","276","+49","Germany"],["丹麦","欧洲","DK","DNK","208","+45","Denmark"],["爱沙尼亚","欧洲","EE","EST","233","+372","Estonia"],["西班牙","欧洲","ES","ESP","724","+34","Spain"],["芬兰","欧洲","FI","FIN","246","+358","Finland"],["法罗群岛","欧洲","FO","FRO","234","+298","Faroe Islands"],["法国","欧洲","FR","FRA","250","+33","France"],["英国","欧洲","GB","GBR","826","+44","United Kingdom"],["根西岛","欧洲","GG","GGY","831","+44","Guernsey"],["直布罗陀","欧洲","GI","GIB","292","+350","Gibraltar"],["希腊","欧洲","GR","GRC","300","+30","Greece"],["克罗地亚","欧洲","HR","HRV","191","+385","Croatia"],["匈牙利","欧洲","HU","HUN","348","+36","Hungary"],["爱尔兰","欧洲","IE","IRL","372","+353","Ireland"],["马恩岛","欧洲","IM","IMN","833","+44","Isle of Man"],["冰岛","欧洲","IS","ISL","352","+354","Iceland"],["意大利","欧洲","IT","ITA","380","+39","Italy"],["泽西岛","欧洲","JE","JEY","832","+44","Jersey"],["列支敦士登","欧洲","LI","LIE","438","+423","Liechtenstein"],["立陶宛","欧洲","LT","LTU","440","+370","Lithuania"],["卢森堡","欧洲","LU","LUX","442","+352","Luxembourg"],["拉脱维亚","欧洲","LV","LVA","428","+371","Latvia"],["摩纳哥","欧洲","MC","MCO","492","+377","Monaco"],["摩尔多瓦","欧洲","MD","MDA","498","+373","Moldova"],["黑山","欧洲","ME","MNE","499","+382","Montenegro"],["北馬其頓","欧洲","MK","MKD","807","+389","North Macedonia"],["马耳他","欧洲","MT","MLT","470","+356","Malta"],["荷兰","欧洲","NL","NLD","528","+31","Netherlands"],["挪威","欧洲","NO","NOR","578","+47","Norway"],["波兰","欧洲","PL","POL","616","+48","Poland"],["葡萄牙","欧洲","PT","PRT","620","+351","Portugal"],["罗马尼亚","欧洲","RO","ROU","642","+40","Romania"],["塞尔维亚","欧洲","RS","SRB","688","+381","Serbia"],["俄罗斯","欧洲","RU","RUS","643","+7","Russia"],["瑞典","欧洲","SE","SWE","752","+46","Sweden"],["斯洛文尼亚","欧洲","SI","SVN","705","+386","Slovenia"],["斯瓦尔巴特","欧洲","SJ","SJM","744","+4779","Svalbard & Jan Mayen"],["斯洛伐克","欧洲","SK","SVK","703","+421","Slovakia"],["圣马力诺","欧洲","SM","SMR","674","+378","San Marino"],["乌克兰","欧洲","UA","UKR","804","+380","Ukraine"],["梵蒂冈","欧洲","VA","VAT","336","+39","Vatican City"],["科索沃","欧洲","XK","UNK","000","+383","Kosovo"],["安哥拉","非洲","AO","AGO","024","+244","Angola"],["布基纳法索","非洲","BF","BFA","854","+226","Burkina Faso"],["布隆迪","非洲","BI","BDI","108","+257","Burundi"],["贝宁","非洲","BJ","BEN","204","+229","Benin"],["博茨瓦纳","非洲","BW","BWA","072","+267","Botswana"],["民主刚果","非洲","CD","COD","180","+243","Congo - Kinshasa"],["中非共和国","非洲","CF","CAF","140","+236","Central African Republic"],["刚果","非洲","CG","COG","178","+242","Congo - Brazzaville"],["科特迪瓦","非洲","CI","CIV","384","+225","Côte d’Ivoire"],["喀麦隆","非洲","CM","CMR","120","+237","Cameroon"],["佛得角","非洲","CV","CPV","132","+238","Cape Verde"],["吉布提","非洲","DJ","DJI","262","+253","Djibouti"],["阿尔及利亚","非洲","DZ","DZA","012","+213","Algeria"],["埃及","非洲","EG","EGY","818","+20","Egypt"],["西撒哈拉","非洲","EH","ESH","732","+212","Western Sahara"],["厄立特里亚","非洲","ER","ERI","232","+291","Eritrea"],["埃塞俄比亚","非洲","ET","ETH","231","+251","Ethiopia"],["加蓬","非洲","GA","GAB","266","+241","Gabon"],["加纳","非洲","GH","GHA","288","+233","Ghana"],["冈比亚","非洲","GM","GMB","270","+220","Gambia"],["几内亚","非洲","GN","GIN","324","+224","Guinea"],["赤道几内亚","非洲","GQ","GNQ","226","+240","Equatorial Guinea"],["几内亚比绍","非洲","GW","GNB","624","+245","Guinea-Bissau"],["英属印度洋领地","非洲","IO","IOT","086","+246","British Indian Ocean Territory"],["肯尼亚","非洲","KE","KEN","404","+254","Kenya"],["科摩罗","非洲","KM","COM","174","+269","Comoros"],["利比里亚","非洲","LR","LBR","430","+231","Liberia"],["莱索托","非洲","LS","LSO","426","+266","Lesotho"],["利比亚","非洲","LY","LBY","434","+218","Libya"],["摩洛哥","非洲","MA","MAR","504","+212","Morocco"],["马达加斯加","非洲","MG","MDG","450","+261","Madagascar"],["马里","非洲","ML","MLI","466","+223","Mali"],["毛里塔尼亚","非洲","MR","MRT","478","+222","Mauritania"],["毛里求斯","非洲","MU","MUS","480","+230","Mauritius"],["马拉维","非洲","MW","MWI","454","+265","Malawi"],["莫桑比克","非洲","MZ","MOZ","508","+258","Mozambique"],["纳米比亚","非洲","NA","NAM","516","+264","Namibia"],["尼日尔","非洲","NE","NER","562","+227","Niger"],["尼日利亚","非洲","NG","NGA","566","+234","Nigeria"],["留尼旺岛","非洲","RE","REU","638","+262","Réunion"],["卢旺达","非洲","RW","RWA","646","+250","Rwanda"],["塞舌尔","非洲","SC","SYC","690","+248","Seychelles"],["苏丹","非洲","SD","SDN","729","+249","Sudan"],["圣赫勒拿、阿森松和特里斯坦-达库尼亚","非洲","SH","SHN","654","+290","St. Helena"],["塞拉利昂","非洲","SL","SLE","694","+232","Sierra Leone"],["塞内加尔","非洲","SN","SEN","686","+221","Senegal"],["索马里","非洲","SO","SOM","706","+252","Somalia"],["南苏丹","非洲","SS","SSD","728","+211","South Sudan"],["圣多美和普林西比","非洲","ST","STP","678","+239","São Tomé & Príncipe"],["斯威士兰","非洲","SZ","SWZ","748","+268","Eswatini"],["乍得","非洲","TD","TCD","148","+235","Chad"],["多哥","非洲","TG","TGO","768","+228","Togo"],["突尼斯","非洲","TN","TUN","788","+216","Tunisia"],["坦桑尼亚","非洲","TZ","TZA","834","+255","Tanzania"],["乌干达","非洲","UG","UGA","800","+256","Uganda"],["马约特","非洲","YT","MYT","175","+262","Mayotte"],["南非","非洲","ZA","ZAF","710","+27","South Africa"],["赞比亚","非洲","ZM","ZMB","894","+260","Zambia"],["津巴布韦","非洲","ZW","ZWE","716","+263","Zimbabwe"],["安提瓜和巴布达","美洲","AG","ATG","028","+1268","Antigua & Barbuda"],["安圭拉","美洲","AI","AIA","660","+1264","Anguilla"],["阿根廷","美洲","AR","ARG","032","+54","Argentina"],["阿鲁巴","美洲","AW","ABW","533","+297","Aruba"],["巴巴多斯","美洲","BB","BRB","052","+1246","Barbados"],["圣巴泰勒米","美洲","BL","BLM","652","+590","St. Barthélemy"],["百慕大","美洲","BM","BMU","060","+1441","Bermuda"],["玻利维亚","美洲","BO","BOL","068","+591","Bolivia"],["荷蘭加勒比區","美洲","BQ","BES","535","+599","Caribbean Netherlands"],["巴西","美洲","BR","BRA","076","+55","Brazil"],["巴哈马","美洲","BS","BHS","044","+1242","Bahamas"],["伯利兹","美洲","BZ","BLZ","084","+501","Belize"],["加拿大","美洲","CA","CAN","124","+1","Canada"],["智利","美洲","CL","CHL","152","+56","Chile"],["哥伦比亚","美洲","CO","COL","170","+57","Colombia"],["哥斯达黎加","美洲","CR","CRI","188","+506","Costa Rica"],["古巴","美洲","CU","CUB","192","+53","Cuba"],["库拉索","美洲","CW","CUW","531","+599","Curaçao"],["多米尼加","美洲","DM","DMA","212","+1767","Dominica"],["多明尼加","美洲","DO","DOM","214","+1","Dominican Republic"],["厄瓜多尔","美洲","EC","ECU","218","+593","Ecuador"],["福克兰群岛","美洲","FK","FLK","238","+500","Falkland Islands"],["格林纳达","美洲","GD","GRD","308","+1473","Grenada"],["法属圭亚那","美洲","GF","GUF","254","+594","French Guiana"],["格陵兰","美洲","GL","GRL","304","+299","Greenland"],["瓜德罗普岛","美洲","GP","GLP","312","+590","Guadeloupe"],["危地马拉","美洲","GT","GTM","320","+502","Guatemala"],["圭亚那","美洲","GY","GUY","328","+592","Guyana"],["洪都拉斯","美洲","HN","HND","340","+504","Honduras"],["海地","美洲","HT","HTI","332","+509","Haiti"],["牙买加","美洲","JM","JAM","388","+1876","Jamaica"],["圣基茨和尼维斯","美洲","KN","KNA","659","+1869","St. Kitts & Nevis"],["开曼群岛","美洲","KY","CYM","136","+1345","Cayman Islands"],["圣卢西亚","美洲","LC","LCA","662","+1758","St. Lucia"],["圣马丁","美洲","MF","MAF","663","+590","St. Martin"],["马提尼克","美洲","MQ","MTQ","474","+596","Martinique"],["蒙特塞拉特","美洲","MS","MSR","500","+1664","Montserrat"],["墨西哥","美洲","MX","MEX","484","+52","Mexico"],["尼加拉瓜","美洲","NI","NIC","558","+505","Nicaragua"],["巴拿马","美洲","PA","PAN","591","+507","Panama"],["秘鲁","美洲","PE","PER","604","+51","Peru"],["圣皮埃尔和密克隆","美洲","PM","SPM","666","+508","St. Pierre & Miquelon"],["波多黎各","美洲","PR","PRI","630","+1","Puerto Rico"],["巴拉圭","美洲","PY","PRY","600","+595","Paraguay"],["苏里南","美洲","SR","SUR","740","+597","Suriname"],["萨尔瓦多","美洲","SV","SLV","222","+503","El Salvador"],["圣马丁岛","美洲","SX","SXM","534","+1721","Sint Maarten"],["特克斯和凯科斯群岛","美洲","TC","TCA","796","+1649","Turks & Caicos Islands"],["特立尼达和多巴哥","美洲","TT","TTO","780","+1868","Trinidad & Tobago"],["美国本土外小岛屿","美洲","UM","UMI","581","+268","U.S. Outlying Islands"],["美国","美洲","US","USA","840","+1","United States"],["乌拉圭","美洲","UY","URY","858","+598","Uruguay"],["圣文森特和格林纳丁斯","美洲","VC","VCT","670","+1784","St. Vincent & Grenadines"],["委内瑞拉","美洲","VE","VEN","862","+58","Venezuela"],["英属维尔京群岛","美洲","VG","VGB","092","+1284","British Virgin Islands"],["美属维尔京群岛","美洲","VI","VIR","850","+1340","U.S. Virgin Islands"],["美属萨摩亚","大洋洲","AS","ASM","016","+1684","American Samoa"],["澳大利亚","大洋洲","AU","AUS","036","+61","Australia"],["科科斯","大洋洲","CC","CCK","166","+61","Cocos (Keeling) Islands"],["库克群岛","大洋洲","CK","COK","184","+682","Cook Islands"],["圣诞岛","大洋洲","CX","CXR","162","+61","Christmas Island"],["斐济","大洋洲","FJ","FJI","242","+679","Fiji"],["密克罗尼西亚","大洋洲","FM","FSM","583","+691","Micronesia"],["关岛","大洋洲","GU","GUM","316","+1671","Guam"],["基里巴斯","大洋洲","KI","KIR","296","+686","Kiribati"],["马绍尔群岛","大洋洲","MH","MHL","584","+692","Marshall Islands"],["北马里亚纳群岛","大洋洲","MP","MNP","580","+1670","Northern Mariana Islands"],["新喀里多尼亚","大洋洲","NC","NCL","540","+687","New Caledonia"],["诺福克岛","大洋洲","NF","NFK","574","+672","Norfolk Island"],["瑙鲁","大洋洲","NR","NRU","520","+674","Nauru"],["纽埃","大洋洲","NU","NIU","570","+683","Niue"],["新西兰","大洋洲","NZ","NZL","554","+64","New Zealand"],["法属波利尼西亚","大洋洲","PF","PYF","258","+689","French Polynesia"],["巴布亚新几内亚","大洋洲","PG","PNG","598","+675","Papua New Guinea"],["皮特凯恩群岛","大洋洲","PN","PCN","612","+64","Pitcairn Islands"],["帕劳","大洋洲","PW","PLW","585","+680","Palau"],["所罗门群岛","大洋洲","SB","SLB","090","+677","Solomon Islands"],["托克劳","大洋洲","TK","TKL","772","+690","Tokelau"],["汤加","大洋洲","TO","TON","776","+676","Tonga"],["图瓦卢","大洋洲","TV","TUV","798","+688","Tuvalu"],["瓦努阿图","大洋洲","VU","VUT","548","+678","Vanuatu"],["瓦利斯和富图纳群岛","大洋洲","WF","WLF","876","+681","Wallis & Futuna"],["萨摩亚","大洋洲","WS","WSM","882","+685","Samoa"],["南极洲","南极洲","AQ","ATA","010","","Antarctica"],["布维岛","南极洲","BV","BVT","074","+47","Bouvet Island"],["南乔治亚","南极洲","GS","SGS","239","+500","South Georgia & South Sandwich Islands"],["赫德岛和麦当劳群岛","南极洲","HM","HMD","334","","Heard & McDonald Islands"],["法国南部和南极土地","南极洲","TF","ATF","260","+262","French Southern Territories"]];
+var CONT_ORDER = ['亚洲','欧洲','非洲','美洲','大洋洲','南极洲'];
+var CONT_EN = {'亚洲':'Asia','欧洲':'Europe','非洲':'Africa','美洲':'Americas','大洋洲':'Oceania','南极洲':'Antarctica'};
+var state = { q:'', cont:'全部', sort:'name' };
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+/* 统计 */
+(function(){
+  var withDial = DATA.filter(function(r){ return r[5]; }).length;
+  $('sTotal').innerHTML = DATA.length + '<span>个</span>';
+  $('sA2').innerHTML = new Set(DATA.map(function(r){ return r[2]; })).size + '<span>个</span>';
+  $('sA3').innerHTML = new Set(DATA.map(function(r){ return r[3]; })).size + '<span>个</span>';
+  $('sDial').innerHTML = withDial + '<span>个</span>';
+})();
+
+/* 大洲筛选 */
+(function(){
+  var box = $('contChips');
+  var counts = {};
+  DATA.forEach(function(r){ counts[r[1]] = (counts[r[1]] || 0) + 1; });
+  var items = [['全部', DATA.length]].concat(
+    CONT_ORDER.filter(function(c){ return counts[c]; }).map(function(c){ return [c, counts[c]]; })
+  );
+  box.innerHTML = items.map(function(it){
+    return '<button type="button" class="chip' + (it[0] === '全部' ? ' is-on' : '') +
+      '" data-cont="' + esc(it[0]) + '" title="' + esc(it[0] + ' ' + (CONT_EN[it[0]] || 'All')) + '">' + esc(it[0]) + (CONT_EN[it[0]] ? '<span class="chip-en">' + CONT_EN[it[0]] + '</span>' : '<span class="chip-en">All</span>') + '<em>' + it[1] + '</em></button>';
+  }).join('');
+  box.addEventListener('click', function(e){
+    var b = e.target.closest('[data-cont]');
+    if (!b) return;
+    state.cont = b.getAttribute('data-cont');
+    Array.prototype.forEach.call(box.querySelectorAll('.chip'), function(c){
+      c.classList.toggle('is-on', c === b);
+    });
+    render();
+  });
+})();
+
+function filtered(){
+  var q = state.q.trim().toLowerCase();
+  var list = DATA.filter(function(r){
+    if (state.cont !== '全部' && r[1] !== state.cont) return false;
+    if (!q) return true;
+    return r.join(' ').toLowerCase().indexOf(q) >= 0;
+  });
+  var byName = function(a,b){ return a[0].localeCompare(b[0], 'zh-Hans-CN'); };
+  if (state.sort === 'cont'){
+    var ci = function(c){ var i = CONT_ORDER.indexOf(c); return i < 0 ? 99 : i; };
+    list.sort(function(a,b){ return (ci(a[1]) - ci(b[1])) || byName(a,b); });
+  } else if (state.sort === 'a2'){
+    list.sort(function(a,b){ return a[2].localeCompare(b[2]); });
+  } else {
+    list.sort(byName);
+  }
+  return list;
+}
+
+function codeCell(cls, label, val, copy){
+  if (!val) return '<div class="code"><span class="lab">' + label + '</span>' +
+    '<span class="pill is-empty" aria-label="' + label + ' 未分配">—</span></div>';
+  return '<div class="code"><span class="lab">' + label + '</span>' +
+    '<button type="button" class="pill ' + cls + '" data-copy="' + esc(copy || val) + '" title="点击复制 ' + esc(copy || val) + '">' + esc(val) + '</button></div>';
+}
+
+function render(){
+  var list = filtered();
+  $('resCount').textContent = list.length;
+  if (!list.length){
+    $('rows').innerHTML = '<div class="empty">' +
+      '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.4-3.4"/></svg>' +
+      '没有匹配的国家或地区，换个关键词试试</div>';
+    return;
+  }
+  $('rows').innerHTML = list.map(function(r){
+    var name = r[0], cont = r[1], a2 = r[2], a3 = r[3], num = r[4], dial = r[5];
+    return '<div class="row">' +
+      '<div class="cell-name"><b>' + esc(name) + '</b><span class="en-line">' + esc(r[6] || '') + ' · ' + esc(cont) + ' ' + esc(CONT_EN[cont] || '') + '</span></div>' +
+      '<div class="codes">' +
+        codeCell('c2', '两位', a2) +
+        codeCell('c3', '三位', a3) +
+        codeCell('num', '数字', num) +
+        codeCell('dial', '电信', dial) +
+      '</div>' +
+      '<button type="button" class="row-copy" data-all="' + esc(name + '  ' + a2 + ' / ' + a3 + ' / ' + num + (dial ? ' / ' + dial : '')) + '" aria-label="复制 ' + esc(name) + ' 的全部代码" title="复制全部代码">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button>' +
+      '</div>';
+  }).join('');
+}
+
+/* 复制 */
+var toastTimer;
+function toast(msg){
+  var t = $('toast');
+  t.textContent = msg;
+  t.classList.add('is-on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('is-on'); }, 1500);
+}
+function legacyCopy(text){
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e){}
+  document.body.removeChild(ta);
+  return Promise.resolve();
+}
+function copyText(text){
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text).catch(function(){ return legacyCopy(text); });
+  }
+  return legacyCopy(text);
+}
+
+document.addEventListener('click', function(e){
+  var c = e.target.closest('[data-copy]');
+  if (c){
+    var v = c.getAttribute('data-copy');
+    copyText(v).then(function(){ toast('已复制 ' + v); });
+    return;
+  }
+  var a = e.target.closest('[data-all]');
+  if (a){
+    var all = a.getAttribute('data-all');
+    copyText(all).then(function(){ toast('已复制全部代码'); });
+  }
+});
+
+/* 交互 */
+var debounce;
+$('searchInput').addEventListener('input', function(e){
+  clearTimeout(debounce);
+  var v = e.target.value;
+  debounce = setTimeout(function(){ state.q = v; render(); }, 140);
+});
+$('sortSelect').addEventListener('change', function(e){
+  state.sort = e.target.value;
+  render();
+});
+$('resetBtn').addEventListener('click', function(){
+  state.q = ''; state.cont = '全部'; state.sort = 'name';
+  $('searchInput').value = '';
+  $('sortSelect').value = 'name';
+  Array.prototype.forEach.call($('contChips').querySelectorAll('.chip'), function(c, i){
+    c.classList.toggle('is-on', i === 0);
+  });
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
