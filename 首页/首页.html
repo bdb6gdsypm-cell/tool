@@ -414,5 +414,45 @@ overflow:hidden;
   }
 })();
 </script>
+
+<script>
+/* 分类超过 5 个工具时，第 5 个之后折叠，并提供「更多」展开 */
+(function(){
+  var LIMIT = 5;
+  document.querySelectorAll('#view-tools .divide-y').forEach(function(box){
+    var items = Array.prototype.slice.call(box.querySelectorAll('a'));
+    if(items.length <= LIMIT) return;
+
+    var extra = items.slice(LIMIT);
+    extra.forEach(function(el){ el.classList.add('hidden'); });
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'more-btn w-full flex items-center justify-center gap-1 py-2.5 text-sm text-gray-500 active:bg-gray-50';
+    btn.setAttribute('aria-expanded', 'false');
+
+    var label = document.createElement('span');
+    var icon = document.createElement('i');
+    icon.className = 'fa fa-chevron-down text-xs';
+    icon.setAttribute('aria-hidden', 'true');
+    btn.appendChild(label);
+    btn.appendChild(icon);
+
+    function paint(){
+      var open = btn.getAttribute('aria-expanded') === 'true';
+      label.textContent = open ? '收起' : ('更多 ' + extra.length + ' 个');
+      icon.className = 'fa text-xs ' + (open ? 'fa-chevron-up' : 'fa-chevron-down');
+      extra.forEach(function(el){ el.classList.toggle('hidden', !open); });
+    }
+    btn.addEventListener('click', function(){
+      var open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!open));
+      paint();
+    });
+    paint();
+    box.parentNode.insertBefore(btn, box.nextSibling);
+  });
+})();
+</script>
 </body>
 </html>
