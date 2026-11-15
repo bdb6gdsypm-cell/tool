@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>颜色转换</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%236366f1'/%3E%3Ccircle cx='12' cy='12' r='5' fill='%23fff' opacity='.85'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f4f4f7;
+  --card:#ffffff;
+  --line:#e1e1e7;
+  --line-soft:#ededf2;
+  --text:#1b1b1f;
+  --text-dim:#54545c;
+  --text-faint:#85858e;
+  --field:#ffffff;
+  --accent:#6366f1;
+  --dot-in:#f2a344;
+  --dot-out:#6366f1;
+  --dot-cur:#6366f1;
+  --radius:14px;
+  --mono:"SF Mono",ui-monospace,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:22px 18px 26px;
+  -webkit-font-smoothing:antialiased;
+}
+.page{width:min(1500px,100%)}
+.back-row{margin:0 0 12px 2px;display:flex;align-items:center}
+.back-btn{
+  width:40px;height:40px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--card);border:1px solid var(--line);color:var(--text-dim);
+  box-shadow:0 2px 8px rgba(20,20,30,.06);
+  text-decoration:none;cursor:pointer;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease,transform .12s ease;
+}
+.back-btn:hover{background:#f5f5f9;border-color:#cfcfd8;color:var(--text)}
+.back-btn:active{transform:translateY(1px)}
+.back-btn svg{display:block}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:0 18px 46px rgba(20,20,30,.09);
+  display:flex;
+  flex-direction:column;
+  height:min(828px,calc(100vh - 100px));
+  min-height:560px;
+}
+/* 顶部工具条 */
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+  min-height:62px;
+}
+.brand{display:flex;align-items:center;gap:9px;padding-left:4px;min-width:0}
+.brand-mark{
+  width:22px;height:22px;border-radius:7px;flex:none;
+  background:conic-gradient(from 210deg,#f97373,#f2a344,#e8e04d,#5fc48a,#5b74e8,#b18cf2,#f97373);
+}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-text b{font-size:14px;font-weight:600;letter-spacing:.2px}
+.brand-text span{font-size:11px;color:var(--text-faint)}
+.top-actions{display:flex;align-items:center;gap:8px}
+.btn{
+  appearance:none;
+  border:1px solid var(--line);
+  background:#ffffff;
+  color:var(--text);
+  font-size:13px;
+  font-family:inherit;
+  height:38px;
+  padding:0 13px;
+  border-radius:9px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  cursor:pointer;
+  transition:background-color .15s ease,border-color .15s ease,transform .12s ease;
+  white-space:nowrap;
+}
+.btn:hover{background:#f5f5f9;border-color:#cfcfd8}
+.btn:active{transform:translateY(1px)}
+.btn svg{flex:none}
+.btn .kbd{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--text-faint);
+  border:1px solid var(--line);
+  background:#f4f4f8;
+  border-radius:5px;
+  padding:1px 5px;
+  margin-left:2px;
+}
+
+/* 主体双栏 */
+.body-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);
+  flex:1;
+  min-height:0;
+}
+.pane{display:flex;flex-direction:column;min-width:0;min-height:0}
+.pane--in{border-right:1px solid var(--line)}
+.pane-head{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:15px 18px;
+  border-bottom:1px solid var(--line);
+  color:var(--text-dim);
+  font-size:13px;
+  min-height:52px;
+}
+.pane-head .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.pane-head .spacer{flex:1}
+.pane-head .meta{font-size:12px;color:var(--text-faint);font-family:var(--mono)}
+.pane-body{padding:18px;display:flex;flex-direction:column;gap:14px;min-height:0;flex:1}
+.field-label{font-size:13px;color:var(--text-dim);margin-bottom:9px;display:block}
+.color-input{
+  width:100%;
+  height:50px;
+  padding:0 14px;
+  border-radius:9px;
+  border:1px solid #d7d7df;
+  background:var(--field);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:16px;
+  outline:none;
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+.color-input::placeholder{color:#9c9ca5}
+.color-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.13)}
+.err-line{font-size:12px;color:#cf3f3f;min-height:0;margin-top:2px;line-height:1.4}
+.support-line{font-size:11.5px;color:var(--text-faint);line-height:1.5;margin:-8px 0 0;white-space:nowrap;letter-spacing:-.1px;overflow:visible;text-overflow:clip;}
+
+.sub-label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim)}
+.sub-label svg{opacity:.7}
+.preview{
+  position:relative;
+  height:205px;
+  border-radius:10px;
+  border:0;
+  overflow:hidden;
+  cursor:pointer;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  padding:12px;
+}
+.alpha-check{
+  position:absolute;inset:0;
+  background-color:#ffffff;
+  background-image:linear-gradient(45deg,#e8e8ee 25%,transparent 25%),linear-gradient(-45deg,#e8e8ee 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e8e8ee 75%),linear-gradient(-45deg,transparent 75%,#e8e8ee 75%);
+  background-size:14px 14px;
+  background-position:0 0,0 7px,7px -7px,-7px 0;
+}
+.preview-fill{position:absolute;inset:0}
+.preview-val{
+  position:relative;
+  font-family:var(--mono);
+  font-size:12px;
+  padding:4px 8px;
+  border-radius:6px;
+  background:rgba(0,0,0,.42);
+  color:#fff;
+}
+.samples-head{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  border:1px solid #dddde4;
+  background:#f8f8fb;
+  color:var(--text-dim);
+  font-family:var(--mono);
+  font-size:11.5px;
+  padding:7px 10px;
+  border-radius:7px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  transition:border-color .15s ease,color .15s ease;
+}
+.chip:hover{border-color:#b9b9c6;color:var(--text)}
+.chip .swatch{width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.10);flex:none}
+
+/* 结果栏 */
+.out-scroll{
+  overflow-y:auto;
+  min-height:0;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:#c9c9d3 transparent;
+  flex:1;
+}
+.out-scroll::-webkit-scrollbar{width:8px}
+.out-scroll::-webkit-scrollbar-thumb{background:#c9c9d3;border-radius:99px}
+.out-scroll::-webkit-scrollbar-track{background:transparent}
+.group-head{
+  padding:11px 18px;
+  font-size:12px;
+  color:var(--text-faint);
+  background:#f7f7fa;
+  border-bottom:1px solid var(--line-soft);
+  border-top:1px solid var(--line-soft);
+  position:sticky;top:0;z-index:2;
+}
+.group-head:first-child{border-top:0}
+.row{
+  display:grid;
+  grid-template-columns:14px 96px minmax(0,1fr) 78px;
+  align-items:center;
+  gap:10px;
+  padding:11px 18px;
+  border-bottom:1px solid var(--line-soft);
+  min-height:56px;
+}
+.row .dot{width:8px;height:8px;border-radius:50%;background:var(--dot-cur);justify-self:center;opacity:.95}
+.row .name{font-family:var(--mono);font-size:12.5px;color:var(--text-dim);letter-spacing:.3px}
+.row .value{
+  font-family:var(--mono);
+  font-size:13px;
+  color:var(--text);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  min-width:0;
+}
+.copy-btn{
+  height:28px;
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--text-dim);
+  border-radius:7px;
+  font-size:11.5px;
+  font-family:inherit;
+  padding:0 8px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  white-space:nowrap;
+  transition:background-color .15s ease,color .15s ease,border-color .15s ease;
+}
+.copy-btn:hover{background:#f3f3f7;color:var(--text);border-color:#cdcdd7}
+.copy-btn.is-done{color:#147a4b;border-color:#a9d9c0;background:#eaf7f0}
+.empty-note{padding:26px 18px;color:var(--text-faint);font-size:13px}
+
+/* 底部条 */
+.card-foot{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-top:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.foot-label{font-size:13px;color:var(--text-dim)}
+.foot-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* toast */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:26px;
+  transform:translate(-50%,14px);
+  background:#1c1c22;
+  color:#ffffff;
+  font-size:13px;
+  padding:9px 16px;
+  border-radius:999px;
+  box-shadow:0 10px 28px rgba(20,20,30,.24);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease,transform .18s ease;
+  z-index:999;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.nb{white-space:nowrap}
+
+/* 响应式 */
+@media (max-width:1400px){
+  .support-line{white-space:normal;font-size:12px;line-height:1.55}
+}
+@media (max-width:920px){
+  body{padding:12px 10px 22px}
+  .card{height:auto;min-height:auto}
+  .body-grid{grid-template-columns:1fr}
+  .pane--in{border-right:0;border-bottom:1px solid var(--line)}
+  .preview{height:150px}
+  .out-scroll{max-height:60vh}
+  .topbar{flex-wrap:wrap;min-height:auto}
+  .top-actions{width:100%;justify-content:flex-end}
+}
+@media (max-width:560px){
+  .pane-body{padding:14px}
+  .pane-head{padding:12px 14px}
+  .row{grid-template-columns:12px minmax(0,1fr) 56px;row-gap:2px;padding:10px 14px}
+  .row .name{grid-column:2;font-size:11.5px}
+  .row .value{grid-column:2;font-size:12.5px;white-space:normal;word-break:break-all;line-height:1.45}
+  .row .dot{grid-row:1 / span 2}
+  .copy-btn{grid-column:3;grid-row:1 / span 2;height:32px;white-space:nowrap}
+  .btn{height:40px}
+  .foot-actions{width:100%}
+  .foot-actions .btn{flex:1;justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="back-row">
+    <a class="back-btn" href="../首页/首页.html" title="返回首页" aria-label="返回首页">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H6"/><path d="M12 19l-7-7 7-7"/></svg>
+    </a>
+  </div>
+  <div class="card" id="appCard">
+    <div class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div class="brand-text">
+          <b>颜色转换</b>
+          <span>Color Converter</span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="btn" id="clearBtn" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>
+          清空
+        </button>
+        <button class="btn" id="fsBtn" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
+          <span id="fsLabel">进入全屏</span>
+          <span class="kbd">F</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="body-grid">
+      <section class="pane pane--in" aria-label="颜色输入">
+        <div class="pane-head">
+          <span class="dot" style="background:var(--dot-in)"></span>
+          <span>颜色输入</span>
+        </div>
+        <div class="pane-body">
+          <div>
+            <label class="field-label" for="colorInput">颜色值</label>
+            <input class="color-input" id="colorInput" type="text" spellcheck="false" autocomplete="off"
+                   value="#6366f1" placeholder="#6366f1 或 rgb() / hsl() / lab() …">
+            <div class="err-line" id="errLine"></div>
+          </div>
+          <p class="support-line">支持 HEX、HEXA、RGB、RGBA、HSL、HSLA、HSV、HWB、Lab、LCH、OKLab、OKLCH，以及多种<span class="nb">高级色彩空间</span>、<span class="nb">颜色名称</span>。</p>
+
+          <div>
+            <div class="sub-label" style="margin-bottom:9px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18c-2.5 0-3.5-1.6-3.5-3.2 0-1.8 1.4-2.4 1.4-3.8 0-1.2-1-2-2.3-2H6.4"/></svg>
+              颜色预览
+            </div>
+            <div class="preview" id="preview">
+              <div class="alpha-check"></div>
+              <div class="preview-fill" id="previewFill"></div>
+              <span class="preview-val" id="previewVal">#6366f1</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="samples-head" style="margin-bottom:9px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.2L20 9.5l-4 3.9 1 5.6-5-2.8-5 2.8 1-5.6-4-3.9 5.8-1.3z"/></svg>
+              示例颜色
+            </div>
+            <div class="chips" id="chips"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="pane pane--out" aria-label="转换结果">
+        <div class="pane-head">
+          <span class="dot" style="background:var(--dot-cur)"></span>
+          <span>转换结果</span>
+          <span class="spacer"></span>
+          <span class="meta" id="formatCount">42 种格式</span>
+        </div>
+        <div class="out-scroll" id="outScroll">
+          <div id="outList"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="card-foot">
+      <span class="foot-label">快捷操作</span>
+      <div class="foot-actions">
+        <button class="btn" id="sampleBtn" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M21 3l-7 7"/><path d="M8 21H3v-5"/><path d="M3 21l7-7"/></svg>
+          示例颜色
+        </button>
+        <button class="btn" id="copyHexBtn" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
+          复制 HEX
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  var clamp = function(v, lo, hi){ return Math.min(hi, Math.max(lo, v)); };
+  var fmt = function(v, n){ var p = Math.pow(10, n); return Math.round(v * p) / p; };
+  var num = function(v, n){ var x = fmt(v, n); return String(x === 0 ? 0 : x); };
+  var pct = function(v, n){ return num(v, n) + '%'; };
+  var fx = function(v){
+    if (!isFinite(v)) return '0';
+    var t = v.toFixed(5);
+    if (t.indexOf('.') > -1) t = t.replace(/0+$/,'').replace(/\.$/,'');
+    if (t === '-0') t = '0';
+    return t;
+  };
+  var deg = function(v, n){ return num(((v % 360) + 360) % 360, n) + 'deg'; };
+
+  function mulMatVec(m, v){
+    return [
+      m[0][0]*v[0] + m[0][1]*v[1] + m[0][2]*v[2],
+      m[1][0]*v[0] + m[1][1]*v[1] + m[1][2]*v[2],
+      m[2][0]*v[0] + m[2][1]*v[1] + m[2][2]*v[2]
+    ];
+  }
+  function inv3(m){
+    var a=m[0][0],b=m[0][1],c=m[0][2],
+        d=m[1][0],e=m[1][1],f=m[1][2],
+        g=m[2][0],h=m[2][1],i=m[2][2];
+    var A=e*i-f*h, B=-(d*i-f*g), C=d*h-e*g;
+    var det=a*A + b*B + c*C;
+    if (Math.abs(det) < 1e-12) return [[1,0,0],[0,1,0],[0,0,1]];
+    var k = 1/det;
+    return [
+      [A*k, -(b*i-c*h)*k, (b*f-c*e)*k],
+      [B*k, (a*i-c*g)*k, -(a*f-c*d)*k],
+      [C*k, -(a*h-b*g)*k, (a*e-b*d)*k]
+    ];
+  }
+
+  var M = {
+    rgb2xyz65: [[0.4124564,0.3575761,0.1804375],[0.2126729,0.7151522,0.0721750],[0.0193339,0.1191920,0.9503041]],
+    p3:        [[0.4865709,0.2656677,0.1982173],[0.2289746,0.6917385,0.0792869],[0.0000000,0.0451134,1.0439444]],
+    a98:       [[0.5938912,0.2726628,0.1163402],[0.2602413,0.6822006,0.0737957],[0.0000000,0.0557482,1.0185434]],
+    rec2020:   [[0.6369580,0.1446169,0.1688810],[0.2627210,0.6779940,0.0598300],[0.0000000,0.0280510,1.0074500]],
+    prophoto:  [[0.7976749,0.1351917,0.0313534],[0.2880402,0.7118741,0.0000857],[0.0000000,0.0000000,0.8252100]],
+    d65tod50:  [[1.0479298,0.0229467,-0.0501922],[0.0274171,0.9941094,-0.0215265],[-0.0026901,0.0129148,0.7727710]]
+  };
+  var INV = {
+    rgb2xyz65: inv3(M.rgb2xyz65),
+    p3: inv3(M.p3),
+    a98: inv3(M.a98),
+    rec2020: inv3(M.rec2020),
+    prophoto: inv3(M.prophoto),
+    d50tod65: inv3(M.d65tod50)
+  };
+
+  var D65 = [0.95047, 1.0, 1.08883];
+  var D50 = [0.96422, 1.0, 0.82521];
+
+  function srgbToLinear(c){
+    c /= 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+  function linearToSrgb(x){
+    x = clamp(x, 0, 1);
+    var v = x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1/2.4) - 0.055;
+    return clamp(v * 255, 0, 255);
+  }
+  function linearToSrgbArr(lin){
+    return [linearToSrgb(lin[0]), linearToSrgb(lin[1]), linearToSrgb(lin[2])];
+  }
+
+  function rgbToXyz65(rgb){
+    return mulMatVec(M.rgb2xyz65, [srgbToLinear(rgb[0]), srgbToLinear(rgb[1]), srgbToLinear(rgb[2])]);
+  }
+  function xyz65ToRgb(xyz){
+    return linearToSrgbArr(mulMatVec(INV.rgb2xyz65, xyz));
+  }
+
+  function xyz65ToD50(xyz){ return mulMatVec(M.d65tod50, xyz); }
+  function xyzD50To65(xyz){ return mulMatVec(INV.d50tod65, xyz); }
+
+  function xyzToLab(xyz, white){
+    var X = xyz[0]/white[0], Y = xyz[1]/white[1], Z = xyz[2]/white[2];
+    var f = function(t){ return t > 0.008856 ? Math.cbrt(t) : (7.787 * t + 16/116); };
+    var fx = f(X), fy = f(Y), fz = f(Z);
+    return [116*fy - 16, 500*(fx - fy), 200*(fy - fz)];
+  }
+  function labToXyzD50(lab){
+    var fy = (lab[0] + 16) / 116;
+    var fx = lab[1] / 500 + fy;
+    var fz = fy - lab[2] / 200;
+    var g = function(t){
+      var t3 = t*t*t;
+      return t3 > 0.008856 ? t3 : (t - 16/116) / 7.787;
+    };
+    return [g(fx)*D50[0], g(fy)*D50[1], g(fz)*D50[2]];
+  }
+  function labToLch(lab){
+    var C = Math.sqrt(lab[1]*lab[1] + lab[2]*lab[2]);
+    var H = Math.atan2(lab[2], lab[1]) * 180 / Math.PI;
+    if (H < 0) H += 360;
+    return [lab[0], C, H];
+  }
+  function lchToLab(lch){
+    var H = lch[2] * Math.PI / 180;
+    return [lch[0], lch[1]*Math.cos(H), lch[1]*Math.sin(H)];
+  }
+
+  function linearRgbToOklab(lin){
+    var l = Math.cbrt(0.4122214708*lin[0] + 0.5363325363*lin[1] + 0.0514459929*lin[2]);
+    var m = Math.cbrt(0.2119034982*lin[0] + 0.6806995451*lin[1] + 0.1073969566*lin[2]);
+    var s = Math.cbrt(0.0883024619*lin[0] + 0.2817188376*lin[1] + 0.6299787005*lin[2]);
+    return [
+      0.2104542553*l + 0.7936177850*m - 0.0040720468*s,
+      1.9779984951*l - 2.4285922050*m + 0.4505937099*s,
+      0.0259040371*l + 0.7827717662*m - 0.8086757660*s
+    ];
+  }
+  function oklabToLinearRgb(ok){
+    var l = Math.pow(ok[0] + 0.3963377774*ok[1] + 0.2158037573*ok[2], 3);
+    var m = Math.pow(ok[0] - 0.1055613458*ok[1] - 0.0638541728*ok[2], 3);
+    var s = Math.pow(ok[0] - 0.0894841775*ok[1] - 1.2914855480*ok[2], 3);
+    return [
+       4.4819294786*l - 3.6741412252*m - 0.4531554695*s,
+      -1.0337920529*l + 2.8064327816*m + 0.2289444854*s,
+       0.0465642212*l - 0.2552776619*m + 1.2571346628*s
+    ];
+  }
+  function oklabToOklch(ok){
+    var C = Math.sqrt(ok[1]*ok[1] + ok[2]*ok[2]);
+    var H = Math.atan2(ok[2], ok[1]) * 180 / Math.PI;
+    if (H < 0) H += 360;
+    return [ok[0], C, H];
+  }
+  function oklchToOklab(lch){
+    var H = lch[2] * Math.PI / 180;
+    return [lch[0], lch[1]*Math.cos(H), lch[1]*Math.sin(H)];
+  }
+
+  /* ============ 颜色解析 ============ */
+  var NAMED = {
+    black:'#000000', white:'#ffffff', red:'#ff0000', green:'#008000', blue:'#0000ff',
+    yellow:'#ffff00', orange:'#ffa500', purple:'#800080', pink:'#ffc0cb', brown:'#a52a2a',
+    gray:'#808080', grey:'#808080', silver:'#c0c0c0', maroon:'#800000', olive:'#808000',
+    lime:'#00ff00', aqua:'#00ffff', cyan:'#00ffff', teal:'#008080', navy:'#000080',
+    fuchsia:'#ff00ff', magenta:'#ff00ff', gold:'#ffd700', indigo:'#4b0082', violet:'#ee82ee',
+    coral:'#ff7f50', salmon:'#fa8072', khaki:'#f0e68c', tomato:'#ff6347', orchid:'#da70d6',
+    plum:'#dda0dd', beige:'#f5f5dc', ivory:'#fffff0', snow:'#fffafa', azure:'#f0ffff',
+    lavender:'#e6e6fa', turquoise:'#40e0d0', crimson:'#dc143c', chocolate:'#d2691e',
+    darkblue:'#00008b', darkgreen:'#006400', darkred:'#8b0000', lightblue:'#add8e6',
+    lightgreen:'#90ee90', lightgray:'#d3d3d3', lightgrey:'#d3d3d3', slategray:'#708090'
+  };
+  var NAMED_LIST = Object.keys(NAMED).filter(function(k){ return k !== 'grey' && k !== 'lightgrey'; });
+
+  function splitAlpha(text){
+    var idx = text.lastIndexOf('/');
+    if (idx === -1) return { body: text, alpha: null };
+    var a = parseFloat(text.slice(idx + 1));
+    return { body: text.slice(0, idx), alpha: isNaN(a) ? null : a };
+  }
+
+  function parseColor(raw){
+    if (raw == null) return null;
+    var str = String(raw).trim().toLowerCase();
+    if (!str) return null;
+    if (NAMED[str]) str = NAMED[str];
+
+    var hex = str.replace(/^#/, '');
+    if (/^(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/.test(hex)){
+      var h = [];
+      if (hex.length <= 4){
+        for (var i = 0; i < hex.length; i++) h.push(parseInt(hex.charAt(i), 16) * 17);
+      } else {
+        for (var j = 0; j < hex.length; j += 2) h.push(parseInt(hex.substr(j, 2), 16));
+      }
+      var alphaHex = h.length === 4 ? h[3] / 255 : 1;
+      return [h[0], h[1], h[2], alphaHex];
+    }
+
+    var m = str.match(/^([a-z-]+)\s*\((.*)\)$/);
+    if (!m) return null;
+    var fn = m[1];
+    var sp = splitAlpha(m[2]);
+    var parts = sp.body.split(/[\s,]+/).filter(Boolean);
+    var alpha = sp.alpha;
+
+    var numv = function(s, scale){
+      var n = parseFloat(s);
+      if (isNaN(n)) return null;
+      if (/%$/.test(s) && scale) return (n / 100) * scale;
+      return n;
+    };
+
+    if (fn === 'rgb' || fn === 'rgba'){
+      if (parts.length < 3) return null;
+      var vals = parts.slice(0, 3).map(function(p){ return numv(p, 255); });
+      if (vals.some(function(v){ return v === null; })) return null;
+      if (alpha === null && parts[3] != undefined) alpha = parseFloat(parts[3]);
+      return [clamp(vals[0],0,255), clamp(vals[1],0,255), clamp(vals[2],0,255), alpha == null ? 1 : clamp(alpha,0,1)];
+    }
+
+    if (fn === 'hsl' || fn === 'hsla'){
+      if (parts.length < 3) return null;
+      var hh = parseFloat(parts[0]);
+      var ss = parseFloat(parts[1]), ll = parseFloat(parts[2]);
+      if (isNaN(hh) || isNaN(ss) || isNaN(ll)) return null;
+      if (alpha === null && parts[3] != undefined) alpha = parseFloat(parts[3]);
+      var rgb = hslToRgb(hh, ss/100, ll/100);
+      return [rgb[0], rgb[1], rgb[2], alpha == null ? 1 : clamp(alpha,0,1)];
+    }
+
+    if (fn === 'hwb'){
+      if (parts.length < 3) return null;
+      var wh = parseFloat(parts[0]), ww = parseFloat(parts[1]), bb = parseFloat(parts[2]);
+      if (isNaN(wh) || isNaN(ww) || isNaN(bb)) return null;
+      if (alpha === null && parts[3] != undefined) alpha = parseFloat(parts[3]);
+      return hwbToRgba(wh, ww/100, bb/100, alpha == null ? 1 : clamp(alpha,0,1));
+    }
+
+    if (fn === 'lab' || fn === 'lch'){
+      if (parts.length < 3) return null;
+      var L = numv(parts[0], 100), A = numv(parts[1], 125), B = numv(parts[2], 125);
+      if (L === null || A === null || B === null) return null;
+      if (alpha === null && parts[3] != undefined) alpha = parseFloat(parts[3]);
+      var lab = fn === 'lch' ? lchToLab([L, A, B]) : [L, A, B];
+      var rgbA = xyz65ToRgb(xyzD50To65(labToXyzD50(lab)));
+      return [rgbA[0], rgbA[1], rgbA[2], alpha == null ? 1 : clamp(alpha,0,1)];
+    }
+
+    if (fn === 'oklab' || fn === 'oklch'){
+      if (parts.length < 3) return null;
+      var oL = numv(parts[0], 1), oA = numv(parts[1], 0.4), oB = numv(parts[2], 0.4);
+      if (oL === null || oA === null || oB === null) return null;
+      if (alpha === null && parts[3] != undefined) alpha = parseFloat(parts[3]);
+      var ok = fn === 'oklch' ? oklchToOklab([oL, oA, oB]) : [oL, oA, oB];
+      var rgbO = linearToSrgbArr(oklabToLinearRgb(ok));
+      return [rgbO[0], rgbO[1], rgbO[2], alpha == null ? 1 : clamp(alpha,0,1)];
+    }
+
+    if (fn === 'color'){
+      var space = parts.shift();
+      if (parts.length < 3) return null;
+      var c = parts.slice(0,3).map(function(p){ return parseFloat(p); });
+      if (c.some(isNaN)) return null;
+      if (space === 'srgb'){
+        return [clamp(c[0],0,1)*255, clamp(c[1],0,1)*255, clamp(c[2],0,1)*255, alpha == null ? 1 : clamp(alpha,0,1)];
+      }
+      var matrices = { 'display-p3': M.p3, 'a98-rgb': M.a98, 'rec2020': M.rec2020, 'prophoto-rgb': M.prophoto };
+      var mat = matrices[space];
+      if (!mat) return null;
+      var xyz = mulMatVec(mat, [clamp(c[0],0,1), clamp(c[1],0,1), clamp(c[2],0,1)]);
+      if (space === 'prophoto-rgb') xyz = xyzD50To65(xyz);
+      var rgbC = xyz65ToRgb(xyz);
+      return [rgbC[0], rgbC[1], rgbC[2], alpha == null ? 1 : clamp(alpha,0,1)];
+    }
+
+    return null;
+  }
+
+  function hslToRgb(h, s, l){
+    h = ((h % 360) + 360) % 360 / 360;
+    if (s === 0){ var v0 = l * 255; return [v0, v0, v0]; }
+    var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    var p = 2 * l - q;
+    var hue2rgb = function(p, q, t){
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    return [hue2rgb(p,q,h+1/3)*255, hue2rgb(p,q,h)*255, hue2rgb(p,q,h-1/3)*255];
+  }
+
+  function rgbToHsl(r, g, b){
+    r/=255; g/=255; b/=255;
+    var max = Math.max(r,g,b), min = Math.min(r,g,b);
+    var l = (max + min) / 2;
+    var h = 0, s = 0;
+    if (max !== min){
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h /= 6;
+    }
+    return [h*360, s*100, l*100];
+  }
+
+  function rgbToHsv(r, g, b){
+    r/=255; g/=255; b/=255;
+    var max = Math.max(r,g,b), min = Math.min(r,g,b), d = max - min;
+    var h = 0;
+    if (d !== 0){
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60;
+      if (h < 0) h += 360;
+    }
+    return [h, (max === 0 ? 0 : d / max) * 100, max * 100];
+  }
+
+  function rgbToHwb(r, g, b){
+    var hsl = rgbToHsl(r, g, b);
+    return [hsl[0], Math.min(r,g,b)/255*100, (1 - Math.max(r,g,b)/255)*100];
+  }
+
+  function hwbToRgba(h, w, b, alpha){
+    if (w + b >= 1){ var gray = w / (w + b) * 255; return [gray, gray, gray, alpha]; }
+    var rgb = hslToRgb(h, 1, 0.5);
+    var scale = 1 - w - b;
+    return [(rgb[0]/255*scale + w)*255, (rgb[1]/255*scale + w)*255, (rgb[2]/255*scale + w)*255, alpha];
+  }
+
+  /* ============ 输出 ============ */
+  function hex2(n){ var s = Math.round(clamp(n,0,255)).toString(16); return s.length < 2 ? '0'+s : s; }
+  function toHex(rgb, withAlpha, alpha){
+    var base = '#' + hex2(rgb[0]) + hex2(rgb[1]) + hex2(rgb[2]);
+    return withAlpha ? base + hex2(alpha * 255) : base;
+  }
+
+  function nearestNamed(rgb){
+    var best = 'unknown', bestD = Infinity;
+    for (var i = 0; i < NAMED_LIST.length; i++){
+      var c = parseColor(NAMED[NAMED_LIST[i]]);
+      var d = Math.pow(c[0]-rgb[0],2) + Math.pow(c[1]-rgb[1],2) + Math.pow(c[2]-rgb[2],2);
+      if (d < bestD){ bestD = d; best = NAMED_LIST[i]; }
+    }
+    return best;
+  }
+
+  function cmyk(rgb){
+    var r = rgb[0]/255, g = rgb[1]/255, b = rgb[2]/255;
+    var k = 1 - Math.max(r, g, b);
+    if (k >= 1) return [0,0,0,100];
+    return [(1-r-k)/(1-k)*100, (1-g-k)/(1-k)*100, (1-b-k)/(1-k)*100, k*100];
+  }
+
+  function computeFormats(rgba){
+    var r = rgba[0], g = rgba[1], b = rgba[2], a = rgba[3];
+    var xyz65 = rgbToXyz65([r,g,b]);
+    var xyz50 = xyz65ToD50(xyz65);
+    var lab = xyzToLab(xyz50, D50);
+    var lch = labToLch(lab);
+    var lin = [srgbToLinear(r), srgbToLinear(g), srgbToLinear(b)];
+    var oklab = linearRgbToOklab(lin);
+    var oklch = oklabToOklch(oklab);
+    var hsl = rgbToHsl(r,g,b);
+    var hsv = rgbToHsv(r,g,b);
+    var hwb = rgbToHwb(r,g,b);
+    var cmykV = cmyk([r,g,b]);
+
+    var p3 = mulMatVec(INV.p3, xyz65).map(function(v){ return clamp(v,0,1); });
+    var a98 = mulMatVec(INV.a98, xyz65).map(function(v){ return clamp(v,0,1); });
+    var rec = mulMatVec(INV.rec2020, xyz65).map(function(v){ return clamp(v,0,1); });
+    var pp = mulMatVec(INV.prophoto, xyz50).map(function(v){ return clamp(v,0,1); });
+
+    var X = xyz65[0], Y = xyz65[1], Z = xyz65[2];
+    var den = X + 15*Y + 3*Z;
+    var up = den > 1e-9 ? 4*X/den : 0;
+    var vp = den > 1e-9 ? 9*Y/den : 0;
+    var LuvL = 116 * (Y > 0.008856 ? Math.cbrt(Y) : (7.787*Y + 16/116)) - 16;
+    var uN = 4*D65[0] / (D65[0] + 15*D65[1] + 3*D65[2]);
+    var vN = 9*D65[1] / (D65[0] + 15*D65[1] + 3*D65[2]);
+    var U = 13 * LuvL * (up - uN);
+    var V = 13 * LuvL * (vp - vN);
+
+    var xyY_Y = xyz65[1];
+    var xyzSum = xyz65[0] + xyz65[1] + xyz65[2];
+    var xyY_x = xyzSum > 1e-9 ? xyz65[0]/xyzSum : 0;
+    var xyY_y = xyzSum > 1e-9 ? xyz65[1]/xyzSum : 0;
+
+    var Y601 = 0.299*r + 0.587*g + 0.114*b;
+    var I = 0.596*r - 0.274*g - 0.322*b;
+    var Q = 0.211*r - 0.523*g + 0.312*b;
+    var Uyuv = 0.492*(b - Y601);
+    var Vyuv = 0.877*(r - Y601);
+    var Cb = 128 - 0.168736*r - 0.331264*g + 0.5*b;
+    var Cr = 128 + 0.5*r - 0.418688*g - 0.081312*b;
+    var luma = (0.2126*r + 0.7152*g + 0.0722*b) / 255 * 100;
+    var gray = 0.299*r + 0.587*g + 0.114*b;
+    var safe = [Math.round(r/51)*51, Math.round(g/51)*51, Math.round(b/51)*51];
+
+    /* ---- 新增高级空间 ---- */
+    // HSI
+    var rgbSum = r + g + b;
+    var hsiS = rgbSum > 0 ? 1 - 3 * Math.min(r, g, b) / rgbSum : 0;
+    var hsiI = rgbSum / 3 / 255;
+
+    // Linear sRGB
+    var linSrgb = [srgbToLinear(r), srgbToLinear(g), srgbToLinear(b)];
+
+    // Adobe RGB (A98) —— 按 563/256 伽马编码
+    var a98Lin = mulMatVec(INV.a98, xyz65);
+    var a98Enc = a98Lin.map(function(v){
+      var sign = v < 0 ? -1 : 1;
+      return sign * Math.pow(Math.abs(v), 256/563);
+    }).map(function(v){ return clamp(v, 0, 1); });
+
+    // Lab / LCH（D65 白点）
+    var labD65 = xyzToLab(xyz65, D65);
+    var lchD65 = labToLch(labD65);
+
+    // LCHuv
+    var lchUvC = Math.sqrt(U*U + V*V);
+    var lchUvH = Math.atan2(V, U) * 180 / Math.PI;
+    if (lchUvH < 0) lchUvH += 360;
+
+    // DIN99o（基于 Lab D65）
+    var cos16 = Math.cos(16 * Math.PI/180), sin16 = Math.sin(16 * Math.PI/180);
+    var dinL = 105.51 * Math.log(1 + 0.0158 * labD65[0]);
+    var dinE = labD65[1] * cos16 + labD65[2] * sin16;
+    var dinF = 0.7 * (labD65[2] * cos16 - labD65[1] * sin16);
+    var dinG = Math.sqrt(dinE*dinE + dinF*dinF);
+    var dinC = Math.log(1 + 0.075 * dinG) / 0.0435;
+    var dinH = Math.atan2(dinF, dinE) * 180 / Math.PI + 26;
+    if (dinH < 0) dinH += 360;
+    var dinA = dinC * Math.cos(dinH * Math.PI/180);
+    var dinB = dinC * Math.sin(dinH * Math.PI/180);
+    var dinC2 = Math.sqrt(dinA*dinA + dinB*dinB);
+    var dinH2 = Math.atan2(dinB, dinA) * 180 / Math.PI;
+    if (dinH2 < 0) dinH2 += 360;
+
+    // Jzazbz
+    var jb = 1.15, jg = 0.66;
+    var jX = xyz65[0] * 100, jY = xyz65[1] * 100, jZ = xyz65[2] * 100;
+    var jXp = jb * jX - (jb - 1) * jZ;
+    var jYp = jg * jY;
+    var jZp = jZ;
+    var jLMS = mulMatVec([
+      [0.41478972, 0.579999, 0.0146480],
+      [-0.2015100, 1.120649, 0.0531008],
+      [-0.0166008, 0.264800, 0.6684799]
+    ], [jXp, jYp, jZp]);
+    var PQ_M1 = 2610 / 16384, PQ_M2 = 1.7 * 2523 / 32;
+    var PQ_C1 = 3424 / 4096, PQ_C2 = 2413 / 128, PQ_C3 = 2392 / 128;
+    function pqEncode(v){
+      var x = v / 10000;
+      var xm = Math.pow(Math.max(x, 0), PQ_M1);
+      var numPQ = PQ_C1 + PQ_C2 * xm;
+      var denPQ = 1 + PQ_C3 * xm;
+      return Math.pow(numPQ / denPQ, PQ_M2);
+    }
+    var jL = pqEncode(jLMS[0]), jM = pqEncode(jLMS[1]), jS = pqEncode(jLMS[2]);
+    var jIz = 0.5*jL + 0.5*jM;
+    var jAz = 3.524000*jL - 4.066708*jM + 0.542708*jS;
+    var jBz = 0.199076*jL + 1.096799*jM - 1.295875*jS;
+    var jJz = (1 + 0.56) * jIz / (1 + 0.56 * jIz) - 1.6295499532821566e-11;
+    var jC = Math.sqrt(jAz*jAz + jBz*jBz);
+    var jH = Math.atan2(jBz, jAz) * 180 / Math.PI;
+    if (jH < 0) jH += 360;
+
+    // ICtCp (BT.2100)
+    var iLMS = mulMatVec([
+      [0.3592, 0.6976, -0.0358],
+      [-0.1922, 1.1004, 0.0755],
+      [0.0070, 0.0749, 0.8434]
+    ], [xyz65[0], xyz65[1], xyz65[2]]);
+    var iL = pqEncode(iLMS[0] * 100), iM = pqEncode(iLMS[1] * 100), iS = pqEncode(iLMS[2] * 100);
+    var iI = 0.5*iL + 0.5*iM;
+    var iCt = (6610/4096)*iL - (13613/8192)*iM + (7003/4096)*iS;
+    var iCp = (17933/4096)*iL - (17390/4096)*iM + (543/256)*iS;
+
+    // XYB（JPEG XL）
+    var xybL = 0.3*linSrgb[0] + 0.622*linSrgb[1] + 0.078*linSrgb[2];
+    var xybM = 0.23*linSrgb[0] + 0.692*linSrgb[1] + 0.078*linSrgb[2];
+    var xybS = 0.24342268924547819*linSrgb[0] + 0.20476744424496821*linSrgb[1] + 0.5518098665095536*linSrgb[2];
+    var xybX = (xybL - xybM) / 2;
+    var xybY = (xybL + xybM) / 2;
+
+    // Cubehelix（由 RGB 反解）
+    var cubeA = -0.14861, cubeB = 1.78277, cubeC = -0.29227, cubeD = -0.90649, cubeE = 1.97294;
+    var cubeM = inv3([[1, cubeA, cubeB], [1, cubeC, cubeD], [1, cubeE, 0]]);
+    var cubeSol = mulMatVec(cubeM, [r/255, g/255, b/255]);
+    var cubeL = cubeSol[0];
+    var cubeS = Math.sqrt(cubeSol[1]*cubeSol[1] + cubeSol[2]*cubeSol[2]);
+    var cubeH = Math.atan2(cubeSol[2], cubeSol[1]) * 180 / Math.PI;
+    if (cubeH < 0) cubeH += 360;
+
+    var aTxt = num(a, 2);
+
+    return [
+            { group:'常用格式', items:[
+        { name:'HEX', value: toHex([r,g,b], false) },
+        { name:'RGB', value: 'rgb(' + Math.round(r) + ', ' + Math.round(g) + ', ' + Math.round(b) + ')' },
+        { name:'HSL', value: 'hsl(' + num(hsl[0],2) + ', ' + pct(hsl[1],2) + ', ' + pct(hsl[2],2) + ')' },
+        { name:'HSV', value: 'hsv(' + deg(hsv[0],2) + ' ' + pct(hsv[1],1) + ' ' + pct(hsv[2],1) + ')' },
+        { name:'HWB', value: 'hwb(' + deg(hwb[0],2) + ' ' + pct(hwb[1],1) + ' ' + pct(hwb[2],1) + ')' },
+        { name:'Lab', value: 'lab(' + pct(lab[0],2) + ' ' + num(lab[1],2) + ' ' + num(lab[2],2) + ')' },
+        { name:'LCH', value: 'lch(' + pct(lab[0],2) + ' ' + num(lch[1],3) + ' ' + deg(lch[2],1) + ')' },
+        { name:'OKLab', value: 'oklab(' + pct(oklab[0]*100,3) + ' ' + num(oklab[1],4) + ' ' + num(oklab[2],4) + ')' },
+        { name:'OKLCH', value: 'oklch(' + pct(oklab[0]*100,3) + ' ' + num(oklch[1],4) + ' ' + deg(oklch[2],1) + ')' },
+        { name:'CMYK', value: 'cmyk(' + num(cmykV[0],0) + '% ' + num(cmykV[1],0) + '% ' + num(cmykV[2],0) + '% ' + num(cmykV[3],0) + '%)' },
+        { name:'HEXA', value: toHex([r,g,b], true, a) },
+        { name:'RGBA', value: 'rgba(' + Math.round(r) + ', ' + Math.round(g) + ', ' + Math.round(b) + ', ' + aTxt + ')' },
+        { name:'HSLA', value: 'hsla(' + num(hsl[0],2) + ', ' + pct(hsl[1],2) + ', ' + pct(hsl[2],2) + ', ' + aTxt + ')' },
+        { name:'HSVA', value: 'hsva(' + deg(hsv[0],2) + ' ' + pct(hsv[1],1) + ' ' + pct(hsv[2],1) + ' / ' + aTxt + ')' },
+        { name:'HWBA', value: 'hwb(' + deg(hwb[0],2) + ' ' + pct(hwb[1],1) + ' ' + pct(hwb[2],1) + ' / ' + aTxt + ')' },
+        { name:'颜色名称', value: nearestNamed([r,g,b]) }
+      ]},
+{ group:'高级色彩空间', items:[
+        { name:'Lab D65', value: 'Lab D65(l: ' + fx(labD65[0]) + ', a: ' + fx(labD65[1]) + ', b: ' + fx(labD65[2]) + ')' },
+        { name:'LCH D65', value: 'LCH D65(l: ' + fx(labD65[0]) + ', c: ' + fx(lchD65[1]) + ', h: ' + fx(lchD65[2]) + ')' },
+        { name:'Luv', value: 'Luv(l: ' + fx(LuvL) + ', u: ' + fx(U) + ', v: ' + fx(V) + ')' },
+        { name:'LCHuv', value: 'LCHuv(l: ' + fx(LuvL) + ', c: ' + fx(lchUvC) + ', h: ' + fx(lchUvH) + ')' },
+        { name:'HSI', value: 'HSI(s: ' + hsiS.toFixed(5) + ', i: ' + hsiI.toFixed(5) + ', h: ' + ((hsv[0] % 360 + 360) % 360).toFixed(5) + ', alpha: ' + a.toFixed(5) + ')' },
+        { name:'DIN99o Lab', value: 'DIN99o Lab(l: ' + fx(dinL) + ', a: ' + fx(dinA) + ', b: ' + fx(dinB) + ')' },
+        { name:'DIN99o LCh', value: 'DIN99o LCh(l: ' + fx(dinL) + ', c: ' + fx(dinC2) + ', h: ' + fx(dinH2) + ')' },
+        { name:'Jzazbz', value: 'Jzazbz(j: ' + fx(jJz) + ', a: ' + fx(jAz) + ', b: ' + fx(jBz) + ')' },
+        { name:'JzCzhz', value: 'JzCzhz(j: ' + fx(jJz) + ', c: ' + fx(jC) + ', h: ' + fx(jH) + ')' },
+        { name:'ICtCp', value: 'ICtCp(i: ' + fx(iI) + ', t: ' + fx(iCt) + ', p: ' + fx(iCp) + ')' },
+        { name:'XYB', value: 'XYB(x: ' + fx(xybX) + ', y: ' + fx(xybY) + ', b: ' + fx(xybS) + ')' },
+        { name:'Linear sRGB', value: 'Linear sRGB(r: ' + fx(linSrgb[0]) + ', g: ' + fx(linSrgb[1]) + ', b: ' + fx(linSrgb[2]) + ')' },
+        { name:'Adobe RGB 1998', value: 'Adobe RGB 1998(r: ' + fx(a98Enc[0]) + ', g: ' + fx(a98Enc[1]) + ', b: ' + fx(a98Enc[2]) + ')' },
+        { name:'Display P3', value: 'Display P3(r: ' + fx(p3[0]) + ', g: ' + fx(p3[1]) + ', b: ' + fx(p3[2]) + ')' },
+        { name:'ProPhoto RGB', value: 'ProPhoto RGB(r: ' + fx(pp[0]) + ', g: ' + fx(pp[1]) + ', b: ' + fx(pp[2]) + ')' },
+        { name:'XYZ D65', value: 'XYZ D65(x: ' + fx(xyz65[0]) + ', y: ' + fx(xyz65[1]) + ', z: ' + fx(xyz65[2]) + ')' },
+        { name:'XYZ D50', value: 'XYZ D50(x: ' + fx(xyz50[0]) + ', y: ' + fx(xyz50[1]) + ', z: ' + fx(xyz50[2]) + ')' },
+        { name:'xyY', value: 'xyy(' + num(xyY_x,4) + ' ' + num(xyY_y,4) + ' ' + num(xyY_Y,4) + ')' },
+        { name:'YIQ', value: 'YIQ(y: ' + fx(Y601/255) + ', i: ' + fx(I/255) + ', q: ' + fx(Q/255) + ')' },
+        { name:'Cubehelix', value: 'Cubehelix(l: ' + fx(cubeL) + ', s: ' + fx(cubeS) + ', h: ' + fx(cubeH > 180 ? cubeH - 360 : cubeH) + ')' }
+      ]},
+      { group:'其他表示', items:[
+        { name:'Rec. 2020', value: 'Rec. 2020(r: ' + fx(rec[0]) + ', g: ' + fx(rec[1]) + ', b: ' + fx(rec[2]) + ')' },
+        { name:'YUV', value: 'yuv(' + num(Y601,0) + ' ' + num(Uyuv,0) + ' ' + num(Vyuv,0) + ')' },
+        { name:'YCbCr', value: 'ycbcr(' + num(Y601,0) + ' ' + num(Cb,0) + ' ' + num(Cr,0) + ')' },
+        { name:'灰度值', value: num(gray,0) },
+        { name:'相对亮度', value: pct(luma,2) },
+        { name:'Web 安全色', value: toHex(safe, false) }
+      ]}
+    ];
+  }
+
+  /* ============ 渲染 ============ */
+  var els = {
+    input: document.getElementById('colorInput'),
+    err: document.getElementById('errLine'),
+    previewVal: document.getElementById('previewVal'),
+    preview: document.getElementById('preview'),
+    fill: document.getElementById('previewFill'),
+    chips: document.getElementById('chips'),
+    list: document.getElementById('outList'),
+    count: document.getElementById('formatCount'),
+    toast: document.getElementById('toast'),
+    card: document.getElementById('appCard'),
+    clear: document.getElementById('clearBtn'),
+    fs: document.getElementById('fsBtn'),
+    fsLabel: document.getElementById('fsLabel'),
+    sample: document.getElementById('sampleBtn'),
+    copyHex: document.getElementById('copyHexBtn')
+  };
+
+  var SAMPLES = [
+    '#ef4444', '#6366f180', '#22c55e', '#3b82f6', 'rgba(245, 158, 11, 0.65)',
+    'hsl(262 83% 58%)', 'hwb(210 10% 10%)', 'lab(65% 30 -45)', 'oklch(70% 0.16 250 / 0.8)'
+  ];
+
+  var toastTimer = null;
+  function toast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 1500);
+  }
+
+  function copyText(text, btn){
+    var done = function(){
+      toast('已复制 ' + text);
+      if (btn){
+        btn.classList.add('is-done');
+        var old = btn.innerHTML;
+        btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>已复制';
+        setTimeout(function(){ btn.classList.remove('is-done'); btn.innerHTML = old; }, 1200);
+      }
+    };
+    var fallback = function(){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch(e){ toast('复制失败，请手动选择'); }
+      document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(fallback);
+    } else { fallback(); }
+  }
+
+  var lastColor = null;
+
+  function escapeHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderResults(rgba){
+    var groups = computeFormats(rgba);
+    var count = 0;
+    var html = '';
+    groups.forEach(function(g){
+      count += g.items.length;
+      html += '<div class="group-head">' + g.group + '</div>';
+      g.items.forEach(function(it){
+        html += '<div class="row">' +
+          '<span class="dot"></span>' +
+          '<span class="name">' + escapeHtml(it.name) + '</span>' +
+          '<span class="value" title="' + escapeHtml(it.value) + '">' + escapeHtml(it.value) + '</span>' +
+          '<button class="copy-btn" type="button" data-copy="' + escapeHtml(it.value) + '">' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>复制</button>' +
+        '</div>';
+      });
+    });
+    els.list.innerHTML = html;
+    els.count.textContent = count + ' 种格式';
+    Array.prototype.forEach.call(els.list.querySelectorAll('.copy-btn'), function(btn){
+      btn.addEventListener('click', function(){ copyText(btn.getAttribute('data-copy'), btn); });
+    });
+  }
+
+  function renderPreview(rgba){
+    els.fill.style.background = 'rgba(' + Math.round(rgba[0]) + ', ' + Math.round(rgba[1]) + ', ' + Math.round(rgba[2]) + ', ' + fmt(rgba[3], 3) + ')';
+    els.previewVal.textContent = rgba[3] >= 1
+      ? toHex([rgba[0], rgba[1], rgba[2]], false)
+      : toHex([rgba[0], rgba[1], rgba[2]], true, rgba[3]);
+  }
+
+  function setEmpty(){
+    lastColor = null;
+    els.err.textContent = '';
+    els.fill.style.background = 'linear-gradient(135deg,#f1f1f5,#e6e6ee)';
+    els.previewVal.textContent = '等待输入';
+    document.documentElement.style.setProperty('--dot-cur', '#6366f1');
+    els.list.innerHTML = '<div class="empty-note">输入颜色后，这里会列出 42 种格式的转换结果。</div>';
+    els.count.textContent = '42 种格式';
+  }
+
+  function applyColor(){
+    var raw = els.input.value;
+    var rgba = parseColor(raw);
+    if (!rgba){
+      els.err.textContent = raw.trim() ? '无法识别这个颜色值，请检查格式。' : '';
+      if (!lastColor) setEmpty();
+      return;
+    }
+    els.err.textContent = '';
+    lastColor = rgba;
+    renderPreview(rgba);
+    renderResults(rgba);
+    updateDotColor(rgba);
+  }
+
+  /* 结果区小圆点：取当前颜色的更深色阶 */
+  function updateDotColor(rgba){
+    var hsl = rgbToHsl(rgba[0], rgba[1], rgba[2]);
+    var h = hsl[0], sat = hsl[1] / 100, l = hsl[2] / 100;
+    var nl = Math.max(0.12, Math.min(0.54, l * 0.72));
+    var rgb = hslToRgb(h, sat, nl);
+    var hex = toHex([rgb[0], rgb[1], rgb[2]], false);
+    document.documentElement.style.setProperty('--dot-cur', hex);
+  }
+
+  function setInput(value){
+    els.input.value = value;
+    applyColor();
+  }
+
+  function buildChips(){
+    els.chips.innerHTML = '';
+    SAMPLES.forEach(function(s){
+      var c = parseColor(s);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip';
+      btn.title = '使用 ' + s;
+      var sw = document.createElement('span');
+      sw.className = 'swatch';
+      if (c) sw.style.background = 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + c[3] + ')';
+      var txt = document.createElement('span');
+      txt.textContent = s;
+      btn.appendChild(sw);
+      btn.appendChild(txt);
+      btn.addEventListener('click', function(){ setInput(s); });
+      els.chips.appendChild(btn);
+    });
+  }
+
+  /* ============ 点击预览取色（复用美化弹窗同款浮层） ============ */
+  function pickerHexToRgb(hex){
+    var m = /^#?([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/.exec(String(hex||'').trim());
+    if (!m) return {r:255,g:255,b:255};
+    return {r:parseInt(m[1],16), g:parseInt(m[2],16), b:parseInt(m[3],16)};
+  }
+  function pickerRgbToHex(r,g,b){
+    return '#' + [r,g,b].map(function(v){
+      return ('0' + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2);
+    }).join('');
+  }
+  function pickerRgbToHsv(r,g,b){
+    r/=255; g/=255; b/=255;
+    var max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min, h=0;
+    if (d){
+      if (max===r) h=((g-b)/d)%6;
+      else if (max===g) h=(b-r)/d+2;
+      else h=(r-g)/d+4;
+      h*=60; if (h<0) h+=360;
+    }
+    return {h:h, s:(max? d/max : 0), v:max};
+  }
+  function pickerHsvToRgb(h,s,v){
+    var c=v*s, x=c*(1-Math.abs(((h/60)%2)-1)), m=v-c;
+    var seg=Math.floor(h/60)%6, r=0, g=0, b=0;
+    if (seg===0){r=c;g=x;} else if (seg===1){r=x;g=c;} else if (seg===2){g=c;b=x;}
+    else if (seg===3){g=x;b=c;} else if (seg===4){r=x;b=c;} else {r=c;b=x;}
+    return {r:Math.round((r+m)*255), g:Math.round((g+m)*255), b:Math.round((b+m)*255)};
+  }
+
+  function createColorPop(onChange){
+    var pop = document.createElement('div');
+    pop.className = 'color-pop';
+    pop.style.cssText = 'position:fixed;left:0;top:0;z-index:9999;display:none;width:300px;padding:14px 14px 12px;border-radius:16px;'
+      + 'background:#2e323a;box-shadow:0 18px 44px rgba(0,0,0,0.45);font-family:inherit;box-sizing:border-box;';
+    pop.innerHTML = ''
+      + '<div class="cp-sv" style="position:relative;width:272px;height:272px;border-radius:8px;overflow:hidden;cursor:crosshair;">'
+      +   '<div class="cp-sv-base" style="position:absolute;left:0;top:0;right:0;bottom:0;background:hsl(210,100%,50%);"></div>'
+      +   '<div style="position:absolute;left:0;top:0;right:0;bottom:0;background:linear-gradient(to right,#fff,rgba(255,255,255,0));"></div>'
+      +   '<div style="position:absolute;left:0;top:0;right:0;bottom:0;background:linear-gradient(to top,#000,rgba(0,0,0,0));"></div>'
+      +   '<div class="cp-dot" style="position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,0.35);"></div>'
+      + '</div>'
+      + '<div class="cp-hue" style="position:relative;margin-top:16px;height:26px;border-radius:13px;cursor:pointer;background:linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);">'
+      +   '<div class="cp-hdot" style="position:absolute;top:-3px;width:26px;height:32px;margin-left:-13px;border-radius:14px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.45);"></div>'
+      + '</div>'
+      + '<div style="display:flex;gap:10px;margin-top:16px;">'
+      +   '<div style="flex:0.8;display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:17px;background:rgba(255,255,255,0.07);color:#cfd4dc;font-size:12px;overflow:hidden;">'
+      +     '<span>#</span><input class="cp-hex" type="text" spellcheck="false" value="FFFFFF" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:#cfd4dc;font-size:12px;">'
+      +   '</div>'
+      +   '<div style="flex:1.2;display:flex;align-items:center;gap:5px;height:34px;padding:0 10px;border-radius:17px;background:rgba(255,255,255,0.07);color:#8b929d;font-size:10px;overflow:hidden;">'
+      +     '<span style="flex-shrink:0;">RGB</span><input class="cp-rgb" type="text" spellcheck="false" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:#8b929d;font-size:10px;">'
+      +   '</div>'
+      + '</div>'
+      + '<button class="cp-ok" type="button" style="width:100%;height:40px;margin-top:14px;border-radius:20px;border:0;background:rgba(255,255,255,0.09);color:#e8eaed;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">✓ 确认选择</button>';
+
+    var sv = pop.querySelector('.cp-sv');
+    var svBase = pop.querySelector('.cp-sv-base');
+    var dot = pop.querySelector('.cp-dot');
+    var hue = pop.querySelector('.cp-hue');
+    var hdot = pop.querySelector('.cp-hdot');
+    var hexInput = pop.querySelector('.cp-hex');
+    var rgbInput = pop.querySelector('.cp-rgb');
+    var okBtn = pop.querySelector('.cp-ok');
+
+    var H = 210, S = 1, V = 1, dragging = null, openFlag = false;
+
+    function paint(emit){
+      svBase.style.background = 'hsl(' + H + ',100%,50%)';
+      var w = sv.getBoundingClientRect().width || 272;
+      dot.style.left = Math.round(S * w) + 'px';
+      dot.style.top = Math.round((1 - V) * w) + 'px';
+      hdot.style.left = (Math.round((H / 360) * 1000) / 10) + '%';
+      var c = pickerHsvToRgb(H, S, V);
+      var hex = pickerRgbToHex(c.r, c.g, c.b);
+      if (document.activeElement !== hexInput) hexInput.value = hex.slice(1).toUpperCase();
+      if (document.activeElement !== rgbInput) rgbInput.value = c.r + ' ' + c.g + ' ' + c.b;
+      if (emit) onChange(hex);
+    }
+
+    function setColor(hex, silent){
+      var c = pickerHexToRgb(hex);
+      var hsv = pickerRgbToHsv(c.r, c.g, c.b);
+      if (hsv.v > 0 && hsv.s > 0) H = hsv.h;
+      S = hsv.s; V = hsv.v;
+      paint(!silent);
+    }
+
+    function svFromEvent(e){
+      var r = sv.getBoundingClientRect();
+      S = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      V = Math.max(0, Math.min(1, 1 - (e.clientY - r.top) / r.height));
+      paint(true);
+    }
+    sv.addEventListener('pointerdown', function(e){
+      dragging = 'sv'; svFromEvent(e);
+      if (sv.setPointerCapture) { try { sv.setPointerCapture(e.pointerId); } catch(_){} }
+      e.preventDefault();
+    });
+    sv.addEventListener('pointermove', function(e){ if (dragging === 'sv') svFromEvent(e); });
+    sv.addEventListener('pointerup', function(){ dragging = null; });
+
+    function hueFromEvent(e){
+      var r = hue.getBoundingClientRect();
+      H = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * 360;
+      paint(true);
+    }
+    hue.addEventListener('pointerdown', function(e){
+      dragging = 'hue'; hueFromEvent(e);
+      if (hue.setPointerCapture) { try { hue.setPointerCapture(e.pointerId); } catch(_){} }
+      e.preventDefault();
+    });
+    hue.addEventListener('pointermove', function(e){ if (dragging === 'hue') hueFromEvent(e); });
+    hue.addEventListener('pointerup', function(){ dragging = null; });
+
+    hexInput.addEventListener('input', function(){
+      var v = hexInput.value.replace(/[^0-9a-fA-F]/g,'');
+      if (v.length === 6) setColor('#' + v, false);
+    });
+    rgbInput.addEventListener('change', function(){
+      var nums = rgbInput.value.split(/[^0-9]+/).filter(Boolean);
+      if (nums.length >= 3) setColor(pickerRgbToHex(+nums[0], +nums[1], +nums[2]), false);
+    });
+
+    function open(anchor){
+      if (!pop.parentNode) document.body.appendChild(pop);
+      pop.style.display = 'block';
+      openFlag = true;
+      var current = lastColor ? pickerRgbToHex(lastColor[0], lastColor[1], lastColor[2]) : '#6366f1';
+      setColor(current, true);
+      var r = anchor.getBoundingClientRect();
+      var w = pop.offsetWidth || 300;
+      var h = pop.offsetHeight || 430;
+      var left = r.left;
+      var top = r.bottom + 10;
+      if (left + w > window.innerWidth - 10) left = Math.max(10, window.innerWidth - w - 10);
+      if (top + h > window.innerHeight - 10) top = Math.max(10, r.top - h - 10);
+      pop.style.left = Math.max(10, left) + 'px';
+      pop.style.top = Math.max(10, top) + 'px';
+      paint(false);
+    }
+    function close(){ pop.style.display = 'none'; openFlag = false; }
+
+    okBtn.addEventListener('click', close);
+
+    return { open: open, close: close, isOpen: function(){ return openFlag; } };
+  }
+
+  var colorPop = createColorPop(function(hex){
+    els.input.value = hex;
+    applyColor();
+  });
+  els.preview.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (colorPop.isOpen()) colorPop.close(); else colorPop.open(els.preview);
+  });
+  document.addEventListener('mousedown', function(e){
+    if (!colorPop.isOpen()) return;
+    var pop = document.querySelector('.color-pop');
+    if (pop && pop.contains(e.target)) return;
+    if (e.target === els.preview || els.preview.contains(e.target)) return;
+    colorPop.close();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && colorPop.isOpen()) colorPop.close();
+  });
+
+  /* ============ 事件 ============ */
+  els.input.addEventListener('input', applyColor);
+  els.input.addEventListener('keydown', function(e){
+    if (e.key === 'Enter'){ applyColor(); els.input.blur(); }
+  });
+
+  els.clear.addEventListener('click', function(){
+    els.input.value = '';
+    setEmpty();
+    els.input.focus();
+  });
+
+  els.sample.addEventListener('click', function(){
+    var s = '#6366f1';
+    setInput(s);
+    toast('已载入示例 #6366f1');
+  });
+
+  els.copyHex.addEventListener('click', function(){
+    if (!lastColor){ toast('还没有可复制的颜色'); return; }
+    copyText(toHex([lastColor[0], lastColor[1], lastColor[2]], false), null);
+  });
+
+  els.fs.addEventListener('click', toggleFullscreen);
+  document.addEventListener('keydown', function(e){
+    var tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (e.key === 'f' || e.key === 'F'){ e.preventDefault(); toggleFullscreen(); }
+  });
+  function toggleFullscreen(){
+    if (!document.fullscreenElement){
+      var root = document.documentElement;
+      var p = root.requestFullscreen ? root.requestFullscreen() : Promise.reject();
+      if (p && p.catch) p.catch(function(){ toast('当前浏览器不支持全屏'); });
+    } else if (document.exitFullscreen){
+      document.exitFullscreen();
+    }
+  }
+  document.addEventListener('fullscreenchange', function(){
+    var on = !!document.fullscreenElement;
+    els.fsLabel.textContent = on ? '退出全屏' : '进入全屏';
+    els.card.style.minHeight = on ? '100vh' : '';
+  });
+
+  /* ============ 初始化 ============ */
+  buildChips();
+  applyColor();
+})();
+</script>
+</body>
+</html>
