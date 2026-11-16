@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>亲戚关系计算器</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%239c3b2e'/%3E%3Ctext x='32' y='46' font-size='38' text-anchor='middle' fill='%23f7f1e6' font-family='serif'%3E亲%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#eef1ef;
+  --paper:#fbf9f4;
+  --ink:#1c2624;
+  --sub:#61706b;
+  --line:#dfe3dd;
+  --jade:#2f5a52;
+  --jade-deep:#223f3a;
+  --seal:#9c3b2e;
+  --tint:#e7ece8;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(circle at 18% 8%, rgba(47,90,82,.07), transparent 42%),
+    radial-gradient(circle at 88% 82%, rgba(156,59,46,.05), transparent 46%),
+    var(--bg);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  line-height:1.6;
+  min-height:100vh;
+}
+.serif{font-family:"Songti SC","STSong","Noto Serif SC","Source Han Serif SC",serif}
+
+.wrap{max-width:1040px;margin:0 auto;padding:22px 18px 56px}
+
+/* ---------- 页头 ---------- */
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.seal{
+  width:44px;height:44px;flex:0 0 44px;border-radius:5px;background:var(--seal);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 0 rgba(120,40,30,.18);
+}
+.seal span{color:#f8f2e6;font-size:26px;line-height:1;font-family:"Songti SC",serif}
+.eyebrow{font-size:11px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase}
+h1{margin:2px 0 0;font-size:26px;line-height:1.25;letter-spacing:.02em}
+.head p{margin:4px 0 0;font-size:13px;color:var(--sub)}
+.headmark{
+  font-size:12px;color:var(--sub);border:1px solid var(--line);
+  padding:5px 10px;border-radius:999px;white-space:nowrap;background:rgba(255,255,255,.6)
+}
+
+/* ---------- 布局 ---------- */
+.grid{display:grid;grid-template-columns:1fr;gap:18px}
+@media(min-width:820px){
+  .grid{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);align-items:start}
+  .col-side{position:sticky;top:18px}
+}
+
+/* ---------- 输入面板 ---------- */
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;box-shadow:0 1px 0 rgba(28,38,36,.04)}
+.panel-label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--sub);letter-spacing:.04em;flex-wrap:wrap}
+.panel-label b{font-weight:600;color:var(--jade-deep);letter-spacing:.12em}
+
+.field{position:relative;margin-top:12px;border-bottom:2px solid var(--jade);padding-bottom:6px}
+.field input{
+  width:100%;border:0;outline:none;background:transparent;
+  font-size:22px;line-height:1.35;color:var(--ink);padding:4px 34px 4px 0;
+  font-family:"PingFang SC","Songti SC",serif;
+}
+.field input::placeholder{color:#a9b4ae;font-size:15px;font-family:-apple-system,"PingFang SC",sans-serif}
+.clear{
+  position:absolute;right:0;top:50%;transform:translateY(-50%);
+  width:30px;height:30px;border:0;background:transparent;color:var(--sub);
+  font-size:18px;cursor:pointer;display:none;line-height:1;padding:0;
+}
+.clear:hover{color:var(--seal)}
+.field.has .clear{display:block}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{
+  border:1px solid var(--line);background:#fff;color:var(--jade-deep);
+  font-size:13px;padding:7px 12px;border-radius:999px;cursor:pointer;
+  transition:background .15s,border-color .15s,transform .1s;
+  min-height:34px;
+}
+.chip:hover{background:var(--tint);border-color:#c9d4cd}
+.chip:active{transform:scale(.97)}
+.chip.ghost{border-style:dashed;color:var(--sub)}
+.chip.ghost:hover{color:var(--seal);border-color:#e2c7c0;background:#faf2ef}
+
+.hintline{margin-top:14px;font-size:12px;color:var(--sub);display:flex;gap:6px;align-items:flex-start}
+.hintline i{flex:0 0 auto;width:3px;height:14px;background:var(--seal);margin-top:3px;border-radius:2px;opacity:.65}
+
+/* ---------- 结果 ---------- */
+.result{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.result-top{
+  background:linear-gradient(135deg,var(--jade) 0%,var(--jade-deep) 100%);
+  color:#f4f7f4;padding:16px 18px;position:relative;overflow:hidden;
+}
+.result-top::after{
+  content:"";position:absolute;right:-26px;top:-26px;width:96px;height:96px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.16);
+}
+.result-top small{font-size:11px;letter-spacing:.2em;opacity:.78;position:relative}
+.bigname{font-size:34px;line-height:1.3;margin-top:4px;letter-spacing:.04em;word-break:break-all;position:relative}
+.bigname.loading{opacity:.55;font-size:26px}
+.result-body{padding:14px 18px 16px}
+.path{font-size:13px;color:var(--sub);word-break:break-all;min-height:20px}
+.path b{color:var(--ink);font-weight:600}
+.path .arrow{color:#b9c4bd;margin:0 4px}
+.result-empty{color:var(--sub);font-size:14px;line-height:1.6}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.rev{margin-top:10px;font-size:13px;color:#3d4d49;line-height:1.6}
+.rev b{color:var(--seal);font-weight:600}
+.pill{font-size:12px;padding:4px 10px;border-radius:6px;background:var(--tint);color:var(--jade-deep)}
+.pill.gender{background:#f6ece8;color:#8a3a2c}
+.notice{
+  margin-top:10px;font-size:12px;color:#8a3a2c;background:#fbf1ee;
+  border:1px solid #f0d9d3;border-radius:8px;padding:8px 10px;line-height:1.55
+}
+
+/* ---------- 速查 ---------- */
+.side-block{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 16px 12px;margin-top:18px}
+.side-title{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+.side-title h2{margin:0;font-size:15px;letter-spacing:.06em}
+.side-title span{font-size:11px;color:var(--sub)}
+.examples{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+@media(max-width:400px){.examples{grid-template-columns:1fr}}
+.ex{
+  text-align:left;border:1px solid var(--line);background:#fff;border-radius:9px;
+  padding:9px 10px;cursor:pointer;display:flex;flex-direction:column;gap:2px;
+  min-height:56px;transition:border-color .15s,background .15s
+}
+.ex:hover{border-color:#c9d4cd;background:#f7faf8}
+.ex strong{font-size:13px;color:var(--ink);font-weight:600;line-height:1.4}
+.ex span{font-size:11px;color:var(--sub)}
+
+.tablelist{margin-top:14px;border-top:1px solid var(--line)}
+.row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #eceee9;font-size:13px}
+.row span{color:var(--sub)}
+.row b{font-weight:600;color:var(--jade-deep);white-space:nowrap}
+.row:last-child{border-bottom:0}
+
+.firewood{margin-top:14px;font-size:12px;color:var(--sub);line-height:1.75}
+.firewood b{color:var(--ink)}
+
+/* ---------- 九族 ---------- */
+.nine-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
+@media(min-width:680px){.nine-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.nine-cap{display:block;font-size:11px;letter-spacing:.14em;color:var(--sub);border-bottom:1px solid var(--line);padding-bottom:6px}
+.nine-list{display:flex;flex-direction:column;margin-top:2px}
+.nine-item{
+  border:0;background:transparent;text-align:left;padding:6px 2px;
+  display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  border-bottom:1px dashed #eceee9;cursor:pointer;min-height:36px;
+}
+.nine-item:last-child{border-bottom:0}
+.nine-item b{font-size:13px;color:var(--ink);font-weight:600;white-space:nowrap}
+.nine-item i{font-style:normal;font-size:11px;color:var(--sub);text-align:right;line-height:1.4}
+.nine-item:hover b{color:var(--seal)}
+
+/* ---------- 底部 ---------- */
+.foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--sub);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.foot span{max-width:60ch}
+
+/* 移动端字号兜底 */
+@media(max-width:400px){
+  h1{font-size:23px}
+  .field input{font-size:19px}
+  .bigname{font-size:30px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 页头 ===== -->
+  <header class="head">
+    <div class="brand">
+      <div class="seal" aria-hidden="true"><span class="serif">亲</span></div>
+      <div>
+        <div class="eyebrow">Kinship Calculator</div>
+        <h1 class="serif">亲戚关系计算器</h1>
+        <p>输入「谁的女儿」「谁的哥哥」这类关系链，换算成正确称谓。</p>
+      </div>
+    </div>
+    <div class="headmark">本地计算 · 不外传</div>
+  </header>
+
+  <div class="grid">
+    <!-- ===== 左：输入 + 结果 ===== -->
+    <main>
+      <section class="panel" aria-labelledby="inputLabel">
+        <div class="panel-label"><b id="inputLabel">关系链</b><span>用「的」连接，例：爸爸的哥哥的儿子</span></div>
+        <div class="field" id="fieldBox">
+          <input id="chainInput" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="例如：妈妈的哥哥 / 老婆的弟弟"
+                 aria-label="亲属关系链">
+          <button class="clear" id="clearBtn" type="button" aria-label="清空">×</button>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="hintline"><i></i><span>点词可直接追加，也可手动输入。带上长幼的写法更准，比如「爸爸的哥哥」比单写「伯伯」更好判断。</span></div>
+      </section>
+
+      <section class="result" aria-live="polite">
+        <div class="result-top">
+          <small id="resultLabel">你该怎么称呼</small>
+          <div class="bigname serif loading" id="bigName">等着你输入</div>
+        </div>
+        <div class="result-body">
+          <div class="path" id="pathLine"></div>
+          <div class="pills" id="pills"></div>
+          <div class="rev" id="revLine"></div>
+          <div id="noticeBox"></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="nineTitle" style="margin-top:16px">
+        <div class="panel-label"><b id="nineTitle">九族对照</b><span>点任一项直接换算</span></div>
+        <div class="nine-grid" id="nineGrid"></div>
+        <div class="hintline"><i></i><span>上九代自父至鼻祖，下九代自子至耳孙，旁系同辈按「堂—从堂—三从—族」排；母系对应称谓加「外」，各地口语略有差别。</span></div>
+      </section>
+    </main>
+
+    <!-- ===== 右：速查 ===== -->
+    <aside class="col-side">
+      <div class="side-block">
+        <div class="side-title"><h2 class="serif">常见例子</h2><span>点一下就用</span></div>
+        <div class="examples" id="examples"></div>
+      </div>
+
+      <div class="side-block">
+        <div class="side-title"><h2 class="serif">高频速查</h2><span>对照表</span></div>
+        <div class="tablelist" id="quickTable"></div>
+        <div class="firewood">
+          <b>怎么读关系链：</b>从「我」出发，一步一个人。「爸爸的哥哥的儿子」＝先往上到父亲，再横向到伯父，最后往下到他的儿子，属同辈旁系，就是堂兄弟。
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="foot">
+    <span>称谓按普通话通用叫法整理，各地方言（如「舅公」「姨婆」等）可能不同。</span>
+    <span>单文件 · 离线可用</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================
+     一、亲属词 → 基本关系符号
+     F 父  M 母  S 子  D 女
+     B 兄  b 弟  Z 姐  z 妹   H 夫  W 妻
+     ========================================================= */
+  var SEG = {
+    '爸爸':'F','父亲':'F','爸':'F','父':'F','家父':'F','老爸':'F',
+    '妈妈':'M','母亲':'M','妈':'M','母':'M','家母':'M','老妈':'M',
+    '爷爷':'FF','祖父':'FF','爷':'FF',
+    '奶奶':'FM','祖母':'FM','奶':'FM',
+    '外公':'MF','外祖父':'MF','姥爷':'MF',
+    '外婆':'MM','外祖母':'MM','姥姥':'MM',
+    '曾祖父':'FFF','曾祖母':'FFM','外曾祖父':'MFF','外曾祖母':'MFM',
+    '高祖父':'FFFF','高祖母':'FFFM',
+    '哥哥':'B','哥':'B','兄长':'B','大哥':'B',
+    '弟弟':'b','弟':'b',
+    '姐姐':'Z','姐':'Z','大姐':'Z',
+    '妹妹':'z','妹':'z',
+    '儿子':'S','儿':'S',
+    '女儿':'D','女':'D',
+    '孙子':'SS','孙女':'SD','外孙':'DS','外孙女':'DD',
+    '曾孙':'SSS','曾孙女':'SSD','外曾孙':'SDS','外曾孙女':'SDD',
+    '丈夫':'H','老公':'H','先生':'H',
+    '妻子':'W','老婆':'W','媳妇':'W','太太':'W',
+    '公公':'HF','婆婆':'HM','岳父':'WF','岳母':'WM','丈人':'WF','丈母娘':'WM',
+    '伯父':'FB','伯伯':'FB','大伯':'FB',
+    '叔叔':'Fb','小叔':'Fb','叔':'Fb',
+    '姑姑':'FZ','姑妈':'FZ','姑':'FZ','姑母':'FZ',
+    '舅舅':'MB','舅':'MB','舅父':'MB',
+    '姨妈':'MZ','姨母':'MZ','阿姨':'MZ','姨':'MZ',
+    '伯母':'FBW','婶婶':'FbW','婶母':'FbW','姑父':'FZH','舅妈':'MBW','姨父':'MZH',
+    '表姑':'FFZD','表叔':'FFZS','表伯':'FFZS','表舅':'MFZS','表姨':'MMZD',
+    '伯公':'FFB','叔公':'FFb','姑奶奶':'FFZ','舅爷爷':'FMB','姨奶奶':'FMZ',
+    '舅姥爷':'MFB','姑姥姥':'MFZ','姨姥姥':'MMZ',
+    '继父':'F','继母':'M','继子':'S','继女':'D',
+    '养父':'F','养母':'M','养子':'S','养女':'D',
+    '嫂子':'BW','弟媳':'bW','姐夫':'ZH','妹夫':'zH',
+    '儿媳':'SW','女婿':'DH',
+    '侄子':'BS','侄女':'BD','外甥':'ZS','外甥女':'ZD',
+    '侄孙':'BSS','侄孙女':'BSD','外甥孙':'ZSS','外甥孙女':'ZSD',
+    '堂哥':'FBS','堂兄':'FBS','堂弟':'FbS','堂姐':'FBD','堂妹':'FbD',
+    '表哥':'MBS','表弟':'MZS','表姐':'MBD','表妹':'MZD',
+    '堂侄':'FBSS','堂侄女':'FBSD','表侄':'MZSS','表侄女':'MZSD',
+    '大伯子':'HB','小叔子':'Hb','大姑子':'HZ','小姑子':'Hz',
+    '大舅子':'WB','小舅子':'Wb','大姨子':'WZ','小姨子':'Wz',
+    '妯娌':'HBW','连襟':'WZH',
+    '内侄':'WBS','内侄女':'WBD',
+    '亲家公':'SWF','亲家母':'SWM',
+    '孙媳':'SSW','孙女婿':'SDH','侄媳':'BSW','外甥女婿':'ZSH'
+  };
+
+  /* =========================================================
+     二、基本关系串 → 称谓
+     ========================================================= */
+  var NAME = {
+    '':'自己（本人）',
+    /* 直系长辈 */
+    'F':'爸爸','M':'妈妈',
+    'FF':'爷爷','FM':'奶奶','MF':'外公','MM':'外婆',
+    'FFF':'曾祖父','FFM':'曾祖母','FMF':'曾外祖父','FMM':'曾外祖母',
+    'MFF':'外曾祖父','MFM':'外曾祖母','MMF':'外曾外祖父','MMM':'外曾外祖母',
+    'FFFF':'高祖父','FFFM':'高祖母','FFMM':'高祖母','MFFF':'外高祖父','MFFM':'外高祖母',
+    /* 自己与兄弟姐妹 */
+    'B':'哥哥','b':'弟弟','Z':'姐姐','z':'妹妹',
+    'FS':'兄弟（哥哥或弟弟）','FD':'姐妹（姐姐或妹妹）',
+    'MS':'兄弟（哥哥或弟弟）','MD':'姐妹（姐姐或妹妹）',
+    /* 直系晚辈 */
+    'S':'儿子','D':'女儿',
+    'SS':'孙子','SD':'孙女','DS':'外孙','DD':'外孙女',
+    'SSS':'曾孙','SSD':'曾孙女','SDS':'外曾孙','SDD':'外曾孙女',
+    'DSS':'外曾孙','DSD':'外曾孙女','DDS':'外曾外孙','DDD':'外曾外孙女',
+    /* 兄弟姐妹的孩子 */
+    'BS':'侄子','bS':'侄子','BD':'侄女','bD':'侄女',
+    'ZS':'外甥','zS':'外甥','ZD':'外甥女','zD':'外甥女',
+    'BSS':'侄孙','BSD':'侄孙女','bSS':'侄孙','bSD':'侄孙女',
+    'ZSS':'外甥孙','ZSD':'外甥孙女','zSS':'外甥孙','zSD':'外甥孙女',
+    /* 父母的兄弟姐妹 */
+    'FB':'伯父','Fb':'叔叔','FZ':'姑姑','MB':'舅舅','MZ':'姨妈',
+    'Mb':'舅舅','MbW':'舅妈','Mz':'姨妈','MzH':'姨父',
+    'Fz':'姑姑','FzH':'姑父',
+    'FzS':'表兄弟（表哥／表弟）','FzD':'表姐妹（表姐／表妹）',
+    'MbS':'表兄弟（表哥／表弟）','MbD':'表姐妹（表姐／表妹）',
+    'MzS':'表兄弟（表哥／表弟）','MzD':'表姐妹（表姐／表妹）',
+    'FBW':'伯母','FbW':'婶婶','FZH':'姑父','MBW':'舅妈','MZH':'姨父',
+    /* 祖辈的兄弟姐妹 */
+    'FFB':'伯公（爷爷的哥哥）','FFb':'叔公（爷爷的弟弟）','FFZ':'姑奶奶',
+    'FMB':'舅爷爷','FMb':'舅爷爷','FMZ':'姨奶奶',
+    'MFB':'舅姥爷','MFb':'舅姥爷','MFZ':'姑姥姥',
+    'MMB':'舅姥爷','MMb':'舅姥爷','MMZ':'姨姥姥','MMz':'姨姥姥',
+    'FFz':'姑奶奶','FMb':'舅爷爷','FMz':'姨奶奶',
+    'MFb':'舅姥爷','MFz':'姑姥姥',
+    /* 祖辈旁系的子女（远房表亲） */
+    'FFBS':'表伯（远房）','FFbS':'表叔（远房）','FFBD':'表姑（远房）','FFbD':'表姑（远房）',
+    'FFZS':'表伯（远房）','FFZD':'表姑（远房）','FFzS':'表叔（远房）','FFzD':'表姑（远房）',
+    'FMBS':'表叔（远房）','FMbS':'表叔（远房）','FMBD':'表姑（远房）','FMbD':'表姑（远房）',
+    'FMZS':'表姑（远房）','FMzS':'表姑（远房）','FMZD':'表姑（远房）','FMzD':'表姑（远房）',
+    'MFBS':'表舅（远房）','MFbS':'表舅（远房）','MFBD':'表姨（远房）','MFbD':'表姨（远房）',
+    'MFZS':'表舅（远房）','MFzS':'表舅（远房）','MFZD':'表姨（远房）','MFzD':'表姨（远房）',
+    'MMBS':'表舅（远房）','MMbS':'表舅（远房）','MMBD':'表姨（远房）','MMbD':'表姨（远房）',
+    'MMZS':'表姨（远房）','MMzS':'表姨（远房）','MMZD':'表姨（远房）','MMzD':'表姨（远房）',
+    /* 堂表同辈 */
+    'FBS':'堂兄弟（堂哥／堂弟）','FBD':'堂姐妹（堂姐／堂妹）',
+    'FbS':'堂兄弟（堂哥／堂弟）','FbD':'堂姐妹（堂姐／堂妹）',
+    'FZS':'表兄弟（表哥／表弟）','FZD':'表姐妹（表姐／表妹）',
+    'MBS':'表兄弟（表哥／表弟）','MBD':'表姐妹（表姐／表妹）',
+    'MZS':'表兄弟（表哥／表弟）','MZD':'表姐妹（表姐／表妹）',
+    'FBSS':'堂侄','FBSD':'堂侄女','FbSS':'堂侄','FbSD':'堂侄女',
+    'FZSS':'表侄','FZSD':'表侄女','MZSS':'表侄','MZSD':'表侄女',
+    /* 配偶及其家人 */
+    'H':'丈夫','W':'妻子',
+    'HF':'公公','HM':'婆婆','WF':'岳父','WM':'岳母',
+    'HB':'大伯子','Hb':'小叔子','HZ':'大姑子','Hz':'小姑子',
+    'WB':'大舅子','Wb':'小舅子','WZ':'大姨子','Wz':'小姨子',
+    'HBW':'妯娌','HbW':'妯娌','WZH':'连襟','WbH':'连襟',
+    'HBWH':'大伯子／小叔子','HbWH':'大伯子／小叔子','WZHW':'大姨子／小姨子','WbHW':'大姨子／小姨子',
+    'WBS':'内侄','WBD':'内侄女','HbS':'侄子','Hbs':'侄子','HBD':'侄女','HbD':'侄女',
+    'HZS':'外甥','HzS':'外甥','HZD':'外甥女','HzD':'外甥女',
+    'WZS':'外甥','WzS':'外甥','WZD':'外甥女','WzD':'外甥女',
+    'HSS':'侄孙','HSD':'侄孙女','WSS':'外孙','WSD':'外孙女',
+    /* 兄弟姐妹的配偶 */
+    'BW':'嫂子','bW':'弟媳','ZH':'姐夫','zH':'妹夫',
+    'BSW':'侄媳','bSW':'侄媳','ZSH':'外甥女婿','zSH':'外甥女婿',
+    /* 子女的配偶与亲家 */
+    'SW':'儿媳','DH':'女婿',
+    'SWF':'亲家公','SWM':'亲家母','DHF':'亲家公','DHM':'亲家母',
+    'SSW':'孙媳','SDH':'孙女婿'
+  };
+
+  /* 需要先归一为更短关系的写法 */
+  var ALIAS = {
+    'FW':'M','MH':'F','FH':'F','MW':'M'
+  };
+
+  var QUICK_TABLE = [
+    ['爸爸的哥哥','伯父'],['爸爸的弟弟','叔叔'],['爸爸的姐姐','姑姑'],
+    ['妈妈的哥哥','舅舅'],['妈妈的姐姐','姨妈'],['爸爸的哥哥的儿子','堂兄弟'],
+    ['妈妈的姐姐的女儿','表姐妹'],['老婆的弟弟','小舅子'],['老公的妈妈','婆婆'],
+    ['儿子的老婆','儿媳'],['姐姐的儿子','外甥'],['爷爷的爸爸','曾祖父'],
+    ['妈妈的爸爸的姐姐','姑姥姥'],['爸爸的爸爸的姐姐','姑奶奶'],['外婆的妹妹','姨姥姥']
+  ];
+
+  var EXAMPLES = [
+    ['爸爸的哥哥的儿子','同辈旁系 · 堂兄弟'],
+    ['妈妈的姐姐的女儿','同辈旁系 · 表姐妹'],
+    ['老婆的弟弟','姻亲 · 小舅子'],
+    ['儿子的老婆','姻亲 · 儿媳'],
+    ['爷爷的爸爸','直系 · 曾祖父'],
+    ['爸爸的姐姐的丈夫','姻亲 · 姑父'],
+    ['哥哥的女儿','旁系晚辈 · 侄女'],
+    ['丈夫的哥哥的老婆','姻亲 · 妯娌']
+  ];
+
+  var CHIP_WORDS = ['爸爸','妈妈','哥哥','弟弟','姐姐','妹妹','儿子','女儿','老婆','老公','爷爷','奶奶','外公','外婆','姑姑','舅舅','姨妈','叔叔','伯父','继父','继母','继子','继女','养父','养母','养子','养女'];
+
+  /* =========================================================
+     三、解析
+     ========================================================= */
+  function tokenize(text){
+    var parts = String(text).replace(/我|本人|自己|的/g, function(m){ return m === '的' ? '|' : ''; }).split('|');
+    var out = [], unknown = [];
+    parts.forEach(function(p){
+      p = p.trim();
+      if (!p) return;
+      if (SEG[p]){ out.push(SEG[p]); return; }
+      var rest = p, ok = true;
+      while (rest.length){
+        var hit = '';
+        for (var len = Math.min(5, rest.length); len >= 1; len--){
+          var sub = rest.slice(0, len);
+          if (SEG[sub]){ hit = sub; break; }
+        }
+        if (!hit){ ok = false; break; }
+        out.push(SEG[hit]);
+        rest = rest.slice(hit.length);
+      }
+      if (!ok) unknown.push(p);
+    });
+    return { keys: out, unknown: unknown };
+  }
+
+  /* 把可归并的链条先化简：
+     ① 兄弟的兄弟 = 同一组兄弟姐妹（保留后一个，决定长幼与性别）
+     ② 开头「父/母 + 子/女」且后面还有关系时，等于先回到本人这一辈的兄弟姐妹 */
+  function collapse(keys){
+    var arr = keys.slice();
+    var SIB = 'BbZz';
+    var guard = 0;
+    while (guard++ < 30){
+      var changed = false;
+      for (var i = 0; i < arr.length - 1; i++){
+        if (SIB.indexOf(arr[i]) >= 0 && SIB.indexOf(arr[i + 1]) >= 0){
+          arr.splice(i, 1);
+          changed = true;
+          break;
+        }
+        /* ③ 子/女 的兄弟姐妹，仍是同一层子女（长幼未知，按统称处理） */
+        if ((arr[i] === 'S' || arr[i] === 'D') && SIB.indexOf(arr[i + 1]) >= 0){
+          arr[i] = (arr[i + 1] === 'Z' || arr[i + 1] === 'z') ? 'D' : 'S';
+          arr.splice(i + 1, 1);
+          changed = true;
+          break;
+        }
+        /* ④ 兄弟的父/母，就是原长辈的父/母：去掉兄弟这一跳 */
+        if (SIB.indexOf(arr[i]) >= 0 && (arr[i + 1] === 'F' || arr[i + 1] === 'M')){
+          arr.splice(i, 1);
+          changed = true;
+          break;
+        }
+        /* ⑥ 旁系子女的母亲，就是那一位的妻子（堂哥的妈妈＝伯母） */
+        if ((arr[i] === 'S' || arr[i] === 'D') && arr[i + 1] === 'M'){
+          for (var w = 0; w < i; w++){
+            if (SIB.indexOf(arr[w]) >= 0){
+              arr[i] = 'W';
+              arr.splice(i + 1, 1);
+              changed = true;
+              break;
+            }
+          }
+          if (changed) break;
+        }
+        /* ⑤ 旁系子女再往上找父亲，等于回到那一辈的兄弟（堂哥的爸爸＝伯父） */
+        if ((arr[i] === 'S' || arr[i] === 'D') && arr[i + 1] === 'F'){
+          for (var q = 0; q < i; q++){
+            if (SIB.indexOf(arr[q]) >= 0){
+              arr.splice(i, 2);
+              changed = true;
+              break;
+            }
+          }
+          if (changed) break;
+        }
+        if (i === 0 && arr.length > 2 && (arr[0] === 'F' || arr[0] === 'M') &&
+            (arr[1] === 'S' || arr[1] === 'D')){
+          arr.splice(0, 2, arr[1] === 'S' ? 'B' : 'Z');
+          changed = true;
+          break;
+        }
+      }
+      if (!changed) break;
+    }
+    return arr;
+  }
+
+  function normalize(keys){
+    /* token 里可能是一整段（如「舅舅」＝MB），先摊平成单步关系 */
+    var flat = [];
+    keys.forEach(function(t){
+      for (var i = 0; i < t.length; i++) flat.push(t.charAt(i));
+    });
+    var s = collapse(flat).join('');
+    var guard = 0;
+    while (ALIAS[s] && guard++ < 5) s = ALIAS[s];
+    return s;
+  }
+
+  /* =========================================================
+     四、关系属性（辈分 / 亲属类型 / 性别）
+     ========================================================= */
+  function numToCn(n){
+    var map = ['零','一','二','三','四','五','六','七','八','九','十'];
+    if (n <= 10) return map[n];
+    if (n < 20) return '十' + map[n - 10];
+    return String(n);
+  }
+
+  function metaOf(key){
+    var gens = 0, up = 0, down = 0, hasSpouse = false, hasSibling = false, branch = '';
+    for (var i = 0; i < key.length; i++){
+      var c = key[i];
+      if (c === 'F' || c === 'M'){
+        gens++; up++;
+        if (!branch) branch = c === 'F' ? '父系' : '母系';
+      } else if (c === 'S' || c === 'D'){
+        gens--; down++;
+      } else if (c === 'B' || c === 'b' || c === 'Z' || c === 'z'){
+        hasSibling = true;
+      } else if (c === 'H' || c === 'W'){
+        hasSpouse = true;
+      }
+    }
+    var line;
+    if (key === '') line = '本人';
+    else if (hasSpouse) line = '姻亲';
+    else if (up > 0 && down === 0 && !hasSibling) line = '直系长辈';
+    else if (down > 0 && up === 0 && !hasSibling) line = '直系晚辈';
+    else if (gens === 0) line = '旁系同辈';
+    else if (gens > 0) line = '旁系长辈';
+    else line = '旁系晚辈';
+
+    var genText = gens === 0 ? '同辈' : (gens > 0 ? '长' + numToCn(gens) + '辈' : '晚' + numToCn(-gens) + '辈');
+
+    var sex = '';
+    var last = key.slice(-1);
+    if (last === 'F' || last === 'B' || last === 'b' || last === 'S' || last === 'H') sex = '男性';
+    else if (last === 'M' || last === 'Z' || last === 'z' || last === 'D' || last === 'W') sex = '女性';
+
+    if (key === 'F' || key === 'M' || hasSpouse) branch = '';
+    return { gens: gens, genText: genText, line: line, sex: sex, branch: branch };
+  }
+
+  /* 纵向九代：上自父至鼻祖，下自子至耳孙 */
+  var UP_GEN = ['','父','祖父','曾祖父','高祖父','天祖父','烈祖父','太祖父','远祖父','鼻祖'];
+  var DOWN_GEN = ['','子','孙','曾孙','玄孙','来孙','晜孙','仍孙','云孙','耳孙'];
+  var SIDE_GEN = ['','堂','从堂','三从','四从','族'];
+
+  function cnSeq(n){ return Array(n + 1).join('的'); }
+
+  /* 词表外的关系，按辈分与支系生成一个可用叫法 */
+  var lastNote = '';
+
+  function genName(key){
+    var last = key.slice(-1);
+    lastNote = '';
+
+    /* 链中段有配偶再接对方亲戚：按「某的某」拼称 */
+    var wIdx = key.search(/[WH]/);
+    if (wIdx >= 0 && wIdx < key.length - 1){
+      var TAIL = {B:'哥哥或弟弟',b:'哥哥或弟弟',Z:'姐姐或妹妹',z:'姐姐或妹妹',
+                  S:'儿子',D:'女儿',F:'父亲',M:'母亲',H:'丈夫',W:'妻子'};
+      var baseK = key.slice(0, wIdx + 1);
+      var tailK = key.slice(wIdx + 1);
+      var baseN = NAME[baseK] || genName(baseK) || (baseK === 'W' ? '老婆' : (baseK === 'H' ? '老公' : ''));
+      var tailN = NAME[tailK] || genName(tailK) || TAIL[tailK] || '';
+      if (baseN && tailN){
+        /* 姻亲的亲属按「随这一家叫」给出实际称呼 */
+        var parentInLaw = (baseN === '伯母' || baseN === '婶婶' || baseN === '姑父' ||
+                           baseN === '姨父' || baseN === '舅妈' || baseN.indexOf('伯祖母') === 0);
+        var SPEAK = parentInLaw
+          ? {B:'舅舅', b:'舅舅', Z:'姨妈', z:'姨妈', F:'外公', M:'外婆', S:'表侄', D:'表侄女'}
+          : {B:'哥哥或弟弟', b:'哥哥或弟弟', Z:'姐姐或妹妹', z:'姐姐或妹妹', S:'外甥', D:'外甥女', F:'伯父', M:'伯母'};
+        var personK = key.slice(0, wIdx);
+        var personN = ({'伯母':'堂哥','婶婶':'堂弟','姑父':'表兄弟','姨父':'表兄弟',
+                        '舅妈':'表兄弟','嫂子':'哥哥','弟媳':'弟弟'})[baseN] || NAME[personK] || '';
+        /* 配偶本人这一支：随配偶称呼（老婆的爷爷＝爷爷） */
+        if (wIdx === 0){
+          var plainN = NAME[tailK] || genName(tailK) || tailN;
+          var spouseW = (key.charAt(wIdx) === 'W' ? '老婆' : '老公');
+          lastNote = spouseW + '的' + plainN + '（姻亲），随' + spouseW + '一家称呼';
+          return plainN;
+        }
+        var upTail = true;
+        for (var u = 0; u < tailK.length; u++){ if (tailK[u] !== 'F' && tailK[u] !== 'M') upTail = false; }
+        /* 长辈姻亲的祖辈：辈分再抬一级（伯母的爷爷＝太爷爷） */
+        if (parentInLaw && upTail && tailK.length >= 2){
+          var TAIGEN = {'爷爷':'太爷爷','奶奶':'太奶奶','外公':'太外公','外婆':'太外婆'};
+          var genN = NAME[tailK] || genName(tailK) || tailN;
+          var taN = TAIGEN[genN] || ('太' + genN);
+          lastNote = '以' + baseN + '为主体计算：她的' + genN + '是' + genN +
+                     '，再按你的位置反推为' + taN + '（姻亲）';
+          return taN;
+        }
+        if (SPEAK[tailK]){
+          lastNote = baseN + '的' + tailN + '（姻亲）' +
+                     (personN ? '，随' + personN + '这一家称呼' : '');
+          return SPEAK[tailK];
+        }
+        lastNote = '';
+        return baseN + '的' + tailN + '（姻亲）';
+      }
+    }
+
+    /* 带配偶：退回前一层 + 配偶 */
+    if (last === 'H' || last === 'W'){
+      var base0 = key.slice(0, -1);
+      if (NAME[base0]) return NAME[base0] + (last === 'H' ? '的丈夫' : '的妻子');
+    }
+
+    var allUp = true, allDown = true, sibIdx = -1;
+    for (var i = 0; i < key.length; i++){
+      var c = key[i];
+      if (c !== 'F' && c !== 'M') allUp = false;
+      if (c !== 'S' && c !== 'D') allDown = false;
+      if (sibIdx < 0 && (c === 'B' || c === 'b' || c === 'Z' || c === 'z')) sibIdx = i;
+    }
+
+    /* 纯直系长辈 */
+    if (allUp){
+      var dep = key.length;
+      if (dep === 1) return key === 'F' ? '爸爸' : '妈妈';
+      if (dep === 2) return '';
+      var femaleU = (key.slice(-1) === 'M');
+      var titleU = UP_GEN[Math.min(dep, 9)] || ('第' + dep + '代祖先');
+      if (dep < 9 && femaleU) titleU = titleU.replace('父', '母');
+      if (dep >= 9 && femaleU) titleU = '鼻祖母';
+      var firstM = key.indexOf('M');
+      var outside = (firstM >= 0) && (firstM === 0 || firstM < key.length - 1);
+      var outU = (outside ? '外' : '') + titleU;
+      return outU;
+    }
+
+    /* 纯直系晚辈 */
+    if (allDown){
+      var depD = key.length;
+      if (depD === 1) return key === 'S' ? '儿子' : '女儿';
+      var femaleD = (key.slice(-1) === 'D');
+      var titleD = DOWN_GEN[Math.min(depD, 9)] || ('第' + depD + '代后人');
+      if (femaleD) titleD = depD >= 9 ? '耳孙女' : titleD + '女';
+      var outD = (key[0] === 'D' ? '外' : '') + titleD;
+      return outD;
+    }
+
+    if (sibIdx < 0) return '';
+
+    var before = key.slice(0, sibIdx);
+    var after = key.slice(sibIdx + 1);
+    var k = 0, down = 0;
+    for (var j = 0; j < before.length; j++){ if (before[j] === 'F' || before[j] === 'M') k++; }
+    for (var t = 0; t < after.length; t++){ if (after[t] === 'S' || after[t] === 'D') down++; }
+    var male = (key.slice(-1) === 'F' || key.slice(-1) === 'B' || key.slice(-1) === 'b' || key.slice(-1) === 'S');
+
+    /* 同辈旁系：堂 → 从堂 → 三从 → 四从 → 族 */
+    if (k >= 2 && down === k){
+      var idx = Math.min(k, 5);
+      return SIDE_GEN[idx] + (male ? '兄弟' : '姐妹');
+    }
+    if (k >= 2 && down === 0){
+      var sibTok = key.charAt(sibIdx);
+      var older = (sibTok === 'B' || sibTok === 'Z');
+      if (k === 2) return male ? '祖辈旁系男性（伯公／叔公辈）' : '祖辈旁系女性（姑奶奶／姨奶奶辈）';
+      var genTag = ['','','','曾','高','天','烈','太','远','鼻'][Math.min(k, 9)] || ('第' + k + '代');
+      var parentChar = key.charAt(sibIdx - 1);
+      if (parentChar === 'M') return genTag + (male ? '舅祖父' : '姨祖母');
+      return genTag + (male ? (older ? '伯祖父' : '叔祖父') : '姑祖母');
+    }
+    if (k === 2 && down === 1) return male ? '表叔（远房）' : '表姑（远房）';
+    /* 更高辈的旁系长辈之子：表伯祖父／表叔祖父 */
+    if (k >= 3 && down === 1){
+      var sibC = key.charAt(sibIdx);
+      var oldC = (sibC === 'B' || sibC === 'Z');
+      var tagC = ['','','','曾','高','天','烈','太','远','鼻'][Math.min(k - 1, 9)] || ('第' + (k - 1) + '代');
+      return '表' + tagC + (male ? (oldC ? '伯祖父' : '叔祖父') : '姑祖母');
+    }
+    if (k >= 1 && down === 2) return male ? '远房表兄弟' : '远房表姐妹';
+    if (k >= 1 && down === 3) return male ? '远房表侄' : '远房表侄女';
+    if (k >= 1 && down >= 4) return male ? '远房晚辈（男）' : '远房晚辈（女）';
+    return '';
+  }
+
+  function nameOfKey(key){
+    var first = '';
+    for (var w in SEG){
+      if (SEG[w] === key){ first = w; break; }
+    }
+    return first || '';
+  }
+
+  function pathHTML(keys){
+    var segs = keys.map(function(k){
+      return nameOfKey(k) || (k.length > 1 ? '亲属' : k);
+    });
+    return '我 ' + segs.map(function(s){
+      return '<span class="arrow">›</span><b>' + s + '</b>';
+    }).join(' ');
+  }
+
+  /* =========================================================
+     五、界面
+     ========================================================= */
+  var input = document.getElementById('chainInput');
+  var fieldBox = document.getElementById('fieldBox');
+  var clearBtn = document.getElementById('clearBtn');
+  var bigName = document.getElementById('bigName');
+  var pathLine = document.getElementById('pathLine');
+  var pills = document.getElementById('pills');
+  var revLine = document.getElementById('revLine');
+
+  /* 反向称呼：这一位按辈分该怎么称呼你 */
+  function revName(meta, key){
+    var g = meta.gens;
+    if (meta.line === '直系长辈'){
+      var n1 = Math.max(g, 1);
+      if (n1 === 1) return '儿子／女儿';
+      var downT = ['', '', '孙子／孙女', '曾孙／曾孙女', '玄孙／玄孙女'][Math.min(n1, 4)];
+      return downT || ('第' + n1 + '代孙辈');
+    }
+    if (meta.line === '直系晚辈'){
+      var n2 = Math.max(-g, 1);
+      if (n2 === 1) return '爸爸／妈妈';
+      var upT = ['', '', '爷爷／奶奶', '曾祖父／曾祖母', '高祖父／高祖母'][Math.min(n2, 4)];
+      return upT || ('第' + n2 + '代祖辈');
+    }
+    if (meta.line === '旁系同辈'){
+      var sibCh = '', kk = 0;
+      for (var i = 0; i < key.length; i++){
+        if ('BbZz'.indexOf(key[i]) >= 0){ sibCh = key[i]; break; }
+        kk++;
+      }
+      if (kk >= 1){
+        var cx = (key.charAt(0) === 'M') ? '表'
+                 : ['', '堂', '从堂', '三从', '四从', '族'][Math.min(kk, 5)];
+        return cx + '兄弟／' + cx + '姐妹';
+      }
+      return '兄弟／姐妹';
+    }
+    if (meta.line === '旁系长辈'){
+      if (g >= 3) return '侄孙辈';
+      if (g === 2) return '侄孙／侄孙女';
+      return meta.branch === '母系' ? '外甥／外甥女' : '侄子／侄女';
+    }
+    if (meta.line === '旁系晚辈'){
+      var n3 = Math.max(-g, 1);
+      var sisM = false;
+      for (var q = 0; q < key.length; q++){
+        if (key[q] === 'Z' || key[q] === 'z') sisM = true;
+        if ('BbZz'.indexOf(key[q]) >= 0) break;
+      }
+      if (n3 === 1) return sisM ? '舅舅／姨妈' : '伯父／叔叔／姑姑';
+      if (n3 === 2) return meta.branch === '母系' ? '舅公／姨婆' : '伯祖父／叔祖父';
+      return '祖辈长辈';
+    }
+    if (meta.line === '姻亲'){
+      var wi = key.search(/[WH]/);
+      if (wi >= 0){
+        var up = key.length - wi - 1;
+        if (wi > 0){ return up >= 2 ? '侄孙辈' : '侄子／侄女'; }
+        if (up >= 1){
+          var titles = ['', '女婿', '孙女婿', '曾孙女婿', '玄孙女婿'];
+          var titlesF = ['', '儿媳', '孙媳', '曾孙媳', '玄孙媳'];
+          var idx = Math.min(up, 4);
+          return key.charAt(wi) === 'H' ? titlesF[idx] : titles[idx];
+        }
+        return '亲家／姻亲同辈';
+      }
+      return '姻亲晚辈（随这一家称呼）';
+    }
+    return '';
+  }
+  var noticeBox = document.getElementById('noticeBox');
+  var resultLabel = document.getElementById('resultLabel');
+
+  function setNotice(text){
+    noticeBox.innerHTML = text ? '<div class="notice">' + text + '</div>' : '';
+  }
+
+  function render(){
+    var raw = input.value.trim();
+    fieldBox.classList.toggle('has', !!raw);
+
+    if (!raw){
+      resultLabel.textContent = '你该怎么称呼';
+      bigName.textContent = '等着你输入';
+      bigName.classList.add('loading');
+      pathLine.innerHTML = '<span class="result-empty">在上面的输入框写关系链，或点右侧/下面的例子试一下。</span>';
+      pills.innerHTML = '';
+      revLine.textContent = '';
+      setNotice('');
+      return;
+    }
+
+    if (/^(我|本人|自己)$/.test(raw)){
+      bigName.textContent = '自己（本人）';
+      bigName.classList.remove('loading');
+      pathLine.textContent = '关系链的起点，也就是你。';
+      resultLabel.textContent = '你的身份';
+      pills.innerHTML = '<span class="pill">同辈</span><span class="pill">本人</span>';
+      revLine.textContent = '';
+      setNotice('');
+      return;
+    }
+
+    var parsed = tokenize(raw);
+    if (!parsed.keys.length){
+      bigName.textContent = '没读懂';
+      bigName.classList.remove('loading');
+      pathLine.textContent = '关系链：' + raw;
+      pills.innerHTML = '';
+      revLine.textContent = '';
+      setNotice('这段关系没有识别出来。试试写成「爸爸的哥哥的儿子」这样，一层一层用“的”连接。');
+      return;
+    }
+
+    var key = normalize(parsed.keys);
+    lastNote = '';
+    var name = NAME[key];
+    var meta = metaOf(key);
+    var generated = false;
+    if (!name){
+      var guess = genName(key);
+      if (guess){ name = guess; generated = true; }
+    }
+
+    /* 继/养关系：沿用血缘位置的推算，但称谓保留「继/养」前缀 */
+    var VARWORD = ['继父','继母','继子','继女','养父','养母','养子','养女'];
+    var t0 = raw.split('的')[0].trim();
+    if (VARWORD.indexOf(t0) >= 0 && name){
+      var pre = t0.charAt(0);
+      if (parsed.keys.length === 1){
+        name = t0;
+        generated = false;
+      } else {
+        var rest = parsed.keys.slice(1);
+        var restFlat = rest.join('');
+        var onlyChild = /^[SD]+$/.test(restFlat);
+        var onlyUp = /^[FM]+$/.test(restFlat);
+        if (onlyChild){
+          name = pre + (rest[rest.length - 1] === 'S' ? '兄弟' : '姐妹');
+        } else if (onlyUp){
+          /* 养父的爸爸＝养祖父（辈分不变，只换称呼式） */
+          var ANCFORM = {'爷爷':'祖父','奶奶':'祖母','外公':'外祖父','外婆':'外祖母',
+                         '爸爸':'父','妈妈':'母'};
+          name = pre + (ANCFORM[name] || name.replace(/^外/, ''));
+        } else if (/^[BbZz]+$/.test(restFlat)){
+          name = pre + name;
+        } else {
+          name = t0 + '的' + name;
+        }
+      }
+      generated = true;
+    }
+
+    if (!name){
+      bigName.textContent = '暂未收录';
+      bigName.classList.remove('loading');
+      resultLabel.textContent = '推算结果';
+      pills.innerHTML = [
+        '<span class="pill">' + meta.genText + '</span>',
+        '<span class="pill">' + meta.line + '</span>',
+        meta.branch ? '<span class="pill">' + meta.branch + '</span>' : '',
+        meta.sex ? '<span class="pill gender">' + meta.sex + '</span>' : ''
+      ].filter(Boolean).join('');
+      pathLine.innerHTML = pathHTML(parsed.keys);
+      revLine.textContent = revName(meta, key) ? '对方怎么称呼你：' + revName(meta, key) : '';
+      setNotice('这个组合不在词表里，只推算出辈分与亲属类型。' +
+        (parsed.unknown.length ? '未识别：' + parsed.unknown.join('、') + '。' : '') +
+        ' 可以把关系链拆短一些，或换用「爸爸、妈妈、哥哥、儿子、老婆」这类基础词。');
+      return;
+    }
+
+    bigName.textContent = name;
+    bigName.classList.remove('loading');
+    resultLabel.textContent = '你该怎么称呼';
+
+    pills.innerHTML = [
+      '<span class="pill">' + meta.genText + '</span>',
+      '<span class="pill">' + meta.line + '</span>',
+      meta.branch ? '<span class="pill">' + meta.branch + '</span>' : '',
+      meta.sex ? '<span class="pill gender">' + meta.sex + '</span>' : ''
+    ].filter(Boolean).join('');
+
+    pathLine.innerHTML = pathHTML(parsed.keys);
+    var rv = revName(meta, key);
+    revLine.innerHTML = rv ? '对方怎么称呼你：<b>' + rv + '</b>' : '';
+
+    var extra = lastNote ? lastNote + '。' : '';
+    if (!lastNote && generated){
+      extra = '这个词表里没有直接对应的固定叫法，按辈分与支系推算。各地口语差别较大，可结合家族习惯称呼。';
+    }
+    if (parsed.unknown.length){
+      extra = '其中「' + parsed.unknown.join('、') + '」按相近写法识别，结果仅供参考。';
+    }
+    if (key === 'FS' || key === 'MS' || key === 'FD' || key === 'MD'){
+      extra = '「爸爸的儿子」可能是你自己，也可能是哥哥或弟弟，需要按长幼判断。';
+    }
+    setNotice(extra);
+  }
+
+  function addWord(w){
+    var v = input.value.trim().replace(/的$/, '');
+    input.value = v ? v + '的' + w : w;
+    render();
+    input.focus();
+    try { input.setSelectionRange(input.value.length, input.value.length); } catch(e){}
+  }
+
+  /* 快捷词 */
+  var chipsBox = document.getElementById('chips');
+  CHIP_WORDS.forEach(function(w){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.textContent = w;
+    b.addEventListener('click', function(){ addWord(w); });
+    chipsBox.appendChild(b);
+  });
+
+  var undo = document.createElement('button');
+  undo.type = 'button';
+  undo.className = 'chip ghost';
+  undo.textContent = '退一层';
+  undo.addEventListener('click', function(){
+    var arr = input.value.split('的');
+    arr.pop();
+    input.value = arr.join('的');
+    render(); input.focus();
+  });
+  chipsBox.appendChild(undo);
+
+  var reset = document.createElement('button');
+  reset.type = 'button';
+  reset.className = 'chip ghost';
+  reset.textContent = '清空';
+  reset.addEventListener('click', function(){ input.value = ''; render(); input.focus(); });
+  chipsBox.appendChild(reset);
+
+  clearBtn.addEventListener('click', function(){ input.value = ''; render(); input.focus(); });
+  input.addEventListener('input', render);
+  input.addEventListener('keydown', function(e){
+    if (e.key === 'Enter'){ e.preventDefault(); input.blur(); render(); }
+  });
+
+  /* 例子 */
+  var exBox = document.getElementById('examples');
+  EXAMPLES.forEach(function(item){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ex';
+    b.innerHTML = '<strong>' + item[0] + '</strong><span>' + item[1] + '</span>';
+    b.addEventListener('click', function(){
+      input.value = item[0];
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    exBox.appendChild(b);
+  });
+
+  /* 对照表 */
+  var tableBox = document.getElementById('quickTable');
+  QUICK_TABLE.forEach(function(item){
+    var d = document.createElement('div');
+    d.className = 'row';
+    d.innerHTML = '<span>' + item[0] + '</span><b>' + item[1] + '</b>';
+    tableBox.appendChild(d);
+  });
+
+  /* 九族对照 */
+  (function(){
+    var box = document.getElementById('nineGrid');
+    if (!box) return;
+
+    function chainUp(n){ return new Array(n + 1).join('爸爸的'); }
+    function chainDown(n){ return new Array(n + 1).join('儿子的'); }
+
+    var groups = [
+      {
+        cap: '上九代 · 父系',
+        items: [
+          ['父','爸爸','1 代'],['祖父','爸爸的爸爸','2 代'],['曾祖父','爸爸的爸爸的爸爸','3 代'],
+          ['高祖父', chainUp(4),'4 代'],['天祖父', chainUp(5),'5 代'],['烈祖父', chainUp(6),'6 代'],
+          ['太祖父', chainUp(7),'7 代'],['远祖父', chainUp(8),'8 代'],['鼻祖', chainUp(9),'9 代']
+        ]
+      },
+      {
+        cap: '下九代 · 子系',
+        items: [
+          ['子','儿子','1 代'],['孙','儿子的儿子','2 代'],['曾孙','儿子的儿子的儿子','3 代'],
+          ['玄孙', chainDown(4),'4 代'],['来孙', chainDown(5),'5 代'],['晜孙', chainDown(6),'6 代'],
+          ['仍孙', chainDown(7),'7 代'],['云孙', chainDown(8),'8 代'],['耳孙', chainDown(9),'9 代']
+        ]
+      },
+      {
+        cap: '旁系同辈 · 九族',
+        items: [
+          ['兄弟','哥哥','同辈'],['堂兄弟','爸爸的哥哥的儿子','1 从'],
+          ['从堂兄弟','爸爸的爸爸的哥哥的儿子的儿子','2 从'],
+          ['三从兄弟','爸爸的爸爸的爸爸的哥哥的儿子的儿子的儿子','3 从'],
+          ['四从兄弟','爸爸的爸爸的爸爸的爸爸的哥哥的儿子的儿子的儿子的儿子','4 从'],
+          ['族兄弟','爸爸的爸爸的爸爸的爸爸的爸爸的哥哥的儿子的儿子的儿子的儿子的儿子','5 从']
+        ]
+      }
+    ];
+
+    groups.forEach(function(g){
+      var col = document.createElement('div');
+      var cap = document.createElement('span');
+      cap.className = 'nine-cap';
+      cap.textContent = g.cap;
+      col.appendChild(cap);
+
+      var list = document.createElement('div');
+      list.className = 'nine-list';
+      g.items.forEach(function(it){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'nine-item';
+        b.innerHTML = '<b>' + it[0] + '</b><i>' + it[2] + '</i>';
+        b.addEventListener('click', function(){
+          input.value = it[1];
+          render();
+          input.focus();
+        });
+        list.appendChild(b);
+      });
+      col.appendChild(list);
+      box.appendChild(col);
+    });
+  })();
+
+  render();
+})();
+</script>
+</body>
+</html>

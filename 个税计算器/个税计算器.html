@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>个税计算器 · 月度预扣 / 年度汇算</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23135a4a'/%3E%3Ctext x='32' y='45' font-size='30' font-family='sans-serif' fill='%23ffffff' text-anchor='middle'%3E%25%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f1f3f1;--card:#fff;--ink:#15181a;--muted:#6b7472;--faint:#8f9691;
+    --line:#e2e6e3;--accent:#135a4a;--accent-soft:#e8f1ed;--warn:#a4552f;
+    --radius:12px;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    --mono:"SF Mono","JetBrains Mono",Consolas,"Roboto Mono",monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:11px;padding:10px 18px;
+    background:rgba(241,243,241,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .back{flex:0 0 auto;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--card);
+    display:flex;align-items:center;justify-content:center;text-decoration:none;}
+  .back svg{width:16px;height:16px;stroke:var(--ink);}
+  .brand h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em;}
+  .brand h1 i{font-style:normal;font-weight:400;color:var(--faint);font-size:13px;}
+  .brand p{margin:1px 0 0;font-size:12px;color:var(--muted);}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:16px 18px 40px;}
+
+  .tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tabs button{flex:0 0 auto;border:0;background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);
+    padding:8px 15px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .16s,color .16s;}
+  .tabs button[aria-selected="true"]{background:var(--accent);color:#fff;font-weight:600;}
+
+  section[data-view]{display:none;}
+  section[data-view].on{display:block;}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;}
+  @media (min-width:980px){.grid{grid-template-columns:minmax(0,1fr) 340px;align-items:start;}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;}
+  .card + .card{margin-top:14px;}
+  .card h2{margin:0 0 3px;font-size:15px;font-weight:700;}
+  .card .hint{margin:0 0 13px;font-size:12px;color:var(--muted);line-height:1.6;}
+
+  .field{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);}
+  .field:first-of-type{border-top:0;}
+  .field label{font-size:13px;color:var(--ink);}
+  .field label small{display:block;font-size:11px;color:var(--faint);font-weight:400;margin-top:2px;}
+  .input-wrap{display:flex;align-items:center;gap:5px;background:#fafbfa;border:1px solid var(--line);border-radius:9px;padding:0 10px;height:38px;}
+  .input-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(19,90,74,.09);background:#fff;}
+  .input-wrap span{font-size:12px;color:var(--faint);}
+  .input-wrap input{flex:1;min-width:0;border:0;outline:0;background:transparent;text-align:right;
+    font-family:var(--mono);font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .input-wrap select{border:0;outline:0;background:transparent;width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);}
+
+  .row-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px;}
+  .auto-switch{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap;}
+  .auto-switch input{width:16px;height:16px;margin:0;accent-color:var(--accent);cursor:pointer;}
+  .input-wrap input[readonly]{color:var(--muted);}
+  .field.wide{grid-template-columns:minmax(0,1fr) 214px;}
+  .range-wrap{gap:4px;}
+  .range-wrap input{flex:1 1 0;min-width:0;font-size:13px;}
+  .range-wrap span{flex:0 0 auto;color:var(--faint);font-size:11px;}
+  .ghost{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:12px;color:var(--accent);
+    font-family:var(--sans);cursor:pointer;}
+  .ghost:hover{background:var(--accent-soft);}
+
+  .result{position:static;}
+  @media (min-width:980px){.result{position:sticky;top:76px;}}
+  .result .big-label{font-size:12px;color:var(--muted);}
+  .result .big{font-family:var(--mono);font-size:36px;font-weight:700;letter-spacing:-.02em;color:var(--accent);line-height:1.15;margin:2px 0 10px;font-variant-numeric:tabular-nums;}
+  .result dl{display:grid;grid-template-columns:1fr auto;gap:8px 12px;margin:0;padding-top:12px;border-top:1px solid var(--line);}
+  .result dt{font-size:12.5px;color:var(--muted);}
+  .result dd{margin:0;font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums;}
+  .result .net{color:var(--accent);font-weight:600;}
+  .result .tag{display:inline-block;margin-top:10px;padding:3px 9px;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-size:11.5px;line-height:1.5;}
+
+  .table-wrap{overflow-x:auto;margin-top:4px;}
+  table{border-collapse:collapse;width:100%;min-width:560px;table-layout:fixed;}
+  th,td{padding:8px 8px;font-size:12.5px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;}
+  th:first-child,td:first-child{text-align:left;}
+  th{color:var(--faint);font-weight:500;font-size:11.5px;}
+  td.num{font-family:var(--mono);}
+  tr.now{background:var(--accent-soft);}
+  tr.now td{color:var(--accent);font-weight:600;}
+
+  .ded{padding:12px 0;border-top:1px solid var(--line);}
+  .ded:first-of-type{border-top:0;padding-top:0;}
+  .ded-head{display:flex;align-items:flex-start;gap:10px;}
+  .ded-head input[type="checkbox"]{width:19px;height:19px;margin:1px 0 0;accent-color:var(--accent);flex:0 0 auto;cursor:pointer;}
+  .ded-head label{font-size:13.5px;font-weight:600;line-height:1.4;cursor:pointer;}
+  .ded-head label small{display:block;font-weight:400;font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .ded-body{display:none;margin:9px 0 0 29px;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);}
+  .ded.on .ded-body{display:flex;}
+  .ded-body input,.ded-body select{height:34px;border:1px solid var(--line);border-radius:8px;background:#fafbfa;padding:0 9px;font-family:var(--mono);font-size:13px;color:var(--ink);}
+  .ded-body input{width:96px;text-align:right;}
+  .ded-body select{font-family:var(--sans);width:auto;max-width:100%;}
+  .ded-body .unit{font-size:12px;color:var(--faint);}
+
+  .total-band{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line);}
+  .total-band span{font-size:12.5px;color:var(--muted);}
+  .total-band b{font-family:var(--mono);font-size:20px;color:var(--accent);font-variant-numeric:tabular-nums;}
+
+  .note{font-size:11.5px;color:var(--faint);line-height:1.7;margin-top:14px;}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,10px);background:var(--ink);color:#fff;font-size:12.5px;
+    padding:8px 14px;border-radius:8px;opacity:0;pointer-events:none;transition:.2s;z-index:60;white-space:nowrap;}
+  .toast.on{opacity:1;transform:translate(-50%,0);}
+
+  @media (max-width:600px){
+    .topbar{padding:8px 12px;}
+    .brand h1 i{display:none;}
+    .wrap{padding:12px 12px 30px;}
+    .field{grid-template-columns:minmax(0,1fr) 128px;}
+    .field.wide{grid-template-columns:minmax(0,1fr) 198px;}
+    .result .big{font-size:30px;}
+    .ded-body{margin-left:0;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back" href="../首页/首页.html" aria-label="返回首页" title="返回首页">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <div class="brand">
+    <h1><span>个税计算器</span> <i>· China IIT Calculator</i></h1>
+    <p>月度累计预扣 · 年度汇算清缴 · 专项附加扣除</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tabs" role="tablist" aria-label="计算模式">
+    <button role="tab" aria-selected="true" data-tab="month">月度预扣</button>
+    <button role="tab" aria-selected="false" data-tab="year">年度汇算</button>
+    <button role="tab" aria-selected="false" data-tab="ded">专项附加扣除</button>
+    <button role="tab" aria-selected="false" data-tab="rate">税率表速查</button>
+  </div>
+
+  <!-- ================= 月度预扣 ================= -->
+  <section data-view="month" class="on">
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>收入与扣除</h2>
+          <p class="hint">按累计预扣法计算：累计收入减去累计减除费用（5,000 元 / 月）、累计专项扣除（五险一金个人部分）与累计专项附加扣除后，套用预扣率表。</p>
+
+          <div class="field">
+            <label for="mSalary">月工资薪金<small>税前应发，假设全年每月相同</small></label>
+            <div class="input-wrap"><span>¥</span><input id="mSalary" type="number" inputmode="decimal" min="0" step="100" value="15000"></div>
+          </div>
+
+          <div class="field">
+            <label for="mCity">参保城市<small>按当地社保 / 公积金缴费基数上下限自动计算</small></label>
+            <div class="input-wrap"><select id="mCity" aria-label="参保城市"></select></div>
+          </div>
+
+          <div class="field wide">
+            <label for="mSBaseLo">社保缴费基数范围<small>工资低于下限按下限、高于上限按上限计</small></label>
+            <div class="input-wrap range-wrap">
+              <input id="mSBaseLo" type="number" inputmode="decimal" min="0" step="10" value="6821" aria-label="社保基数下限">
+              <span>–</span>
+              <input id="mSBaseHi" type="number" inputmode="decimal" min="0" step="10" value="35283" aria-label="社保基数上限">
+            </div>
+          </div>
+
+          <div class="field wide">
+            <label for="mMedi">医保 / 失业个人比例<small>随参保城市自动切换，可改为当地实际比例</small></label>
+            <div class="input-wrap range-wrap">
+              <span>医保</span>
+              <input id="mMedi" type="number" inputmode="decimal" min="0" max="10" step="0.1" value="2" aria-label="医保个人比例">
+              <span>%</span>
+              <span>失业</span>
+              <input id="mUnemp" type="number" inputmode="decimal" min="0" max="5" step="0.1" value="0.5" aria-label="失业个人比例">
+              <span>%</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="mShen">五险个人月缴<small>养老 8% + 医保 + 失业，乘以社保缴费基数</small></label>
+            <div class="input-wrap"><span>¥</span><input id="mShen" type="number" inputmode="decimal" min="0" step="10" value="1575"></div>
+          </div>
+
+          <div class="field wide">
+            <label for="mGBaseLo">公积金缴费基数范围<small>下限通常是当地最低工资</small></label>
+            <div class="input-wrap range-wrap">
+              <input id="mGBaseLo" type="number" inputmode="decimal" min="0" step="10" value="2420" aria-label="公积金基数下限">
+              <span>–</span>
+              <input id="mGBaseHi" type="number" inputmode="decimal" min="0" step="10" value="35283" aria-label="公积金基数上限">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="mGong">公积金个人月缴<small>公积金基数 × 下方比例，可改为实际缴纳额</small></label>
+            <div class="input-wrap"><span>¥</span><input id="mGong" type="number" inputmode="decimal" min="0" step="10" value="1050"></div>
+          </div>
+
+          <div class="field">
+            <label for="mFund">公积金比例<small>单位和个人同比例，常见 5%–12%</small></label>
+            <div class="input-wrap">
+              <select id="mFund" aria-label="公积金比例">
+                <option value="5">5%</option>
+                <option value="7" selected>7%</option>
+                <option value="8">8%</option>
+                <option value="10">10%</option>
+                <option value="12">12%</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row-inline">
+            <label class="auto-switch" for="mAuto"><input type="checkbox" id="mAuto" checked>按城市基数自动计算五险与公积金</label>
+          </div>
+          <div class="row-inline" id="mSocialNote">自动：五险 10.5% + 公积金 7%</div>
+          <p class="note">基数上下限取各地近年公布口径的参考值，请以当地社保 / 公积金中心最新公布为准；改数字即可按你的实际基数计算。</p>
+
+          <div class="field">
+            <label for="mAdd">专项附加扣除月合计<small>在「专项附加扣除」页配置后自动带入</small></label>
+            <div class="input-wrap"><span>¥</span><input id="mAdd" type="number" inputmode="decimal" min="0" step="10" value="0"></div>
+          </div>
+
+          <div class="field">
+            <label for="mOther">其他扣除月合计<small>企业年金、商业健康险、个人养老金等</small></label>
+            <div class="input-wrap"><span>¥</span><input id="mOther" type="number" inputmode="decimal" min="0" step="10" value="0"></div>
+          </div>
+
+          <div class="field">
+            <label for="mMonth">查看月份<small>结果区显示该月的预扣与到手</small></label>
+            <div class="input-wrap">
+              <select id="mMonth">
+                <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
+                <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
+                <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
+                <option value="10">10 月</option><option value="11">11 月</option><option value="12" selected>12 月</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>全年逐月明细</h2>
+          <p class="hint">累计预扣下前期税率低、后期可能跳档，每月税额并不相同。</p>
+          <div class="table-wrap">
+            <table>
+              <colgroup><col style="width:12%"><col style="width:26%"><col style="width:22%"><col style="width:20%"><col style="width:20%"></colgroup>
+              <thead><tr><th>月份</th><th>累计应纳税所得额</th><th>累计税额</th><th>当月预扣</th><th>当月到手</th></tr></thead>
+              <tbody id="mTable"></tbody>
+            </table>
+          </div>
+          <p class="note">到手 = 税前工资 − 五险 − 公积金 − 当月预扣个税，未考虑年终奖与其他扣款。</p>
+        </div>
+      </div>
+
+      <aside class="card result" aria-live="polite">
+        <div class="big-label" id="mMonthLabel">12 月应预扣个税</div>
+        <div class="big" id="mTax">¥0.00</div>
+        <dl>
+          <dt>税前月工资</dt><dd id="mSalaryOut">¥0</dd>
+          <dt>五险个人部分</dt><dd id="mShenOut">−¥0</dd>
+          <dt>公积金个人部分</dt><dd id="mGongOut">−¥0</dd>
+          <dt>当月专项附加扣除</dt><dd id="mAddOut">−¥0</dd>
+          <dt>当月到手</dt><dd class="net" id="mNet">¥0</dd>
+          <dt>全年个税合计</dt><dd id="mYearTax">¥0</dd>
+          <dt>全年到手合计</dt><dd class="net" id="mYearNet">¥0</dd>
+        </dl>
+        <span class="tag" id="mBracket">适用预扣率 3%</span>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= 年度汇算 ================= -->
+  <section data-view="year">
+    <div class="grid">
+      <div class="card">
+        <h2>年度综合所得</h2>
+        <p class="hint">劳务报酬、特许权使用费按 80% 计入收入额；稿酬按 80% 后再减按 70% 计算。年度减除费用为 60,000 元。</p>
+
+        <div class="field">
+          <label for="yWage">工资薪金年收入</label>
+          <div class="input-wrap"><span>¥</span><input id="yWage" type="number" inputmode="decimal" min="0" step="1000" value="180000"></div>
+        </div>
+        <div class="field">
+          <label for="yLabor">劳务报酬年收入<small>按收入 × 80% 计入</small></label>
+          <div class="input-wrap"><span>¥</span><input id="yLabor" type="number" inputmode="decimal" min="0" step="1000" value="0"></div>
+        </div>
+        <div class="field">
+          <label for="yAuthor">稿酬年收入<small>按收入 × 80% × 70% 计入</small></label>
+          <div class="input-wrap"><span>¥</span><input id="yAuthor" type="number" inputmode="decimal" min="0" step="1000" value="0"></div>
+        </div>
+        <div class="field">
+          <label for="yRoyalty">特许权使用费年收入<small>按收入 × 80% 计入</small></label>
+          <div class="input-wrap"><span>¥</span><input id="yRoyalty" type="number" inputmode="decimal" min="0" step="1000" value="0"></div>
+        </div>
+        <div class="field">
+          <label for="ySocial">专项扣除年合计<small>五险一金个人部分</small></label>
+          <div class="input-wrap"><span>¥</span><input id="ySocial" type="number" inputmode="decimal" min="0" step="100" value="31500"></div>
+        </div>
+        <div class="field">
+          <label for="yAdd">专项附加扣除年合计<small>含大病医疗等年度项目</small></label>
+          <div class="input-wrap"><span>¥</span><input id="yAdd" type="number" inputmode="decimal" min="0" step="100" value="0"></div>
+        </div>
+        <div class="field">
+          <label for="yOther">其他扣除年合计<small>个人养老金每年上限 12,000 元</small></label>
+          <div class="input-wrap"><span>¥</span><input id="yOther" type="number" inputmode="decimal" min="0" step="100" value="0"></div>
+        </div>
+        <div class="field">
+          <label for="yPaid">已预缴税额<small>工资薪金预扣 + 劳务等预扣</small></label>
+          <div class="input-wrap"><span>¥</span><input id="yPaid" type="number" inputmode="decimal" min="0" step="100" value="0"></div>
+        </div>
+        <div class="row-inline">
+          <button class="ghost" type="button" id="syncYear">按月度方案自动带入收入与扣除</button>
+        </div>
+      </div>
+
+      <aside class="card result" aria-live="polite">
+        <div class="big-label">年度汇算应补 / 应退</div>
+        <div class="big" id="yDiff">¥0.00</div>
+        <dl>
+          <dt>综合所得收入额</dt><dd id="yIncome">¥0</dd>
+          <dt>减除费用</dt><dd>−¥60,000</dd>
+          <dt>专项扣除</dt><dd id="ySocialOut">−¥0</dd>
+          <dt>专项附加扣除</dt><dd id="yAddOut">−¥0</dd>
+          <dt>其他扣除</dt><dd id="yOtherOut">−¥0</dd>
+          <dt>应纳税所得额</dt><dd id="yTaxable">¥0</dd>
+          <dt>全年应纳税额</dt><dd id="yTax">¥0</dd>
+          <dt>已预缴税额</dd><dd id="yPaidOut">¥0</dd>
+        </dl>
+        <span class="tag" id="yTag">适用税率 3%</span>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= 专项附加扣除 ================= -->
+  <section data-view="ded">
+    <div class="grid">
+      <div class="card">
+        <h2>专项附加扣除配置</h2>
+        <p class="hint">现行标准（2023 年起）：子女教育、婴幼儿照护各 2,000 元 / 月 / 人；赡养老人 3,000 元 / 月；住房贷款利息 1,000 元 / 月；住房租金分 1,500 / 1,100 / 800 元三档。住房贷款利息与住房租金不能同时享受。</p>
+
+        <div class="ded" data-ded="child">
+          <div class="ded-head">
+            <input type="checkbox" id="dChild">
+            <label for="dChild">子女教育<small>2,000 元 / 月 / 每名子女</small></label>
+          </div>
+          <div class="ded-body">
+            <span class="unit">子女数</span>
+            <input type="number" id="dChildN" min="0" max="10" step="1" value="1" aria-label="子女数">
+            <span class="unit" id="dChildSum">— 元 / 月</span>
+          </div>
+        </div>
+
+        <div class="ded" data-ded="baby">
+          <div class="ded-head">
+            <input type="checkbox" id="dBaby">
+            <label for="dBaby">3 岁以下婴幼儿照护<small>2,000 元 / 月 / 每名婴幼儿</small></label>
+          </div>
+          <div class="ded-body">
+            <span class="unit">婴幼儿数</span>
+            <input type="number" id="dBabyN" min="0" max="10" step="1" value="1" aria-label="婴幼儿数">
+            <span class="unit" id="dBabySum">— 元 / 月</span>
+          </div>
+        </div>
+
+        <div class="ded" data-ded="edu">
+          <div class="ded-head">
+            <input type="checkbox" id="dEdu">
+            <label for="dEdu">继续教育<small>学历（学位）400 元 / 月，或职业资格 3,600 元 / 年（折 300 元 / 月）</small></label>
+          </div>
+          <div class="ded-body">
+            <select id="dEduType">
+              <option value="degree">学历（学位）继续教育</option>
+              <option value="cert">职业资格继续教育</option>
+            </select>
+            <span class="unit" id="dEduSum">— 元 / 月</span>
+          </div>
+        </div>
+
+        <div class="ded" data-ded="loan">
+          <div class="ded-head">
+            <input type="checkbox" id="dLoan">
+            <label for="dLoan">住房贷款利息<small>1,000 元 / 月，扣除期限最长 240 个月</small></label>
+          </div>
+          <div class="ded-body"><span class="unit">与住房租金互斥，勾选后租金自动取消</span></div>
+        </div>
+
+        <div class="ded" data-ded="rent">
+          <div class="ded-head">
+            <input type="checkbox" id="dRent">
+            <label for="dRent">住房租金<small>按城市档位确定扣除标准</small></label>
+          </div>
+          <div class="ded-body">
+            <select id="dRentCity">
+              <option value="1500">直辖市 / 省会 / 计划单列市：1,500 元 / 月</option>
+              <option value="1100">市辖区户籍人口超 100 万的城市：1,100 元 / 月</option>
+              <option value="800">市辖区户籍人口不超过 100 万的城市：800 元 / 月</option>
+            </select>
+            <span class="unit" id="dRentSum">— 元 / 月</span>
+          </div>
+        </div>
+
+        <div class="ded" data-ded="elder">
+          <div class="ded-head">
+            <input type="checkbox" id="dElder">
+            <label for="dElder">赡养老人<small>独生子女 3,000 元 / 月；非独生子女分摊，每人不超过 1,500 元</small></label>
+          </div>
+          <div class="ded-body">
+            <select id="dElderType">
+              <option value="only">独生子女（3,000 元 / 月）</option>
+              <option value="share">非独生子女分摊</option>
+            </select>
+            <input type="number" id="dElderAmt" min="0" max="1500" step="100" value="1500" aria-label="分摊金额">
+            <span class="unit" id="dElderSum">— 元 / 月</span>
+          </div>
+        </div>
+
+        <div class="ded" data-ded="medical">
+          <div class="ded-head">
+            <input type="checkbox" id="dMedical">
+            <label for="dMedical">大病医疗<small>仅年度汇算扣除：自付超过 15,000 元的部分，年度上限 80,000 元</small></label>
+          </div>
+          <div class="ded-body">
+            <span class="unit">年度自付</span>
+            <input type="number" id="dMedicalAmt" min="0" step="1000" value="0" aria-label="大病医疗年度自付">
+            <span class="unit" id="dMedicalSum">— 元 / 年</span>
+          </div>
+        </div>
+
+        <div class="ded" data-ded="pension">
+          <div class="ded-head">
+            <input type="checkbox" id="dPension">
+            <label for="dPension">个人养老金<small>每年最高 12,000 元，按其他扣除计入</small></label>
+          </div>
+          <div class="ded-body">
+            <input type="number" id="dPensionAmt" min="0" max="12000" step="1000" value="12000" aria-label="个人养老金年缴额">
+            <span class="unit">元 / 年</span>
+          </div>
+        </div>
+
+        <div class="total-band">
+          <span>每月专项附加扣除合计</span>
+          <b id="dedMonth">¥0</b>
+        </div>
+        <div class="total-band" style="border-top:0;padding-top:2px;">
+          <span>全年扣除合计（含大病医疗与个人养老金）</span>
+          <b id="dedYear">¥0</b>
+        </div>
+        <p class="note">大病医疗只能在年度汇算时扣除，不计入月度预扣。勾选后「月度预扣」「年度汇算」页会自动带入对应金额。</p>
+      </div>
+
+      <aside class="card result">
+        <div class="big-label">每月可少预扣个税（估算）</div>
+        <div class="big" id="dedSave">¥0.00</div>
+        <dl>
+          <dt>当前月度专项附加扣除</dt><dd id="dedMonthOut">¥0</dd>
+          <dt>对应全年扣除</dt><dd id="dedYearOut">¥0</dd>
+          <dt>子女 / 婴幼儿类合计</dt><dd id="dedKidOut">¥0</dd>
+          <dt>住房类合计</dd><dd id="dedHouseOut">¥0</dd>
+        </dl>
+        <span class="tag">扣除越多，应纳税所得额越低</span>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= 税率表 ================= -->
+  <section data-view="rate">
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>月度预扣率表（居民个人工资薪金）</h2>
+          <p class="hint">按累计预扣预缴应纳税所得额确定预扣率与速算扣除数。</p>
+          <div class="table-wrap">
+            <table>
+              <colgroup><col style="width:46%"><col style="width:18%"><col style="width:18%"><col style="width:18%"></colgroup>
+              <thead><tr><th>累计预扣预缴应纳税所得额</th><th>预扣率</th><th>速算扣除数</th><th>当前档位</th></tr></thead>
+              <tbody id="rateMonth"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>年度综合所得税率表</h2>
+          <p class="hint">适用于工资薪金、劳务报酬、稿酬、特许权使用费合并计算的年度汇算。</p>
+          <div class="table-wrap">
+            <table>
+              <colgroup><col style="width:46%"><col style="width:18%"><col style="width:18%"><col style="width:18%"></colgroup>
+              <thead><tr><th>全年应纳税所得额</th><th>税率</th><th>速算扣除数</th><th>当前档位</th></tr></thead>
+              <tbody id="rateYear"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <aside class="card result">
+        <div class="big-label">你当前适用的年度税率</div>
+        <div class="big" id="rateNow">3%</div>
+        <dl>
+          <dt>年度应纳税所得额</dt><dd id="rateTaxable">¥0</dd>
+          <dt>速算扣除数</dt><dd id="rateQuick">¥0</dd>
+          <dt>边际税率</dt><dd id="rateMarginal">3%</dd>
+        </dl>
+        <span class="tag">收入每多 100 元，按边际税率计税</span>
+      </aside>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+var BRACKETS = [
+  { up: 36000,    rate: 0.03, quick: 0 },
+  { up: 144000,   rate: 0.10, quick: 2520 },
+  { up: 300000,   rate: 0.20, quick: 16920 },
+  { up: 420000,   rate: 0.25, quick: 31920 },
+  { up: 660000,   rate: 0.30, quick: 52920 },
+  { up: 960000,   rate: 0.35, quick: 85920 },
+  { up: Infinity, rate: 0.45, quick: 181920 }
+];
+
+function bracketOf(taxable){
+  for (var i = 0; i < BRACKETS.length; i++){
+    if (taxable <= BRACKETS[i].up) return BRACKETS[i];
+  }
+  return BRACKETS[BRACKETS.length - 1];
+}
+function taxOf(taxable){
+  if (taxable <= 0) return 0;
+  var b = bracketOf(taxable);
+  return taxable * b.rate - b.quick;
+}
+function money(n){
+  return (n < 0 ? '−' : '') + '¥' + Math.abs(n).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function money0(n){
+  return (n < 0 ? '−' : '') + '¥' + Math.abs(n).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+}
+function socialTotal(){ return num('mShen') + num('mGong'); }
+function num(id){
+  var el = document.getElementById(id);
+  if (!el) return 0;
+  var v = parseFloat(el.value);
+  return isFinite(v) && v > 0 ? v : 0;
+}
+function pct(r){ return (r * 100).toFixed(0) + '%'; }
+
+/* ---------- 专项附加扣除 ---------- */
+function readDed(){
+  var child = document.getElementById('dChild').checked ? Math.min(10, num('dChildN')) * 2000 : 0;
+  var baby  = document.getElementById('dBaby').checked ? Math.min(10, num('dBabyN')) * 2000 : 0;
+
+  var edu = 0;
+  if (document.getElementById('dEdu').checked){
+    edu = document.getElementById('dEduType').value === 'degree' ? 400 : 300;
+  }
+  var loan = document.getElementById('dLoan').checked ? 1000 : 0;
+  var rent = document.getElementById('dRent').checked ? parseFloat(document.getElementById('dRentCity').value) : 0;
+
+  var elder = 0;
+  if (document.getElementById('dElder').checked){
+    elder = document.getElementById('dElderType').value === 'only' ? 3000 : Math.min(1500, num('dElderAmt'));
+  }
+
+  var medical = document.getElementById('dMedical').checked
+    ? Math.max(0, Math.min(80000, num('dMedicalAmt') - 15000)) : 0;
+  var pension = document.getElementById('dPension').checked ? Math.min(12000, num('dPensionAmt')) : 0;
+
+  var monthSum = child + baby + edu + loan + rent + elder;
+  var yearSum = monthSum * 12 + medical + pension;
+
+  return { child: child, baby: baby, edu: edu, loan: loan, rent: rent, elder: elder,
+    medical: medical, pension: pension, month: monthSum, year: yearSum };
+}
+
+function paintDed(){
+  var d = readDed();
+
+  document.getElementById('dedMonth').textContent = money0(d.month);
+  document.getElementById('dedYear').textContent = money0(d.year);
+  document.getElementById('dedMonthOut').textContent = money0(d.month);
+  document.getElementById('dedYearOut').textContent = money0(d.year);
+  document.getElementById('dedKidOut').textContent = money0(d.child + d.baby);
+  document.getElementById('dedHouseOut').textContent = money0(d.loan + d.rent);
+
+  document.getElementById('dChildSum').textContent = money0(d.child) + ' / 月';
+  document.getElementById('dBabySum').textContent = money0(d.baby) + ' / 月';
+  document.getElementById('dEduSum').textContent = d.edu ? money0(d.edu) + ' / 月' : '— 元 / 月';
+  document.getElementById('dRentSum').textContent = money0(d.rent) + ' / 月';
+  document.getElementById('dElderSum').textContent = d.elder ? money0(d.elder) + ' / 月' : '— 元 / 月';
+  document.getElementById('dMedicalSum').textContent = money0(d.medical) + ' / 年';
+
+  document.getElementById('mAdd').value = String(Math.round(d.month));
+  document.getElementById('mOther').value = String(Math.round(d.pension / 12));
+  document.getElementById('yAdd').value = String(Math.round(d.year - d.pension));
+  document.getElementById('yOther').value = String(Math.round(d.pension));
+
+  document.querySelectorAll('.ded').forEach(function(box){
+    box.classList.toggle('on', box.querySelector('input[type="checkbox"]').checked);
+  });
+
+  if (document.getElementById('dLoan').checked && document.getElementById('dRent').checked){
+    document.getElementById('dRent').checked = false;
+  }
+
+  // 按当前年度边际税率估算「每月少预扣」
+  var baseAnnual = Math.max(0, num('mSalary') * 12 - 60000 - socialTotal() * 12);
+  var rate = bracketOf(Math.max(1, baseAnnual - d.month * 12)).rate;
+  document.getElementById('dedSave').textContent = money(d.month * rate);
+
+  renderAll();
+}
+
+/* ---------- 月度预扣 ---------- */
+var monthRows = [];
+
+function computeMonthly(){
+  var salary = num('mSalary'), social = socialTotal(), add = num('mAdd'), other = num('mOther');
+  var rows = [], prevTax = 0;
+  for (var m = 1; m <= 12; m++){
+    var cumTaxable = Math.max(0, (salary - 5000 - social - add - other) * m);
+    var cumTax = taxOf(cumTaxable);
+    var monthTax = Math.max(0, cumTax - prevTax);
+    prevTax = cumTax;
+    rows.push({ m: m, cumTaxable: cumTaxable, cumTax: cumTax, tax: monthTax, net: salary - social - monthTax });
+  }
+  return rows;
+}
+
+function paintMonthly(){
+  monthRows = computeMonthly();
+  var sel = parseInt(document.getElementById('mMonth').value, 10) || 12;
+  var row = monthRows[sel - 1];
+  var salary = num('mSalary'), social = socialTotal(), add = num('mAdd');
+
+  document.getElementById('mMonthLabel').textContent = sel + ' 月应预扣个税';
+  document.getElementById('mTax').textContent = money(row.tax);
+  document.getElementById('mSalaryOut').textContent = money0(salary);
+  document.getElementById('mShenOut').textContent = '−' + money0(num('mShen'));
+  document.getElementById('mGongOut').textContent = '−' + money0(num('mGong'));
+  document.getElementById('mAddOut').textContent = '−' + money0(add);
+  document.getElementById('mNet').textContent = money(row.net);
+  document.getElementById('mYearTax').textContent = money(monthRows[11].cumTax);
+  var netSum = 0;
+  for (var k = 0; k < monthRows.length; k++) netSum += monthRows[k].net;
+  document.getElementById('mYearNet').textContent = money(netSum);
+
+  var b = bracketOf(row.cumTaxable);
+  document.getElementById('mBracket').textContent =
+    '累计应纳税所得额 ' + money0(row.cumTaxable) + ' · 预扣率 ' + pct(b.rate);
+
+  var html = '';
+  for (var i = 0; i < monthRows.length; i++){
+    var r = monthRows[i];
+    html += '<tr' + (r.m === sel ? ' class="now"' : '') + '>'
+      + '<td>' + r.m + ' 月</td>'
+      + '<td class="num">' + money0(r.cumTaxable) + '</td>'
+      + '<td class="num">' + money0(r.cumTax) + '</td>'
+      + '<td class="num">' + money0(r.tax) + '</td>'
+      + '<td class="num">' + money0(r.net) + '</td></tr>';
+  }
+  document.getElementById('mTable').innerHTML = html;
+
+  var paid = document.getElementById('yPaid');
+  if (!paid.dataset.touched) paid.value = String(Math.round(monthRows[11].cumTax));
+}
+
+/* ---------- 年度汇算 ---------- */
+function paintYear(){
+  var wage = num('yWage'), labor = num('yLabor'), author = num('yAuthor'), royalty = num('yRoyalty');
+  var social = num('ySocial'), add = num('yAdd'), other = num('yOther'), paid = num('yPaid');
+
+  var income = wage + labor * 0.8 + author * 0.8 * 0.7 + royalty * 0.8;
+  var taxable = Math.max(0, income - 60000 - social - add - other);
+  var tax = taxOf(taxable);
+  var diff = tax - paid;
+
+  document.getElementById('yIncome').textContent = money0(income);
+  document.getElementById('ySocialOut').textContent = '−' + money0(social);
+  document.getElementById('yAddOut').textContent = '−' + money0(add);
+  document.getElementById('yOtherOut').textContent = '−' + money0(other);
+  document.getElementById('yTaxable').textContent = money0(taxable);
+  document.getElementById('yTax').textContent = money(tax);
+  document.getElementById('yPaidOut').textContent = money0(paid);
+  document.getElementById('yDiff').textContent = money(Math.abs(diff));
+  document.getElementById('yDiff').style.color = diff >= 0 ? 'var(--accent)' : 'var(--warn)';
+  var state = Math.abs(diff) < 0.005 ? '无需补退税' : (diff > 0 ? '应补税' : '应退税');
+  document.getElementById('yTag').textContent = state + ' · 适用税率 ' + pct(bracketOf(taxable).rate);
+}
+
+/* ---------- 税率表 ---------- */
+function tableHtml(taxable){
+  var nowB = bracketOf(taxable), html = '';
+  for (var i = 0; i < BRACKETS.length; i++){
+    var br = BRACKETS[i];
+    var prev = i === 0 ? 0 : BRACKETS[i - 1].up;
+    var label = i === 0
+      ? '不超过 ' + money0(br.up)
+      : (i === BRACKETS.length - 1 ? '超过 ' + money0(prev) : money0(prev) + ' — ' + money0(br.up));
+    var isNow = br === nowB;
+    html += '<tr' + (isNow ? ' class="now"' : '') + '>'
+      + '<td>' + label + '</td>'
+      + '<td class="num">' + pct(br.rate) + '</td>'
+      + '<td class="num">' + (br.quick ? money0(br.quick) : '¥0') + '</td>'
+      + '<td>' + (isNow ? '当前' : '') + '</td></tr>';
+  }
+  return html;
+}
+
+function paintRate(){
+  var monthlyTaxable = monthRows.length ? monthRows[11].cumTaxable : 0;
+  var wage = num('yWage'), labor = num('yLabor'), author = num('yAuthor'), royalty = num('yRoyalty');
+  var yearTaxable = Math.max(0, wage + labor * 0.8 + author * 0.56 + royalty * 0.8
+    - 60000 - num('ySocial') - num('yAdd') - num('yOther'));
+
+  document.getElementById('rateMonth').innerHTML = tableHtml(monthlyTaxable);
+  document.getElementById('rateYear').innerHTML = tableHtml(yearTaxable);
+
+  var b = bracketOf(yearTaxable);
+  document.getElementById('rateNow').textContent = pct(b.rate);
+  document.getElementById('rateTaxable').textContent = money0(yearTaxable);
+  document.getElementById('rateQuick').textContent = money0(b.quick);
+  document.getElementById('rateMarginal').textContent = pct(b.rate);
+}
+
+function renderAll(){
+  paintMonthly();
+  paintYear();
+  paintRate();
+}
+
+/* ---------- 事件绑定 ---------- */
+function on(id, ev, fn){
+  var el = document.getElementById(id);
+  if (el) el.addEventListener(ev, fn);
+}
+function numberField(id){
+  on(id, 'input', renderAll);
+  on(id, 'change', renderAll);
+}
+['mSalary', 'mShen', 'mGong', 'mAdd', 'mOther'].forEach(numberField);
+on('mMonth', 'change', paintMonthly);
+['yWage', 'yLabor', 'yAuthor', 'yRoyalty', 'ySocial', 'yAdd', 'yOther'].forEach(numberField);
+on('yPaid', 'input', function(){
+  document.getElementById('yPaid').dataset.touched = '1';
+  paintYear();
+});
+
+var SOCIAL_RATE = 0.105;
+
+/* 各地社保 / 公积金缴费基数上下限（参考值，2024 年前后公布口径；可在页面上直接改） */
+var CITY_BASE = {
+  '北京':     [6821, 35283, 2420, 35283],
+  '上海':     [7384, 36921, 2690, 36921],
+  '广州':     [4546, 27501, 2300, 27501],
+  '深圳':     [4492, 27501, 2360, 27501],
+  '天津':     [4751, 23757, 2320, 23757],
+  '重庆':     [4118, 20587, 2100, 20587],
+  '杭州':     [4812, 24930, 2490, 24930],
+  '宁波':     [4462, 24060, 2490, 24060],
+  '台州':     [4462, 24060, 2280, 24060],
+  '南京':     [4879, 24396, 2280, 24396],
+  '苏州':     [4879, 24396, 2280, 24396],
+  '武汉':     [4494, 22470, 2210, 22470],
+  '成都':     [4511, 22555, 2100, 22555],
+  '西安':     [4559, 22795, 2160, 22795],
+  '长沙':     [4027, 20133, 2010, 20133],
+  '郑州':     [3578, 17890, 2100, 17890],
+  '济南':     [4416, 22078, 2200, 22078],
+  '青岛':     [4416, 22078, 2200, 22078],
+  '厦门':     [4212, 21060, 2030, 21060],
+  '合肥':     [4227, 21135, 2060, 21135],
+  '福州':     [4212, 22164, 2195, 22164],
+  '南昌':     [4170, 20850, 1850, 20850],
+  '昆明':     [4306, 21530, 1990, 21530],
+  '贵阳':     [4385, 21925, 1890, 21925],
+  '南宁':     [4187, 20935, 1990, 20935],
+  '海口':     [4165, 20825, 2010, 20825],
+  '沈阳':     [4442, 22210, 1910, 22210],
+  '大连':     [4375, 21875, 1910, 21875],
+  '哈尔滨':   [4290, 21450, 1860, 21450],
+  '长春':     [4300, 21500, 1880, 21500],
+  '石家庄':   [4385, 21925, 2200, 21925],
+  '太原':     [4113, 20565, 1880, 20565],
+  '乌鲁木齐': [4052, 20260, 1820, 20260],
+  '兰州':     [4090, 20450, 1770, 20450],
+  '银川':     [4025, 20125, 1950, 20125],
+  '西宁':     [3980, 19900, 1880, 19900],
+  '呼和浩特': [4000, 20000, 1980, 20000],
+  '拉萨':     [4000, 20000, 1850, 20000]
+};
+
+/* 各城市职工医保、失业保险个人缴费比例（%，参考值，可改） */
+var MEDI_UNEMP = {
+  '北京':[2,0.2], '上海':[2,0.5], '广州':[2,0.2], '深圳':[2,0.3], '天津':[2,0.5],
+  '重庆':[2,0.5], '杭州':[2,0.5], '宁波':[2,0.5], '台州':[2,0.5], '南京':[2,0.5],
+  '苏州':[2,0.5], '武汉':[2,0.3], '成都':[2,0.4], '西安':[2,0.3], '长沙':[2,0.3],
+  '郑州':[2,0.3], '济南':[2,0.3], '青岛':[2,0.3], '厦门':[2,0.5], '合肥':[2,0.5],
+  '福州':[2,0.5], '南昌':[2,0.5], '昆明':[2,0.3], '贵阳':[2,0.3], '南宁':[2,0.5],
+  '海口':[2,0.5], '沈阳':[2,0.5], '大连':[2,0.5], '哈尔滨':[2,0.5], '长春':[2,0.5],
+  '石家庄':[2,0.5], '太原':[2,0.3], '乌鲁木齐':[2,0.5], '兰州':[2,0.3], '银川':[2,0.3],
+  '西宁':[2,0.5], '呼和浩特':[2,0.3], '拉萨':[2,0.5]
+};
+
+function isAuto(){ return document.getElementById('mAuto').checked; }
+
+function shenRate(){
+  return 0.08 + (num('mMedi') / 100) + (num('mUnemp') / 100);
+}
+
+function fillCity(){
+  var city = document.getElementById('mCity').value;
+  var data = CITY_BASE[city];
+  if (!data) return;
+  document.getElementById('mSBaseLo').value = String(data[0]);
+  document.getElementById('mSBaseHi').value = String(data[1]);
+  document.getElementById('mGBaseLo').value = String(data[2]);
+  document.getElementById('mGBaseHi').value = String(data[3]);
+
+  var mu = MEDI_UNEMP[city];
+  if (mu){
+    document.getElementById('mMedi').value = String(mu[0]);
+    document.getElementById('mUnemp').value = String(mu[1]);
+  }
+}
+
+function applyBase(salary, lo, hi){
+  var base = salary;
+  var tag = '';
+  if (lo > 0 && base < lo){ base = lo; tag = '按下限'; }
+  else if (hi > 0 && base > hi){ base = hi; tag = '按上限'; }
+  return { base: base, tag: tag };
+}
+
+function autoSocial(silent){
+  var shen = document.getElementById('mShen'), gong = document.getElementById('mGong');
+  var fundSel = document.getElementById('mFund');
+  var ids = ['mSBaseLo', 'mSBaseHi', 'mGBaseLo', 'mGBaseHi', 'mCity'];
+
+  if (!isAuto()){
+    shen.readOnly = false; gong.readOnly = false;
+    shen.style.opacity = '1'; gong.style.opacity = '1';
+    fundSel.disabled = true;
+    fundSel.style.opacity = '.45';
+    document.getElementById('mSocialNote').textContent =
+      '手动模式：五险 ' + money0(num('mShen')) + ' + 公积金 ' + money0(num('mGong')) + ' = ' + money0(socialTotal()) + ' 元 / 月';
+    return;
+  }
+
+  shen.readOnly = true; gong.readOnly = true;
+  shen.style.opacity = '.85'; gong.style.opacity = '.85';
+  fundSel.disabled = false;
+  fundSel.style.opacity = '1';
+
+  var salary = num('mSalary');
+  var fund = parseFloat(fundSel.value) || 0;
+
+  var s = applyBase(salary, num('mSBaseLo'), num('mSBaseHi'));
+  var g = applyBase(salary, num('mGBaseLo'), num('mGBaseHi'));
+
+  shen.value = String(Math.round(s.base * shenRate()));
+  gong.value = String(Math.round(g.base * fund / 100));
+
+  var city = document.getElementById('mCity').value;
+  var rate = shenRate() * 100;
+  document.getElementById('mSocialNote').textContent =
+    (city ? city + ' · ' : '') + '社保基数 ' + money0(s.base) + (s.tag ? '（' + s.tag + '）' : '（按工资）')
+    + '，五险合计 ' + rate.toFixed(1).replace('.0', '') + '%（养老 8% + 医保 '
+    + num('mMedi') + '% + 失业 ' + num('mUnemp') + '%）→ ' + money0(num('mShen'))
+    + '；公积金基数 ' + money0(g.base) + (g.tag ? '（' + g.tag + '）' : '（按工资）')
+    + ' × ' + fund + '% = ' + money0(num('mGong'));
+
+  if (!silent) renderAll();
+}
+
+/* 城市下拉初始化 */
+(function(){
+  var sel = document.getElementById('mCity');
+  var names = Object.keys(CITY_BASE);
+  var html = '';
+  for (var i = 0; i < names.length; i++){
+    html += '<option value="' + names[i] + '"' + (names[i] === '北京' ? ' selected' : '') + '>' + names[i] + '</option>';
+  }
+  html += '<option value="custom">其他 / 自定义</option>';
+  sel.innerHTML = html;
+  fillCity();
+})();
+
+document.getElementById('mCity').addEventListener('change', function(){
+  fillCity();
+  autoSocial(false);
+  toast('已切换为' + this.value + '的缴费基数');
+});
+
+['mSBaseLo', 'mSBaseHi', 'mGBaseLo', 'mGBaseHi'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', function(){
+    if (isAuto()){ autoSocial(true); renderAll(); }
+  });
+});
+['mSBaseLo', 'mSBaseHi', 'mGBaseLo', 'mGBaseHi'].forEach(function(id){
+  document.getElementById(id).addEventListener('change', function(){
+    if (isAuto()) autoSocial(false);
+  });
+});
+
+['mMedi', 'mUnemp'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', function(){
+    if (isAuto()){ autoSocial(true); renderAll(); }
+  });
+});
+
+['mShen', 'mGong'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', function(){
+    if (isAuto()){
+      document.getElementById('mAuto').checked = false;
+      autoSocial(true);
+      toast('已切换为手动填写，五险与公积金可分别修改');
+    }
+    paintMonthly();
+  });
+});
+document.getElementById('mAuto').addEventListener('change', function(){ autoSocial(false); });
+document.getElementById('mFund').addEventListener('change', function(){ autoSocial(false); });
+document.getElementById('mSalary').addEventListener('input', function(){
+  if (isAuto()){ autoSocial(true); renderAll(); }
+});
+
+on('syncYear', 'click', function(){
+  document.getElementById('yWage').value = String(Math.round(num('mSalary') * 12));
+  document.getElementById('ySocial').value = String(Math.round(socialTotal() * 12));
+  renderAll();
+  toast('已带入月度的收入与扣除');
+});
+
+var dedIds = ['dChild','dChildN','dBaby','dBabyN','dEdu','dEduType','dLoan','dRent','dRentCity',
+  'dElder','dElderType','dElderAmt','dMedical','dMedicalAmt','dPension','dPensionAmt'];
+dedIds.forEach(function(id){
+  ['change', 'input', 'click'].forEach(function(ev){
+    on(id, ev, function(){
+      if (id === 'dElderType'){
+        var amt = document.getElementById('dElderAmt');
+        var only = document.getElementById('dElderType').value === 'only';
+        amt.disabled = only;
+        amt.style.opacity = only ? '.45' : '1';
+      }
+      paintDed();
+    });
+  });
+});
+
+document.querySelectorAll('.tabs button').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.tabs button').forEach(function(b){ b.setAttribute('aria-selected', 'false'); });
+    btn.setAttribute('aria-selected', 'true');
+    document.querySelectorAll('section[data-view]').forEach(function(sec){
+      sec.classList.toggle('on', sec.dataset.view === btn.dataset.tab);
+    });
+  });
+});
+
+var toastTimer;
+function toast(msg){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('on'); }, 1600);
+}
+
+paintDed();
+autoSocial(true);
+renderAll();
+document.getElementById('dElderAmt').disabled = true;
+document.getElementById('dElderAmt').style.opacity = '.45';
+</script>
+</body>
+</html>

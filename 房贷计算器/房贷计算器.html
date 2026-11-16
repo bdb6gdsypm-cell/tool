@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>房贷计算器 · 本息与本金</title>
+<style>
+  :root{
+    --bg:#f4f4f2;
+    --panel:#ffffff;
+    --panel-2:#f8f8f6;
+    --line:#e4e4df;
+    --line-soft:#efefec;
+    --ink:#1f2b31;
+    --ink-soft:#43525a;
+    --muted:#767f83;
+    --accent:#2b6573;
+    --accent-soft:rgba(43,101,115,.1);
+    --warn:#9b4a33;
+    --ok:#3f6b4a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font:14px/1.65 "PingFang SC","Noto Sans SC","Source Han Sans SC",system-ui,-apple-system,"Helvetica Neue",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 16px 210px;}
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:14px;}
+  h1{font-size:22px;font-weight:600;letter-spacing:.02em;margin:0;}
+  .back{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-bottom:10px;border:1px solid var(--line);border-radius:50%;background:var(--panel-2);color:var(--ink-soft);text-decoration:none;transition:.15s;}
+  .back:hover{border-color:var(--accent);color:var(--accent);background:#ffffff;}
+  .back svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;}
+  .sub{color:var(--muted);font-size:13px;}
+  .badge{font-size:12px;color:var(--accent);border:1px solid rgba(43,101,115,.35);background:var(--accent-soft);border-radius:999px;padding:4px 10px;white-space:nowrap;}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px;align-items:stretch;}
+  .c1{width:19%;}.c2{width:18%;}.c3{width:19%;}.c4{width:19%;}.c5{width:25%;}
+  @media (min-width:900px){
+    .grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);}
+    .c1{width:26%;}.c2{width:16%;}.c3{width:19%;}.c4{width:16%;}.c5{width:23%;}
+  }
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:16px;}
+  .panel h2{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:600;margin:0 0 14px;}
+  .field{margin-bottom:14px;}
+  .field label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--ink-soft);margin-bottom:6px;}
+  .field label em{font-style:normal;color:var(--muted);font-size:12px;}
+  .inputwrap{display:flex;align-items:center;border:1px solid var(--line);border-radius:3px;background:#fff;overflow:hidden;}
+  .inputwrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft);}
+  .inputwrap input,.inputwrap select{
+    flex:1;min-width:0;border:0;background:transparent;padding:11px 12px;
+    font:16px/1.2 inherit;color:var(--ink);outline:none;appearance:none;
+  }
+  .inputwrap select{padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+  .unit{flex:0 0 auto;padding:0 12px;font-size:12px;color:var(--muted);border-left:1px solid var(--line-soft);background:var(--panel-2);align-self:stretch;display:flex;align-items:center;}
+  .seg{display:flex;gap:8px;}
+  .seg button{
+    flex:1;min-height:44px;padding:9px 8px;border:1px solid var(--line);border-radius:3px;
+    background:var(--panel-2);color:var(--ink-soft);font:13px/1.4 inherit;cursor:pointer;transition:.15s;
+  }
+  .seg button:hover{border-color:#c6c1b2;}
+  .seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#f6fbfc;font-weight:600;}
+  .ratehint{font-size:12px;color:var(--muted);margin:6px 0 0;}
+  .btn-main{
+    width:100%;min-height:46px;border:0;border-radius:3px;background:var(--accent);color:#f6fbfc;
+    font:600 15px/1 inherit;cursor:pointer;letter-spacing:.04em;margin-top:4px;
+  }
+  .btn-main:hover{background:#245662;}
+  .btn-ghost{width:100%;min-height:40px;margin-top:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink-soft);border-radius:3px;font:13px/1 inherit;cursor:pointer;}
+  .btn-ghost:hover{border-color:#c6c1b2;}
+  .hero-stat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+  .stat{padding:14px 14px 12px;background:var(--panel);}
+  .stat+.stat{border-left:1px solid var(--line-soft);}
+  .stat.main{grid-column:1/-1;border-left:0;border-bottom:1px solid var(--line-soft);background:linear-gradient(180deg,rgba(43,101,115,.07),rgba(43,101,115,0));}
+  .stat .k{font-size:12px;color:var(--muted);}
+  .stat .v{font-size:30px;font-weight:600;color:var(--accent);letter-spacing:-.01em;line-height:1.25;margin-top:2px;font-variant-numeric:tabular-nums;}
+  .stat .v small{font-size:12px;font-weight:400;color:var(--muted);margin-left:4px;}
+  .stat .v.sm{font-size:20px;color:var(--ink);}
+  .split{margin-top:12px;}
+  .split .row{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);padding:5px 0;}
+  .split .row b{font-weight:600;font-variant-numeric:tabular-nums;}
+  .ratio{height:8px;border-radius:2px;overflow:hidden;display:flex;background:var(--panel-2);border:1px solid var(--line-soft);margin:8px 0 6px;}
+  .ratio i{display:block;height:100%;}
+  .ratio .p{background:var(--accent);}
+  .ratio .i2{background:#cba06a;}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .legend u{display:inline-block;width:8px;height:8px;border-radius:2px;text-decoration:none;}
+  .preRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) 34px;gap:6px;margin-bottom:6px;align-items:stretch;}
+  .preRow .inputwrap input{padding:9px 10px;font-size:15px;}
+  .preRow .inputwrap .unit{padding:0 8px;font-size:11px;}
+  .preDel{width:34px;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:3px;cursor:pointer;font:14px/1 inherit;}
+  .preDel:hover{border-color:#c6c1b2;color:var(--warn);}
+  .cum{font-size:10px;line-height:1.3;color:#a9a294;margin-top:3px;font-weight:400;white-space:normal;overflow-wrap:anywhere;}
+  .preline{white-space:nowrap;overflow-wrap:normal;}
+  .preline.multi{display:flex;align-items:baseline;max-width:100%;}
+  .preline.multi .pn{flex:0 0 auto;}
+  .preline.multi .pn2{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:#8f3a2e;}
+  .pn{color:#8f3a2e;}
+  tr.haspre td{vertical-align:top;}
+
+.allshown{color:var(--muted);font-size:12px;text-align:center;padding:8px 0;}
+  .presum{margin-top:12px;border:1px solid rgba(43,101,115,.3);background:var(--accent-soft);border-radius:3px;padding:8px 12px;}
+  .presum .prow{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);padding:3px 0;font-variant-numeric:tabular-nums;}
+  .presum .prow b{font-weight:600;}
+  .chart{margin-top:14px;}
+  .chart svg{width:100%;height:150px;display:block;}
+  .chartcap{font-size:12px;color:var(--muted);margin-top:4px;}
+  .cmp{margin-top:14px;border-top:1px solid var(--line-soft);padding-top:12px;}
+  .cmp h3{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 8px;}
+  .cmp .cgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .ccell{border:1px solid var(--line);border-radius:3px;padding:10px;background:var(--panel-2);}
+  .ccell.on{border-color:rgba(43,101,115,.5);background:var(--accent-soft);}
+  .ccell .t{font-size:12px;color:var(--ink-soft);font-weight:600;}
+  .ccell .v{font-size:12px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums;line-height:1.7;}
+  .tblwrap{margin-top:14px;overflow:visible;border:1px solid var(--line);border-radius:4px;}
+  table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:12.5px;}
+  thead th{position:sticky;top:0;z-index:3;background:var(--panel-2);color:var(--ink-soft);font-weight:600;text-align:right;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  thead th:first-child{text-align:left;}
+  .tblwrap.clip table tr:nth-child(n+13){display:none;}
+  .tblwrap.clip tr.more{display:table-row;}
+  tr.more td{padding:0;border-bottom:0;background:var(--panel-2);}
+  tr.more button{width:100%;min-height:38px;border:0;background:transparent;color:var(--accent);font:13px/1 inherit;cursor:pointer;}
+  td{padding:8px 8px;text-align:right;border-bottom:1px solid var(--line-soft);color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  td:first-child{text-align:left;color:var(--muted);}
+  tbody tr:last-child td{border-bottom:0;}
+  .note{font-size:12px;color:var(--muted);line-height:1.8;margin-top:12px;}
+  .note strong{color:var(--ink-soft);font-weight:600;}
+  footer{margin-top:22px;text-align:center;font-size:12px;color:var(--muted);line-height:1.8;}
+  .err{color:var(--warn);font-size:12px;margin-top:6px;min-height:16px;}
+  .tip-bubble{position:fixed;z-index:99;background:#2b6573;color:#fff;font-size:11.5px;line-height:1.5;padding:6px 9px;border-radius:4px;max-width:270px;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none;white-space:normal;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <a class="back" href="../首页/首页.html" aria-label="返回首页" title="返回首页">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>
+      </a>
+      <h1>房贷计算器</h1>
+      <div class="sub">等额本息 / 等额本金 · 月供、利息、还款明细一次算清</div>
+    </div>
+    <div class="badge">纯本地计算 · 不上传</div>
+  </header>
+
+  <div class="grid">
+    <!-- ===== 参数 ===== -->
+    <section class="panel">
+      <h2>贷款参数</h2>
+      <div class="field">
+        <label>房屋总价</label>
+        <div class="inputwrap"><input id="price" type="number" inputmode="decimal" value="150" min="1" step="1"><span class="unit">万元</span></div>
+      </div>
+
+      <div class="field">
+        <label>首付比例 <em id="dpHint">3.0 成</em></label>
+        <div class="inputwrap"><input id="down" type="number" inputmode="decimal" value="30" min="0" max="100" step="1"><span class="unit">%</span></div>
+      </div>
+
+      <div class="field">
+        <label>首付金额 <em>按比例自动算或手动输入</em></label>
+        <div class="inputwrap"><input id="downAmt" type="number" inputmode="decimal" value="45" min="0" step="1"><span class="unit">万元</span></div>
+      </div>
+
+      <div class="field">
+        <label>贷款类型</label>
+        <div class="seg" id="typeSeg">
+          <button type="button" data-type="commercial" aria-pressed="true">商业贷</button>
+          <button type="button" data-type="fund" aria-pressed="false">公积金贷</button>
+          <button type="button" data-type="combo" aria-pressed="false">组合贷</button>
+        </div>
+      </div>
+
+      <div class="field" id="loanField">
+        <label>贷款金额 <em id="loanHint">105.00 万元</em></label>
+        <div class="inputwrap"><input id="loan" type="number" inputmode="decimal" value="105" min="0" step="1"><span class="unit">万元</span></div>
+      </div>
+
+      <div class="field">
+        <label>贷款年限</label>
+        <div class="inputwrap">
+          <select id="years">
+            <option value="5">5 年（60 期）</option>
+            <option value="10">10 年（120 期）</option>
+            <option value="15">15 年（180 期）</option>
+            <option value="20">20 年（240 期）</option>
+            <option value="25">25 年（300 期）</option>
+            <option value="30" selected>30 年（360 期）</option>
+            <option value="35">35 年（420 期）</option>
+            <option value="40">40 年（480 期）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field" id="rateField">
+        <label>年利率 <em id="rateTag">LPR 参考</em></label>
+        <div class="inputwrap"><input id="rate" type="number" inputmode="decimal" value="3.1" min="0.1" max="24" step="0.01"><span class="unit">%</span></div>
+        <p class="ratehint" id="rateHint">商业贷款常用 2.9%–3.3%；按合同执行利率填。</p>
+      </div>
+
+      <!-- 组合贷专用 -->
+      <div id="comboBlock" style="display:none">
+        <div class="field">
+          <label>商业贷款金额</label>
+          <div class="inputwrap"><input id="cLoan" type="number" inputmode="decimal" value="75" min="0" step="1"><span class="unit">万元</span></div>
+        </div>
+        <div class="field">
+          <label>商贷年利率</label>
+          <div class="inputwrap"><input id="cRate" type="number" inputmode="decimal" value="3.1" min="0.1" max="24" step="0.01"><span class="unit">%</span></div>
+        </div>
+        <div class="field">
+          <label>公积金贷款金额</label>
+          <div class="inputwrap"><input id="fLoan" type="number" inputmode="decimal" value="30" min="0" step="1"><span class="unit">万元</span></div>
+        </div>
+        <div class="field">
+          <label>公积金年利率</label>
+          <div class="inputwrap"><input id="fRate" type="number" inputmode="decimal" value="2.6" min="0.1" max="24" step="0.01"><span class="unit">%</span></div>
+        </div>
+        <p class="ratehint" id="comboHint" style="padding-bottom:6px">合计 105.00 万元 · 公积金利率常为 2.6%–3.1%</p>
+      </div>
+
+      <div class="field">
+        <label>还款方式</label>
+        <div class="seg" id="modeSeg">
+          <button type="button" data-mode="annuity" aria-pressed="true">等额本息</button>
+          <button type="button" data-mode="linear" aria-pressed="false">等额本金</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:8px">
+        <label>首次还贷时间</label>
+        <div class="inputwrap"><input id="start" type="month" value="2026-12"></div>
+      </div>
+
+      <div class="field">
+        <label>提前还款 <em>可添加多笔</em></label>
+        <div id="preList"></div>
+        <button class="btn-ghost" type="button" id="addPre" style="margin-top:8px">+ 添加一笔提前还款</button>
+      </div>
+
+      <div class="err" id="err"></div>
+      <button class="btn-main" type="button" id="calcBtn">重新计算</button>
+    </section>
+
+    <!-- ===== 结果 ===== -->
+    <section class="panel">
+      <h2>计算结果</h2>
+      <div class="hero-stat">
+        <div class="stat main">
+          <div class="k" id="mainK">每月月供</div>
+          <div class="v" id="mainV">—</div>
+          <div class="mix" id="mixV">—</div>
+        </div>
+        <div class="stat">
+          <div class="k">支付总利息</div>
+          <div class="v sm" id="interestV">—</div>
+        </div>
+        <div class="stat">
+          <div class="k">还款总额</div>
+          <div class="v sm" id="totalV">—</div>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="ratio"><i class="p" id="ratioP" style="width:0"></i><i class="i2" id="ratioI" style="width:0"></i></div>
+        <div class="legend">
+          <span><u style="background:#2b6573"></u>本金 <b id="principalV" style="font-weight:400;color:var(--ink-soft)">—</b></span>
+          <span><u style="background:#cba06a"></u>利息 <b id="legendI" style="font-weight:400;color:var(--ink-soft)">—</b></span>
+        </div>
+        <div class="row"><span>首月还款</span><b id="firstV">—</b></div>
+        <div class="row"><span>末月还款</span><b id="lastV">—</b></div>
+        <div class="row"><span>利息占还款总额</span><b id="pctV">—</b></div>
+      </div>
+
+      <div class="presum" id="preSum" style="display:none">
+        <div class="prow"><span>提前还款</span><b id="preAmtV">—</b></div>
+        <div class="prow"><span>处理后月供</span><b id="prePayV">—</b></div>
+        <div class="prow"><span>处理后期限</span><b id="preTermV">—</b></div>
+        <div class="prow"><span>节省利息</span><b id="preSaveV" style="color:var(--accent)">—</b></div>
+      </div>
+
+      <div class="chart">
+        <svg id="chart" viewBox="0 0 420 150" preserveAspectRatio="none" role="img" aria-label="剩余本金走势"></svg>
+        <div class="chartcap" id="chartcap">剩余本金随期数变化</div>
+      </div>
+
+      <div class="cmp">
+        <h3>两种方式对比（同等条件）</h3>
+        <div class="cgrid">
+          <div class="ccell" id="ccAnnuity">
+            <div class="t">等额本息</div>
+            <div class="v" id="ccAnnuityV">—</div>
+          </div>
+          <div class="ccell" id="ccLinear">
+            <div class="t">等额本金</div>
+            <div class="v" id="ccLinearV">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== 明细表 ===== -->
+  <section class="panel" style="margin-top:14px">
+    <h2>还款明细</h2>
+    <div class="tblwrap clip" id="tblwrap">
+      <table>
+        <colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"></colgroup>
+        <thead>
+          <tr><th>期数</th><th>月供</th><th>本金</th><th>利息</th><th>剩余本金</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <button class="btn-ghost" type="button" id="toggleAll">展开全部期数</button>
+    <p class="note">
+      计算按<strong>按月计息、月末还款、利率全程不变</strong>处理：月利率 = 年利率 / 12；等额本金每月本金相同、利息逐月递减。<br>
+      实际银行可能按日计息、有放款日差异与提前还款，结果仅供预算参考，以银行还款计划为准。
+    </p>
+  </section>
+
+  <footer>单 HTML 文件 · 双击即可用 · 数据只在浏览器内计算</footer>
+</div>
+
+<script>
+
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var priceEl=$('price'), downEl=$('down'), downAmtEl=$('downAmt'), loanEl=$('loan'), yearsEl=$('years'),
+      rateEl=$('rate'), startEl=$('start'), preList=$('preList'),
+      typeSeg=$('typeSeg'), modeSeg=$('modeSeg'),
+      cLoan=$('cLoan'), cRate=$('cRate'), fLoan=$('fLoan'), fRate=$('fRate'),
+      comboTip=$('comboBlock'), errEl=$('err'),
+      rowsEl=$('rows'), tblwrap=$('tblwrap'), toggleAll=$('toggleAll');
+
+  var state={mode:'annuity', type:'commercial', expanded:false, autoLoan:true, lastCombo:'c', downManual:false};
+
+  function num(el){ var v=parseFloat(el.value); return isFinite(v)? v : 0; }
+  function fmt(n){
+    if(!isFinite(n)) return '—';
+    return n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function wan(n){ return isFinite(n)? (n/10000).toFixed(2) : '—'; }
+  function amort(L,r,n){
+    if(n<=0) return L;
+    if(r===0) return L/n;
+    var f=Math.pow(1+r,n);
+    return L*r*f/(f-1);
+  }
+
+  /* ---------- 提前还款行 ---------- */
+  function addPreRow(k,amt,style){
+    var row=document.createElement('div');
+    row.className='preRow';
+    row.innerHTML=
+      '<div class="inputwrap"><input class="preK" type="number" inputmode="numeric" min="1" step="1" value="'+(k||36)+'" placeholder="第几期"><span class="unit">期</span></div>'+
+      '<div class="inputwrap"><input class="preA" type="number" inputmode="decimal" min="0" step="1" value="'+(amt||0)+'"><span class="unit">万元</span></div>'+
+      '<div class="inputwrap"><select class="preS"><option value="shorten">缩短年限</option><option value="reduce">减少月供</option></select></div>'+
+      '<button class="preDel" type="button" title="删除">×</button>'+
+      '<div class="inputwrap preTWrap" style="grid-column:1/-1;display:none"><select class="preT">'+
+        '<option value="both">商贷 + 公积金（按余额分摊）</option>'+
+        '<option value="c">只还商贷</option>'+
+        '<option value="f">只还公积金贷</option>'+
+      '</select></div>';
+    if(style) row.querySelector('.preS').value=style;
+    if(state.type==='combo') row.querySelector('.preTWrap').style.display='block';
+    preList.appendChild(row);
+  }
+  function readPres(){
+    var out=[];
+    Array.prototype.forEach.call(preList.querySelectorAll('.preRow'),function(row){
+      var k=parseInt(row.querySelector('.preK').value,10)||0;
+      var amt=parseFloat(row.querySelector('.preA').value)||0;
+      var style=row.querySelector('.preS').value;
+      var target=(row.querySelector('.preT')||{}).value || 'both';
+      if(k>0 && amt>0) out.push({k:k, amt:amt, style:style, target:target});
+    });
+    out.sort(function(a,b){return a.k-b.k;});
+    return out;
+  }
+
+  /* ---------- 参数联动 ---------- */
+  function comboTotal(){
+    var price=num(priceEl), amt=num(downAmtEl);
+    if(!amt){
+      var down=Math.min(100,Math.max(0,num(downEl)));
+      amt=price*down/100;
+    }
+    return Math.max(0, price-amt);
+  }
+  function syncCombo(edited){
+    var total=comboTotal();
+    if(total>0){
+      if(edited==='c'){
+        fLoan.value=Math.max(0, +(total-num(cLoan)).toFixed(2));
+      } else if(edited==='f'){
+        cLoan.value=Math.max(0, +(total-num(fLoan)).toFixed(2));
+      }
+    }
+    var sum=num(cLoan)+num(fLoan);
+    var tip='合计 '+total.toFixed(2)+' 万元（首付后剩余）· 商贷 '+num(cLoan).toFixed(2)+' / 公积金 '+num(fLoan).toFixed(2)+' 万元';
+    if(total<=0){
+      tip='合计 '+sum.toFixed(2)+' 万元 · 商贷 '+num(cLoan).toFixed(2)+' / 公积金 '+num(fLoan).toFixed(2)+' 万元';
+    }
+    comboTip.querySelector('#comboHint').textContent=tip;
+  }
+  function syncLoan(){
+    if(state.type==='combo'){
+      var price0=num(priceEl);
+      if(!state.downManual){
+        var down0=Math.min(100,Math.max(0,num(downEl)));
+        downAmtEl.value=+(price0*down0/100).toFixed(2);
+        $('dpHint').textContent=(down0/10).toFixed(1)+' 成';
+      }
+      syncCombo(state.lastCombo);
+      return;
+    }
+    if(state.autoLoan){
+      var price=num(priceEl);
+      if(state.downManual){
+        var amt=Math.min(price, num(downAmtEl));
+        var loanM=Math.max(0, price-amt);
+        loanEl.value=loanM? +loanM.toFixed(2) : 0;
+        $('loanHint').textContent=loanM.toFixed(2)+' 万元';
+        return;
+      }
+      var down=Math.min(100,Math.max(0,num(downEl)));
+      var loan=price*(1-down/100);
+      loanEl.value=loan? +loan.toFixed(2) : 0;
+      $('loanHint').textContent=loan.toFixed(2)+' 万元';
+      $('dpHint').textContent=(down/10).toFixed(1)+' 成';
+      downAmtEl.value=+(price*down/100).toFixed(2);
+    }
+  }
+  function syncHintFromLoan(){
+    var price=num(priceEl), loan=num(loanEl);
+    $('loanHint').textContent=loan.toFixed(2)+' 万元';
+    if(price>0){
+      var dp=Math.max(0,Math.min(100,(1-loan/price)*100));
+      downEl.value=+dp.toFixed(1);
+      downAmtEl.value=+(price-loan).toFixed(2);
+      state.downManual=true;
+      $('dpHint').textContent=(dp/10).toFixed(1)+' 成';
+    }
+  }
+
+  function parts(){
+    if(state.type==='combo'){
+      return [
+        {kind:'c', amt:num(cLoan)*10000, rate:num(cRate)/100},
+        {kind:'f', amt:num(fLoan)*10000, rate:num(fRate)/100}
+      ].filter(function(p){return p.amt>0;});
+    }
+    return [{kind:'single', amt:num(loanEl)*10000, rate:num(rateEl)/100}];
+  }
+
+  /* ---------- 单笔贷款：支持多笔提前还款 ---------- */
+  function planOf(part, n, mode, pres){
+    var L=part.amt, r=part.rate/12;
+    var rows=[], ti=0, tp=0, pi=0;
+    pres=pres||[];
+    if(L<=0 || r<0) return {rows:[], interest:0, pay:0};
+
+    if(mode==='annuity'){
+      var pay=amort(L,r,n), m=L, endLimit=n;
+      for(var i=1;i<=endLimit && m>0.01;i++){
+        var it=m*r, pr=pay-it;
+        if(i===endLimit || pr>m) pr=m;
+        m-=pr;
+        var extra=0, items=[];
+        while(pi<pres.length && pres[pi].k<=i){
+          var e=Math.min(m, pres[pi].share);
+          if(e>0){ m-=e; extra+=e; items.push({amt:e, style:pres[pi].style}); }
+          if(pres[pi].style==='reduce' && m>0 && endLimit>i) pay=amort(m, r, endLimit-i);
+          if(pres[pi].style==='shorten' && m>0 && pay>m*r){
+            var need=Math.log(pay/(pay-m*r))/Math.log(1+r);
+            if(isFinite(need)) endLimit=Math.min(endLimit, i+Math.max(1,Math.ceil(need)));
+          }
+          pi++;
+        }
+        if(m<0.01) m=0;
+        ti+=it; tp+=(it+pr+extra);
+        rows.push({pay:it+pr+extra, principal:pr+extra, interest:it, rest:m, pre:extra, pres:items});
+      }
+      return {rows:rows, interest:ti, pay:tp, kind:part.kind};
+    }
+
+    var prBase=L/n, m2=L;
+    for(var j=1;j<=n && m2>0.01;j++){
+      var it2=m2*r, pr2=(j===n || prBase>m2)? m2 : prBase;
+      m2-=pr2;
+      var ex=0, items2=[];
+      while(pi<pres.length && pres[pi].k<=j){
+        var e2=Math.min(m2, pres[pi].share);
+        if(e2>0){ m2-=e2; ex+=e2; items2.push({amt:e2, style:pres[pi].style}); }
+        if(pres[pi].style==='reduce' && m2>0) prBase=m2/(n-j);
+        pi++;
+      }
+      if(m2<0.01) m2=0;
+      ti+=it2; tp+=(it2+pr2+ex);
+      rows.push({pay:it2+pr2+ex, principal:pr2+ex, interest:it2, rest:m2, pre:ex, pres:items2});
+    }
+    return {rows:rows, interest:ti, pay:tp, kind:part.kind};
+  }
+
+  /* ---------- 汇总（组合贷按期合并） ---------- */
+  function buildPlan(mode, usePre){
+    mode=mode||state.mode;
+    var n=(parseInt(yearsEl.value,10)||30)*12;
+    var ps=parts();
+    if(!ps.length) return null;
+    if(ps.some(function(x){return x.amt<=0 || x.rate<0 || !isFinite(x.amt);})) return null;
+
+    var pres=(usePre && mode===state.mode)? readPres() : [];
+    var subs=[];
+
+    if(pres.length){
+      var base=ps.map(function(p){return planOf(p,n,mode,null);});
+      var partPres=ps.map(function(){return [];});
+      pres.forEach(function(pr){
+        var restSum=0;
+        var rests=base.map(function(b){
+          var rw=b.rows[Math.min(pr.k, b.rows.length)-1];
+          restSum+=(rw? rw.rest : 0);
+          return rw? rw.rest : 0;
+        });
+        var amount=pr.amt*10000;
+        var targetPart=-1;
+        if(pr.target==='c' || pr.target==='f'){
+          ps.forEach(function(pt,idx){ if(pt.kind===pr.target) targetPart=idx; });
+        }
+        base.forEach(function(b,idx){
+          var share=0;
+          if(targetPart>=0){
+            share= idx===targetPart? amount : 0;
+          } else if(restSum>0){
+            share= amount*rests[idx]/restSum;
+          }
+          if(share>0) partPres[idx].push({k:pr.k, share:share, style:pr.style});
+        });
+      });
+      subs=ps.map(function(p,idx){ return planOf(p, n, mode, partPres[idx]); });
+    } else {
+      subs=ps.map(function(p){return planOf(p,n,mode,null);});
+    }
+
+    var maxLen=subs.reduce(function(a,b){return Math.max(a,b.rows.length);},0);
+    var rows=[];
+    for(var i=0;i<maxLen;i++){
+      var pay=0,pr2=0,it2=0,rest=0,pre=0,pres=[],alive=[];
+      subs.forEach(function(sp){
+        var rw=sp.rows[i];
+        if(rw){
+          pay+=rw.pay;pr2+=rw.principal;it2+=rw.interest;rest+=rw.rest;pre+=rw.pre;
+          (rw.pres||[]).forEach(function(it){ pres.push({kind:sp.kind, amt:it.amt, style:it.style}); });
+          if(rw.rest>0.5) alive.push(sp.kind);
+        }
+      });
+      rows.push({i:i+1,pay:pay,principal:pr2,interest:it2,rest:rest,pre:pre,pres:pres,alive:alive});
+    }
+    var totalInterest=subs.reduce(function(a,b){return a+b.interest;},0);
+    var totalPay=subs.reduce(function(a,b){return a+b.pay;},0);
+    return {rows:rows,totalInterest:totalInterest,totalPay:totalPay,
+            first:rows[0].pay, last:rows[rows.length-1].pay,
+            loan:ps.reduce(function(a,b){return a+b.amt;},0), n:rows.length, pres:pres};
+  }
+
+  function monthsFromDate(ym,i){
+    if(!ym) return i+'期';
+    var y=+ym.slice(0,4), m=+ym.slice(5,7);
+    var idx=(m-1)+i;
+    var yy=y+Math.floor(idx/12), mm=idx%12+1;
+    return yy+'.'+String(mm).padStart(2,'0');
+  }
+  function yearsText(months){
+    var y=Math.floor(months/12), m=months%12;
+    return (y? y+' 年 ':'')+(m? m+' 个月':'')||'0';
+  }
+
+  /* ---------- 图表 ---------- */
+  function renderChart(plan){
+    var svg=$('chart');
+    var W=420,H=150,padL=8,padR=10,padT=12,padB=20;
+    var n=plan.n, step=(W-padL-padR)/Math.max(1,n-1), maxR=plan.loan||1;
+    var pts=plan.rows.map(function(row,idx){
+      return [padL+idx*step, padT+(H-padT-padB)*(1-row.rest/maxR)];
+    });
+    var d='M'+pts.map(function(p){return p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' L');
+    var grid='';
+    for(var g=0;g<=4;g++){
+      var yy=padT+(H-padT-padB)*g/4;
+      grid+='<line x1="'+padL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yy.toFixed(1)+'" stroke="#eae7dc" stroke-width="1"/>';
+    }
+    var tickMonths=Math.max(12, Math.ceil((n/6)/12)*12), ticks='';
+    for(var y=tickMonths;y<=n;y+=tickMonths){
+      var xx=padL+(y-1)*step;
+      ticks+='<text x="'+xx.toFixed(1)+'" y="'+(H-6)+'" font-size="9" fill="#9aa3a7" text-anchor="middle">'+(y/12)+'年</text>';
+    }
+    svg.innerHTML=grid+
+      '<path d="'+d+'" fill="none" stroke="#2b6573" stroke-width="1.6"/>'+
+      '<circle cx="'+pts[0][0].toFixed(1)+'" cy="'+pts[0][1].toFixed(1)+'" r="2.6" fill="#2b6573"/>'+
+      '<circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+'" r="2.6" fill="#cba06a"/>'+
+      ticks;
+    $('chartcap').textContent='剩余本金走势：期初 '+wan(plan.loan)+' 万元 → 期末归零';
+  }
+
+  /* ---------- 明细 ---------- */
+
+  /* ---------- 提前还款文字悬停气泡 ---------- */
+  var tipEl=null;
+  function showTip(el){
+    var txt=el.getAttribute('data-full');
+    if(!txt) return;
+    if(!tipEl){ tipEl=document.createElement('div'); tipEl.className='tip-bubble'; document.body.appendChild(tipEl); }
+    tipEl.textContent=txt;
+    tipEl.style.display='block';
+    var r=el.getBoundingClientRect(), t=tipEl.getBoundingClientRect();
+    var top=r.bottom+6;
+    if(top+t.height>window.innerHeight-8) top=r.top-t.height-6;
+    var left=Math.min(Math.max(8,r.left), window.innerWidth-t.width-8);
+    tipEl.style.top=top+'px'; tipEl.style.left=left+'px';
+  }
+  function hideTip(){ if(tipEl) tipEl.style.display='none'; }
+  rowsEl.addEventListener('mouseover',function(e){
+    var t=e.target.closest? e.target.closest('.preline') : null;
+    if(t && t.getAttribute('data-full')) showTip(t); else hideTip();
+  });
+  rowsEl.addEventListener('mouseleave',hideTip);
+  function renderTable(plan){
+    state.lastN=plan.n;
+    function prepLabel(kind){
+      if(kind==='f') return '公积金贷';
+      if(kind==='c') return '商贷';
+      return state.type==='fund'? '公积金贷':'商贷';
+    }
+    function mixOf(row){
+      if(state.type!=='combo') return state.type==='fund'? '公积金贷':'商业贷款';
+      var hasC=row.alive.indexOf('c')>=0, hasF=row.alive.indexOf('f')>=0;
+      if(hasC && hasF) return '商业贷款 + 公积金贷';
+      if(hasF) return '公积金贷';
+      if(hasC) return '商业贷款';
+      return '已结清';
+    }
+    var html='', ym=startEl.value, cumP=0, cumI=0;
+    plan.rows.forEach(function(row,idx){
+      cumP+=row.principal; cumI+=row.interest;
+      var preItems=(row.pres||[]).map(function(it){
+          return '提前还'+prepLabel(it.kind)+' '+wan(it.amt)+' 万元 · '+(it.style==='shorten'?'缩短年限':'减少月供');
+        });
+      var preTxt=preItems.join('；');
+      var cumPay='<div class="cum">'+mixOf(row)+'</div>';
+      var cumP2='<div class="cum">累计还本 '+fmt(cumP)+'</div>';
+      var cumI2='<div class="cum">累计还息 '+fmt(cumI)+'</div>';
+      html+='<tr'+(preTxt? ' class="haspre"':'')+'><td class="datecell">'+monthsFromDate(ym,idx)+
+        (function(){
+          if(!preTxt) return '<div class="cum">'+row.i+'/'+plan.n+'</div></td>';
+          var full=row.i+'/'+plan.n+' '+preTxt;
+          if(preItems.length>1){
+            return '<div class="cum preline multi" data-full="'+full.replace(/"/g,'&quot;')+'">'+
+              '<span class="pn">'+row.i+'/'+plan.n+' '+preItems[0]+'；</span>'+
+              '<span class="pn2">'+preItems.slice(1).join('；')+'</span></div></td>';
+          }
+          return '<div class="cum preline" data-full="'+full.replace(/"/g,'&quot;')+'">'+
+            row.i+'/'+plan.n+'<span class="pn"> '+preItems[0]+'</span></div></td>';
+        })()+
+        '<td>'+fmt(row.pay)+cumPay+'</td>'+
+        '<td>'+fmt(row.principal)+cumP2+'</td>'+
+        '<td>'+fmt(row.interest)+cumI2+'</td>'+
+        '<td>'+fmt(row.rest)+'</td></tr>';
+    });
+    rowsEl.innerHTML=html+(state.expanded
+      ? '<tr class="more"><td colspan="5"><div class="allshown">已显示全部 '+plan.n+' 期</div></td></tr>'
+      : '<tr class="more"><td colspan="5"><button type="button" id="inlineMore">显示全部 '+plan.n+' 期</button></td></tr>');
+    var inline=$('inlineMore');
+    if(inline) inline.onclick=function(){ setExpanded(true); };
+  }
+  function setExpanded(v){
+    state.expanded=v;
+    tblwrap.classList.toggle('clip',!v);
+    toggleAll.textContent=v?'只看前 12 期':'展开全部期数';
+    var more=rowsEl.querySelector('tr.more');
+    if(more){
+      var n=state.lastN||'';
+      more.innerHTML='<td colspan="5">'+(v
+        ? '<div class="allshown">已显示全部 '+n+' 期</div>'
+        : '<button type="button" id="inlineMore">显示全部 '+n+' 期</button>')+'</td>';
+      var inline=$('inlineMore');
+      if(inline) inline.onclick=function(){ setExpanded(true); };
+    }
+  }
+
+  /* ---------- 类型切换文案 ---------- */
+  function applyType(){
+    var combo=(state.type==='combo');
+    comboTip.style.display=combo?'block':'none';
+    $('loanField').style.display=combo?'none':'block';
+    $('rateField').style.display=combo?'none':'block';
+    Array.prototype.forEach.call(preList.querySelectorAll('.preTWrap'),function(w){
+      w.style.display=combo?'block':'none';
+    });
+    if(combo){
+      $('mainK').textContent='每月月供（商贷 + 公积金）';
+    } else if(state.type==='fund'){
+      $('rateTag').textContent='公积金利率';
+      $('rateHint').textContent='公积金贷款常见 2.6%–3.1%，以当地公积金中心公布为准。';
+      if(num(rateEl)===3.1) rateEl.value=2.6;
+    } else {
+      $('rateTag').textContent='LPR 参考';
+      $('rateHint').textContent='商业贷款常用 2.9%–3.3%，按合同执行利率填。';
+    }
+  }
+
+  /* ---------- 总渲染 ---------- */
+  function render(){
+    errEl.textContent='';
+    var pres=readPres();
+    $('preSum').style.display=pres.length?'block':'none';
+
+    var plan=buildPlan(state.mode, true);
+    if(!plan){
+      ['mainV','interestV','totalV','firstV','lastV','pctV','principalV','legendI'].forEach(function(id){
+        $(id).textContent='—';
+      });
+      $('chart').innerHTML='';
+      rowsEl.innerHTML='';
+      ['ccAnnuityV','ccLinearV'].forEach(function(id){ $(id).textContent='—'; });
+      errEl.textContent='请填写大于 0 的贷款金额与有效利率';
+      return;
+    }
+    var mainV=$('mainV');
+    if(state.mode==='annuity'){
+      if(state.type!=='combo') $('mainK').textContent='每月月供（等额本息）';
+      mainV.innerHTML=fmt(plan.rows[0].pay)+'<small>元</small>';
+    } else {
+      $('mainK').textContent=(state.type==='combo')?'首月月供（合计，逐月递减）':'首月月供（逐月递减）';
+      mainV.innerHTML=fmt(plan.first)+'<small>元</small>';
+    }
+    if(state.type==='combo'){
+      $('mixV').textContent='商业贷款 '+num(cLoan).toFixed(2)+' 万 + 公积金贷 '+num(fLoan).toFixed(2)+' 万';
+    } else if(state.type==='fund'){
+      $('mixV').textContent='公积金贷';
+    } else {
+      $('mixV').textContent='商业贷款';
+    }
+    $('interestV').textContent=wan(plan.totalInterest)+' 万元';
+    $('totalV').textContent=wan(plan.totalPay)+' 万元';
+    $('principalV').textContent=wan(plan.loan)+' 万';
+    $('legendI').textContent=wan(plan.totalInterest)+' 万';
+    $('firstV').textContent=fmt(plan.first)+' 元';
+    $('lastV').textContent=fmt(plan.last)+' 元';
+    var pct=plan.totalPay>0 ? plan.totalInterest/plan.totalPay*100 : 0;
+    $('pctV').textContent=pct.toFixed(1)+'%';
+    $('ratioP').style.width=Math.max(0,(100-pct)).toFixed(1)+'%';
+    $('ratioI').style.width=pct.toFixed(1)+'%';
+
+    renderTable(plan);
+    renderChart(plan);
+
+    /* 提前还款小结（支持多笔） */
+    if(pres.length){
+      var base=buildPlan(state.mode,false);
+      var save=base? (base.totalInterest-plan.totalInterest) : 0;
+      var sum=pres.reduce(function(a,b){return a+b.amt;},0);
+      var lastK=pres[pres.length-1].k;
+      var afterIdx=Math.min(plan.rows.length-1, lastK);
+      $('preAmtV').textContent=sum.toFixed(2)+' 万元 / 共 '+pres.length+' 笔';
+      $('prePayV').textContent=fmt(plan.rows[afterIdx].pay)+' 元';
+      $('preTermV').textContent=yearsText(plan.n)+(base&&base.n!==plan.n?'（原 '+yearsText(base.n)+'）':'（期限不变）');
+      $('preSaveV').textContent='约 '+wan(save)+' 万元';
+    }
+
+    var pA=buildPlan('annuity', false), pL=buildPlan('linear', false);
+    if(pA && pL){
+      $('ccAnnuityV').textContent='月供 '+fmt(pA.rows[0].pay)+' 元 · 总利息 '+wan(pA.totalInterest)+' 万元';
+      $('ccLinearV').textContent='首月 '+fmt(pL.first)+' 元起递减 · 总利息 '+wan(pL.totalInterest)+' 万元';
+    }
+    $('ccAnnuity').classList.toggle('on',state.mode==='annuity');
+    $('ccLinear').classList.toggle('on',state.mode==='linear');
+    setExpanded(state.expanded);
+  }
+
+  /* ---------- 交互 ---------- */
+  typeSeg.addEventListener('click',function(e){
+    var btn=e.target.closest('button[data-type]');
+    if(!btn) return;
+    state.type=btn.getAttribute('data-type');
+    Array.prototype.forEach.call(typeSeg.children,function(b){
+      b.setAttribute('aria-pressed', b===btn?'true':'false');
+    });
+    applyType(); syncLoan(); render();
+  });
+
+  modeSeg.addEventListener('click',function(e){
+    var btn=e.target.closest('button[data-mode]');
+    if(!btn) return;
+    state.mode=btn.getAttribute('data-mode');
+    Array.prototype.forEach.call(modeSeg.children,function(b){
+      b.setAttribute('aria-pressed', b===btn?'true':'false');
+    });
+    render();
+  });
+
+  $('addPre').addEventListener('click',function(){
+    var lastK=preList.querySelectorAll('.preK');
+    addPreRow(lastK.length? (parseInt(lastK[lastK.length-1].value,10)||12)+12 : 12, 0);
+    render();
+  });
+
+  preList.addEventListener('input',function(e){
+    if(e.target.classList.contains('preK') || e.target.classList.contains('preA')) render();
+  });
+  preList.addEventListener('change',function(e){
+    if(e.target.classList.contains('preS') || e.target.classList.contains('preT')) render();
+  });
+  preList.addEventListener('click',function(e){
+    var btn=e.target.closest('.preDel');
+    if(!btn) return;
+    btn.parentNode.parentNode.removeChild(btn.parentNode);
+    render();
+  });
+
+  priceEl.addEventListener('input',function(){ state.autoLoan=true; syncLoan(); render(); });
+  downEl.addEventListener('input',function(){ state.autoLoan=true; state.downManual=false; syncLoan(); render(); });
+  loanEl.addEventListener('input',function(){ state.autoLoan=false; syncHintFromLoan(); render(); });
+  downAmtEl.addEventListener('input',function(){
+    state.downManual=true;
+    var price=num(priceEl), amt=num(downAmtEl);
+    if(price>0){
+      var dp=Math.max(0,Math.min(100,amt/price*100));
+      downEl.value=+dp.toFixed(1);
+      $('dpHint').textContent=(dp/10).toFixed(1)+' 成';
+      state.autoLoan=true;
+      var loan=price-amt;
+      loanEl.value=loan>0? +loan.toFixed(2) : 0;
+      $('loanHint').textContent=loan.toFixed(2)+' 万元';
+      if(state.type==='combo') syncCombo(state.lastCombo);
+    }
+    render();
+  });
+  cLoan.addEventListener('input',function(){ state.lastCombo='c'; syncCombo('c'); render(); });
+  fLoan.addEventListener('input',function(){ state.lastCombo='f'; syncCombo('f'); render(); });
+  [cRate,fRate].forEach(function(el){ el.addEventListener('input',function(){ syncLoan(); render(); }); });
+  yearsEl.addEventListener('change',render);
+  rateEl.addEventListener('input',render);
+  startEl.addEventListener('change',render);
+  $('calcBtn').addEventListener('click',function(){ state.autoLoan=true; syncLoan(); render(); });
+  toggleAll.addEventListener('click',function(){ setExpanded(!state.expanded); });
+
+  applyType();
+  syncLoan();
+  render();
+})();
+
+</script>
+</body>
+</html>

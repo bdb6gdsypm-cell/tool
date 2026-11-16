@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图片加水印 · 本地处理</title>
+<style>
+  :root{
+    --bg:#12161d;
+    --paper:#1a2029;
+    --paper-2:#222a35;
+    --line:#2f3946;
+    --line-soft:#27313c;
+    --ink:#e9edf4;
+    --ink-soft:#b7c2d0;
+    --muted:#8e9aa8;
+    --seal:#7c9cbf;
+    --seal-soft:rgba(124,156,191,.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding:20px 16px 28px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{
+    display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline;
+    padding-bottom:14px;border-bottom:1px solid #2a3340;
+  }
+  header h1{
+    margin:0;font-family:"Songti SC","STSong","SimSun",serif;
+    font-size:24px;font-weight:600;letter-spacing:.06em;color:var(--ink);
+  }
+  header .sub{font-size:13px;color:var(--muted);}
+  header .badge{
+    margin-left:auto;font-size:12px;color:var(--seal);
+    border:1px solid rgba(124,156,191,.36);border-radius:999px;
+    padding:3px 10px;white-space:nowrap;background:#1a2029;
+  }
+  .stage{margin-top:18px;display:grid;gap:16px;grid-template-columns:1fr;}
+  @media (min-width:900px){
+    .stage{grid-template-columns:minmax(0,1.55fr) minmax(300px,.9fr);align-items:start;}
+  }
+  .viewer{
+    background:var(--paper);border:1px solid var(--line);border-radius:4px;
+    padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0;
+    box-shadow:0 1px 0 rgba(34,52,58,.04);
+  }
+  .drop{
+    position:relative;min-height:280px;border:1px dashed #3a4756;border-radius:3px;
+    background:
+      linear-gradient(0deg,rgba(255,255,255,.02),rgba(255,255,255,.02)),
+      repeating-linear-gradient(45deg,#1d242d 0 10px,#1b222b 10px 20px);
+    display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:28px 20px;cursor:pointer;
+    transition:border-color .18s,background .18s;
+  }
+  .drop:hover,.drop.over{border-color:var(--seal);}
+  .drop input{display:none;}
+  .drop .hint{max-width:340px;}
+  .drop .glyph{
+    width:52px;height:52px;margin:0 auto 14px;
+    border:1px solid var(--line);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;background:#1a2029;
+  }
+  .drop .glyph svg{width:22px;height:22px;stroke:var(--seal);fill:none;stroke-width:1.6;}
+  .drop strong{display:block;font-size:15px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+  .drop p{margin:0;font-size:13px;color:var(--muted);line-height:1.7;}
+  .canvas-wrap{display:none;position:relative;overflow:hidden;border-radius:3px;background:#232c37;border:1px solid var(--line-soft);}
+  .canvas-wrap.on{display:block;}
+  #preview{display:block;max-width:100%;height:auto;margin:0 auto;}
+  .meta-row{
+    display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;
+    font-size:12px;color:var(--muted);
+  }
+  .meta-row .fname{color:var(--ink);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .meta-row .sep{width:1px;height:12px;background:var(--line);}
+  .viewer-foot{display:flex;flex-wrap:wrap;gap:8px;}
+  .btn{
+    appearance:none;border:1px solid var(--line);background:var(--paper-2);
+    color:var(--ink-soft);font-size:13px;padding:9px 16px;border-radius:3px;
+    cursor:pointer;font-family:inherit;transition:background .16s,border-color .16s,color .16s;
+    min-height:40px;
+  }
+  .btn:hover{background:#161c24;border-color:#3a4756;color:var(--ink);}
+  .btn.primary{background:var(--ink);border-color:var(--ink);color:#0f1419;font-weight:600;}
+  .btn.primary:hover{background:#6f8fb0;border-color:#6f8fb0;}
+  .btn:disabled{opacity:.42;cursor:not-allowed;}
+  .panel{
+    background:var(--paper);border:1px solid var(--line);border-radius:4px;
+    padding:16px;display:flex;flex-direction:column;gap:18px;
+    box-shadow:0 1px 0 rgba(34,52,58,.04);
+  }
+  .group{display:flex;flex-direction:column;gap:9px;}
+  .group > label,.group-title{
+    font-size:12px;letter-spacing:.08em;color:var(--muted);
+    display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  }
+  .group-title .val{color:var(--seal);font-variant-numeric:tabular-nums;letter-spacing:0;font-weight:600;}
+  input[type=text]{
+    width:100%;background:#1a2029;border:1px solid var(--line);border-radius:3px;
+    color:var(--ink);padding:10px 12px;font-size:16px;font-family:inherit;
+    outline:none;transition:border-color .16s;
+  }
+  input[type=text]:focus{border-color:var(--seal);box-shadow:0 0 0 2px var(--seal-soft);}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:22px;background:none;margin:0;
+  }
+  input[type=range]::-webkit-slider-runnable-track{height:3px;background:#2a3340;border-radius:2px;}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:var(--seal);border:none;margin-top:-6.5px;cursor:pointer;
+  }
+  input[type=range]::-moz-range-track{height:3px;background:#2a3340;border-radius:2px;}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border:none;border-radius:50%;background:var(--seal);cursor:pointer;}
+  .pos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:144px;}
+  .pos-grid button{
+    appearance:none;height:34px;border:1px solid var(--line);background:var(--paper-2);
+    border-radius:2px;cursor:pointer;position:relative;padding:0;
+  }
+  .pos-grid button::after{
+    content:"";position:absolute;left:50%;top:50%;width:9px;height:9px;
+    border-radius:50%;background:#5a6876;transform:translate(-50%,-50%);
+  }
+  .pos-grid button.active{border-color:var(--seal);background:var(--seal-soft);}
+  .pos-grid button.active::after{background:var(--seal);}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .colors{display:flex;gap:8px;}
+  .swatch{
+    width:26px;height:26px;border-radius:50%;border:1px solid #46586a;cursor:pointer;
+    padding:0;appearance:none;
+  }
+  .swatch.active{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--seal);}
+  #customColor{
+    width:30px;height:26px;padding:0;border:1px solid #3a4756;border-radius:3px;
+    background:#1a2029;cursor:pointer;
+  }
+  .toggle{
+    display:flex;align-items:center;gap:10px;cursor:pointer;
+    padding:10px 12px;border:1px solid var(--line);border-radius:3px;
+    background:var(--paper-2);font-size:13px;min-height:44px;color:var(--ink-soft);
+  }
+  .toggle input{display:none;}
+  .switch{
+    width:36px;height:20px;border-radius:999px;background:#2f3946;position:relative;
+    flex:0 0 auto;transition:background .18s;
+  }
+  .switch::after{
+    content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;
+    background:#6e7d8d;transition:transform .18s,background .18s;
+  }
+  .toggle input:checked + .switch{background:rgba(124,156,191,.26);}
+  .toggle input:checked + .switch::after{transform:translateX(16px);background:var(--seal);}
+  .divider{height:1px;background:var(--line-soft);margin:0;}
+  .hintline{font-size:12px;color:var(--muted);line-height:1.7;margin:0;}
+  footer{margin-top:20px;font-size:12px;color:#7c8794;text-align:center;line-height:1.8;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>图片加水印</h1>
+    <span class="sub">文字水印 · 摆位、旋转、平铺</span>
+    <span class="badge">本地处理 · 不上传</span>
+  </header>
+
+  <div class="stage">
+    <!-- ===== 画布区 ===== -->
+    <section class="viewer">
+      <div class="drop" id="drop">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="hint">
+          <div class="glyph">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5"/><path d="M7.5 9.5 12 5l4.5 4.5"/><path d="M4 17v2h16v-2"/></svg>
+          </div>
+          <strong>点击选择图片，或拖入 / 粘贴</strong>
+          <p>支持 JPG、PNG、WEBP，导出为原尺寸 PNG。<br>图片只在本机浏览器内处理。</p>
+        </div>
+      </div>
+
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="preview"></canvas>
+      </div>
+
+      <div class="meta-row" id="metaRow" style="display:none;">
+        <span class="fname" id="fname">—</span>
+        <span class="sep"></span>
+        <span id="fsize">—</span>
+        <span class="sep"></span>
+        <span id="fdim">—</span>
+      </div>
+
+      <div class="viewer-foot">
+        <button class="btn primary" id="downloadBtn" disabled>下载带水印图片</button>
+        <button class="btn" id="clearBtn" disabled>换一张</button>
+      </div>
+    </section>
+
+    <!-- ===== 控制面板 ===== -->
+    <aside class="panel">
+      <div class="group">
+        <label for="wmText">水印文字</label>
+        <input type="text" id="wmText" value="© 你的名字" maxlength="40" autocomplete="off">
+      </div>
+
+      <div class="group">
+        <div class="group-title"><span>字号（按图片短边）</span><span class="val" id="sizeVal">6%</span></div>
+        <input type="range" id="sizeRange" min="2" max="18" step="1" value="6">
+      </div>
+
+      <div class="group">
+        <div class="group-title"><span>不透明度</span><span class="val" id="opacityVal">38%</span></div>
+        <input type="range" id="opacityRange" min="5" max="100" step="1" value="38">
+      </div>
+
+      <div class="group">
+        <div class="group-title"><span>倾斜角度</span><span class="val" id="rotVal">0°</span></div>
+        <input type="range" id="rotRange" min="-45" max="45" step="1" value="0">
+      </div>
+
+      <div class="group">
+        <div class="group-title"><span>颜色</span></div>
+        <div class="row">
+          <div class="colors" id="colors">
+            <button class="swatch active" data-color="#ffffff" style="background:#ffffff" aria-label="白色"></button>
+            <button class="swatch" data-color="#111111" style="background:#111111" aria-label="黑色"></button>
+            <button class="swatch" data-color="#d98a4d" style="background:#d98a4d" aria-label="琥珀"></button>
+            <button class="swatch" data-color="#2f5a52" style="background:#2f5a52" aria-label="墨绿"></button>
+          </div>
+          <input type="color" id="customColor" value="#ffffff" aria-label="自定义颜色">
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-title"><span>位置</span></div>
+        <div class="pos-grid" id="posGrid">
+          <button data-pos="tl" aria-label="左上" class="active"></button>
+          <button data-pos="tc" aria-label="中上"></button>
+          <button data-pos="tr" aria-label="右上"></button>
+          <button data-pos="ml" aria-label="左中"></button>
+          <button data-pos="mc" aria-label="正中"></button>
+          <button data-pos="mr" aria-label="右中"></button>
+          <button data-pos="bl" aria-label="左下"></button>
+          <button data-pos="bc" aria-label="中下"></button>
+          <button data-pos="br" aria-label="右下"></button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="group" id="gapGroup">
+        <div class="group-title"><span>平铺间隔（字宽的倍数）</span><span class="val" id="gapVal">2.6</span></div>
+        <input type="range" id="gapRange" min="12" max="60" step="1" value="26">
+      </div>
+
+      <label class="toggle" for="tileToggle">
+        <input type="checkbox" id="tileToggle">
+        <span class="switch"></span>
+        <span>全图平铺（防盗图水印）</span>
+      </label>
+
+      <label class="toggle" for="shadowToggle">
+        <input type="checkbox" id="shadowToggle" checked>
+        <span class="switch"></span>
+        <span>加描边阴影，浅色背景可读</span>
+      </label>
+
+      <p class="hintline">提示：人像照片用白色低透明度压在角落最稳妥；证件类图片不建议加明显水印。</p>
+    </aside>
+  </div>
+
+  <footer>单一 HTML 文件 · 可直接双击打开 · 仅使用浏览器本地绘图，不联网</footer>
+</div>
+
+<script>
+(function(){
+  var state = {
+    img: null,
+    fileName: '',
+    text: '© 你的名字',
+    size: 6,
+    opacity: 38,
+    rot: 0,
+    color: '#e9edf4',
+    pos: 'tl',
+    tile: false,
+    gap: 2.6,
+    shadow: true
+  };
+
+  var drop = document.getElementById('drop');
+  var fileInput = document.getElementById('fileInput');
+  var canvasWrap = document.getElementById('canvasWrap');
+  var canvas = document.getElementById('preview');
+  var ctx = canvas.getContext('2d');
+  var metaRow = document.getElementById('metaRow');
+  var fname = document.getElementById('fname');
+  var fsize = document.getElementById('fsize');
+  var fdim = document.getElementById('fdim');
+  var downloadBtn = document.getElementById('downloadBtn');
+  var clearBtn = document.getElementById('clearBtn');
+
+  var wmText = document.getElementById('wmText');
+  var sizeRange = document.getElementById('sizeRange');
+  var sizeVal = document.getElementById('sizeVal');
+  var opacityRange = document.getElementById('opacityRange');
+  var opacityVal = document.getElementById('opacityVal');
+  var rotRange = document.getElementById('rotRange');
+  var rotVal = document.getElementById('rotVal');
+  var colors = document.getElementById('colors');
+  var customColor = document.getElementById('customColor');
+  var posGrid = document.getElementById('posGrid');
+  var tileToggle = document.getElementById('tileToggle');
+  var gapGroup = document.getElementById('gapGroup');
+  var gapRange = document.getElementById('gapRange');
+  var gapVal = document.getElementById('gapVal');
+  var shadowToggle = document.getElementById('shadowToggle');
+
+  function fmtBytes(n){
+    if (!n && n !== 0) return '—';
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1024 / 1024).toFixed(2) + ' MB';
+  }
+
+  /* ---------- 载入图片 ---------- */
+  function loadFile(file){
+    if (!file || !/^image\//.test(file.type)) return;
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function(){
+      state.img = img;
+      state.fileName = file.name || 'image';
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      drop.style.display = 'none';
+      canvasWrap.classList.add('on');
+      metaRow.style.display = 'flex';
+      fname.textContent = state.fileName;
+      fsize.textContent = fmtBytes(file.size);
+      fdim.textContent = img.naturalWidth + ' × ' + img.naturalHeight;
+      downloadBtn.disabled = false;
+      clearBtn.disabled = false;
+      draw();
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
+
+  drop.addEventListener('click', function(){ fileInput.click(); });
+  fileInput.addEventListener('change', function(e){
+    loadFile(e.target.files && e.target.files[0]);
+  });
+  ['dragenter','dragover'].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function(e){
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    loadFile(f);
+  });
+  window.addEventListener('paste', function(e){
+    var items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++){
+      if (items[i].type.indexOf('image') === 0){
+        loadFile(items[i].getAsFile());
+        break;
+      }
+    }
+  });
+
+  /* ---------- 绘制 ---------- */
+  function rgba(hex, a){
+    var h = hex.replace('#','');
+    if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    var r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
+  function anchorPoint(pos, w, h, margin, tw, th){
+    var x, y;
+    if (pos[0] === 't') y = margin + th / 2;
+    else if (pos[0] === 'm') y = h / 2;
+    else y = h - margin - th / 2;
+    if (pos[1] === 'l') x = margin + tw / 2;
+    else if (pos[1] === 'c') x = w / 2;
+    else x = w - margin - tw / 2;
+    return {x:x, y:y};
+  }
+
+  function draw(){
+    if (!state.img) return;
+    var w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(state.img, 0, 0);
+
+    var text = (state.text || '').trim();
+    if (!text) return;
+
+    var base = Math.min(w, h);
+    var fontSize = Math.max(8, Math.round(base * state.size / 100));
+    ctx.font = '600 ' + fontSize + 'px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    var tw = ctx.measureText(text).width;
+    var th = fontSize * 1.2;
+    var color = rgba(state.color, state.opacity / 100);
+    var rot = state.rot * Math.PI / 180;
+
+    function paintOne(cx, cy, angle, alphaScale){
+      var a = (state.opacity / 100) * (alphaScale || 1);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      if (state.shadow){
+        /* 描边取反色：白字配深描边、深字配浅描边，任何底色都可读 */
+        ctx.lineWidth = Math.max(1, fontSize * 0.1);
+        var hx = state.color.replace('#','');
+        if (hx.length === 3) hx = hx[0]+hx[0]+hx[1]+hx[1]+hx[2]+hx[2];
+        var lum = (0.2126*parseInt(hx.slice(0,2),16) + 0.7152*parseInt(hx.slice(2,4),16) + 0.0722*parseInt(hx.slice(4,6),16)) / 255;
+        ctx.strokeStyle = lum > 0.55 ? rgba('#000000', Math.min(1, a * 1.4)) : rgba('#ffffff', Math.min(1, a * 1.4));
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, 0, 0);
+        ctx.shadowColor = 'rgba(0,0,0,' + (0.28 * (alphaScale || 1)) + ')';
+        ctx.shadowBlur = Math.max(1, fontSize * 0.14);
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+      }
+      ctx.fillStyle = rgba(state.color, a);
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
+
+    if (state.tile){
+      var stepX = Math.max(90, tw * state.gap);
+      var stepY = Math.max(66, th * (state.gap + 0.1));
+      var angle = rot || (-24 * Math.PI / 180);
+      for (var y = -stepY; y < h + stepY; y += stepY){
+        for (var x = -stepX; x < w + stepX; x += stepX){
+          var off = (Math.round(y / stepY) % 2) ? stepX / 2 : 0;
+          paintOne(x + off, y, angle, 0.8);
+        }
+      }
+      return;
+    }
+
+    var margin = Math.round(base * 0.045);
+    /* 按旋转后的外接框估算，避免贴边出界 */
+    var bx = Math.abs(tw * Math.cos(rot)) + Math.abs(th * Math.sin(rot));
+    var by = Math.abs(tw * Math.sin(rot)) + Math.abs(th * Math.cos(rot));
+    var p = anchorPoint(state.pos, w, h, margin, bx, by);
+    paintOne(p.x, p.y, rot, 1);
+  }
+
+  /* ---------- 控件联动 ---------- */
+  wmText.addEventListener('input', function(){ state.text = wmText.value; draw(); });
+  sizeRange.addEventListener('input', function(){
+    state.size = +sizeRange.value; sizeVal.textContent = state.size + '%'; draw();
+  });
+  opacityRange.addEventListener('input', function(){
+    state.opacity = +opacityRange.value; opacityVal.textContent = state.opacity + '%'; draw();
+  });
+  rotRange.addEventListener('input', function(){
+    state.rot = +rotRange.value; rotVal.textContent = state.rot + '°'; draw();
+  });
+
+  colors.addEventListener('click', function(e){
+    var b = e.target.closest('.swatch');
+    if (!b) return;
+    state.color = b.dataset.color;
+    customColor.value = state.color;
+    Array.prototype.forEach.call(colors.children, function(c){ c.classList.toggle('active', c === b); });
+    draw();
+  });
+  customColor.addEventListener('input', function(){
+    state.color = customColor.value;
+    Array.prototype.forEach.call(colors.children, function(c){ c.classList.remove('active'); });
+    draw();
+  });
+
+  posGrid.addEventListener('click', function(e){
+    var b = e.target.closest('button[data-pos]');
+    if (!b) return;
+    state.pos = b.dataset.pos;
+    Array.prototype.forEach.call(posGrid.children, function(c){ c.classList.toggle('active', c === b); });
+    draw();
+  });
+
+  gapRange.addEventListener('input', function(){
+    state.gap = (+gapRange.value) / 10;
+    gapVal.textContent = state.gap.toFixed(1);
+    draw();
+  });
+  function syncGap(){
+    gapGroup.style.opacity = state.tile ? '1' : '.45';
+    gapRange.disabled = !state.tile;
+  }
+  syncGap();
+  tileToggle.addEventListener('change', function(){ state.tile = tileToggle.checked; syncGap(); draw(); });
+  shadowToggle.addEventListener('change', function(){ state.shadow = shadowToggle.checked; draw(); });
+
+  /* ---------- 下载 / 重置 ---------- */
+  downloadBtn.addEventListener('click', function(){
+    if (!state.img) return;
+    var name = state.fileName.replace(/\.[^.]+$/, '') + '-watermarked.png';
+    if (canvas.toBlob){
+      canvas.toBlob(function(blob){
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function(){
+          URL.revokeObjectURL(a.href);
+          a.remove();
+        }, 1200);
+      }, 'image/png');
+    } else {
+      var a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  });
+
+  clearBtn.addEventListener('click', function(){
+    state.img = null;
+    canvas.width = 0;
+    canvas.height = 0;
+    drop.style.display = 'flex';
+    canvasWrap.classList.remove('on');
+    metaRow.style.display = 'none';
+    downloadBtn.disabled = true;
+    clearBtn.disabled = true;
+    fileInput.value = '';
+  });
+})();
+</script>
+</body>
+</html>

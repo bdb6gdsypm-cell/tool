@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>元素周期表 · Periodic Table</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='3.2' fill='%2314201f'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5.5' fill='none' stroke='%233c7fb0' stroke-width='2'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5.5' fill='none' stroke='%23c95a4d' stroke-width='2' transform='rotate(60 16 16)'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5.5' fill='none' stroke='%236c9a76' stroke-width='2' transform='rotate(120 16 16)'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f5f6f4;--panel:#ffffff;--ink:#14201f;--muted:#5f6d6b;--faint:#93a09d;
+    --line:#dde3e0;--line-soft:#e9eeeb;
+    --am:#c95a4d;--ae:#d99a3c;--tm:#4b6fbf;--ptm:#7a8b99;--ml:#6c9a76;
+    --nm:#3f8f8a;--hl:#8f5ab0;--ng:#3c7fb0;--ln:#b06a8f;--an:#8c6a4f;--un:#8a8a86;
+    --radius:8px;
+    --mono:"SF Mono","JetBrains Mono",Consolas,monospace;
+    --serif:"Songti SC","STSong","Noto Serif SC",serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .shell{max-width:1180px;margin:0 auto;padding:0 16px 64px;}
+
+  .topbar{position:sticky;top:0;z-index:30;background:rgba(245,246,244,.92);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .topbar-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;}
+  .back{flex:0 0 auto;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);
+    background:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;}
+  .back svg{width:15px;height:15px;stroke:var(--ink);}
+  .brand h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.01em;}
+  .brand h1 i{font-style:normal;font-weight:400;color:var(--faint);font-size:12px;letter-spacing:.02em;margin-left:6px;}
+  .brand p{margin:2px 0 0;font-size:11.5px;color:var(--muted);}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-soft);
+    border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;margin:16px 0 14px;}
+  .stat{background:var(--panel);padding:12px 14px;}
+  .stat b{display:block;font-family:var(--mono);font-size:22px;font-weight:600;line-height:1.1;}
+  .stat span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;}
+
+  .searchbar{display:flex;align-items:center;gap:10px;background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:10px 16px;}
+  .searchbar svg{width:16px;height:16px;stroke:var(--muted);flex:0 0 auto;}
+  .searchbar input{flex:1;min-width:0;border:0;outline:0;background:transparent;
+    font-size:16px;color:var(--ink);letter-spacing:.01em;}
+  .searchbar input::placeholder{color:var(--faint);}
+  .clearbtn{border:0;background:transparent;color:var(--faint);font-size:12px;cursor:pointer;padding:4px;display:none;}
+  .clearbtn.show{display:block;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 6px;}
+  .chip{border:1px solid var(--line);background:var(--panel);color:var(--muted);
+    font-size:12px;padding:5px 11px;border-radius:999px;cursor:pointer;transition:.16s;display:inline-flex;align-items:center;gap:6px;}
+  .chip:hover{border-color:#c3cfca;color:var(--ink);}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .chip .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+
+  .subline{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:14px 0 8px;}
+  .subline h2{margin:0;font-family:var(--serif);font-size:15px;font-weight:600;letter-spacing:.02em;}
+  .subline .hint{font-size:11.5px;color:var(--faint);}
+
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .ptable{display:grid;grid-template-columns:28px repeat(18,minmax(0,1fr));
+    gap:3px;min-width:880px;padding:2px 2px 12px;}
+  .gh,.phcell{display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:10px;color:var(--faint);height:18px;}
+
+  .el{position:relative;aspect-ratio:1/1;border-radius:7px;border:1px solid transparent;
+    background:var(--panel);padding:4px 5px 3px;cursor:pointer;overflow:hidden;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    transition:transform .12s,border-color .16s,box-shadow .16s,opacity .16s;font-family:inherit;}
+  .el:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(20,32,31,.10);z-index:2;}
+  .el:focus-visible{outline:2px solid #35566b;outline-offset:2px;}
+  .el .z{position:absolute;top:3px;left:5px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1;}
+  .el .sym{font-family:var(--serif);font-size:16px;font-weight:700;line-height:1;margin-top:4px;}
+  .el .cn{font-size:10px;color:var(--muted);margin-top:2px;line-height:1;white-space:nowrap;}
+  .el .ms{font-family:var(--mono);font-size:8.5px;color:var(--faint);margin-top:1px;line-height:1;}
+  .el.dim{opacity:.26;}
+  .el.hit{border-color:#35566b;box-shadow:0 0 0 2px rgba(53,86,107,.16);}
+
+  .elist{display:none;border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;background:var(--panel);}
+  .erow{display:grid;grid-template-columns:26px 40px 1fr auto;gap:10px;align-items:baseline;
+    padding:10px 12px;border-bottom:1px solid var(--line-soft);cursor:pointer;}
+  .erow:last-child{border-bottom:0;}
+  .erow .z{font-family:var(--mono);font-size:10px;color:var(--faint);}
+  .erow .sym{font-family:var(--serif);font-size:15px;font-weight:700;}
+  .erow .nm{font-size:13.5px;}
+  .erow .nm em{font-style:normal;color:var(--faint);font-size:11px;margin-left:6px;}
+  .erow .ms{font-family:var(--mono);font-size:10.5px;color:var(--muted);}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft);}
+  .lg{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);}
+  .lg i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+
+  .mask{position:fixed;inset:0;background:rgba(15,24,23,.42);z-index:60;
+    display:flex;align-items:center;justify-content:center;padding:16px;}
+  .mask[hidden]{display:none;}
+  .card{width:100%;max-width:520px;max-height:86vh;overflow:auto;background:var(--panel);
+    border-radius:12px;border-top:3px solid #35566b;box-shadow:0 18px 50px rgba(10,20,20,.24);
+    padding:20px 20px 16px;position:relative;}
+  .card:focus{outline:none;}
+  .card .close{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;
+    border:1px solid var(--line);background:#fff;cursor:pointer;font-size:13px;color:var(--muted);line-height:1;}
+  .card .head{display:flex;align-items:flex-start;gap:14px;padding-right:26px;}
+  .card .tile{flex:0 0 62px;height:62px;border-radius:10px;border:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .card .tile b{font-family:var(--serif);font-size:22px;line-height:1;}
+  .card .tile span{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px;}
+  .card h3{margin:0;font-size:19px;font-weight:700;letter-spacing:.02em;}
+  .card h3 i{font-style:normal;font-weight:400;color:var(--faint);font-size:12px;margin-left:8px;}
+  .card .meta{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.7;}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:11px 16px;margin-top:14px;padding-top:13px;
+    border-top:1px dashed #cfd9d4;}
+  .kv div{min-width:0;}
+  .kv label{display:block;font-size:10.5px;color:var(--faint);margin-bottom:2px;letter-spacing:.02em;}
+  .kv p{margin:0;font-size:12.5px;line-height:1.6;word-break:break-word;}
+  .kv .wide{grid-column:1/-1;}
+  .note{margin-top:13px;padding-top:11px;border-top:1px solid var(--line-soft);
+    font-size:12.5px;line-height:1.8;color:#3d4a48;}
+  .foot{margin-top:12px;font-size:10.5px;color:var(--faint);}
+
+  .empty{display:none;text-align:center;padding:36px 12px;color:var(--muted);font-size:13px;}
+  .empty.show{display:block;}
+
+  @media (max-width:900px){
+    .shell{padding:0 12px 56px;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .el .sym{font-size:14px;}
+    .el .cn{font-size:9.5px;}
+    .el .ms{display:none;}
+  }
+  @media (max-width:680px){
+    .tablewrap{display:none;}
+    .elist{display:block;}
+    .brand p{display:none;}
+    .subline{margin-top:10px;}
+    .mask{align-items:flex-end;padding:0;}
+    .card{max-width:none;max-height:88vh;border-radius:14px 14px 0 0;padding:18px 16px 18px;}
+    .kv{grid-template-columns:1fr;gap:9px;}
+    .chip{font-size:11.5px;padding:5px 10px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <a class="back" href="../首页/首页.html" aria-label="返回首页">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    <div class="brand">
+      <h1>元素周期表<i>Periodic Table</i></h1>
+      <p>118 种元素 · 原子序数 / 类别 / 物性 / 用途</p>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="stats">
+    <div class="stat"><b>118</b><span>元素总数</span></div>
+    <div class="stat"><b>94</b><span>自然界存在</span></div>
+    <div class="stat"><b>24</b><span>人工合成</span></div>
+    <div class="stat"><b>7</b><span>周期 / 18 族</span></div>
+  </div>
+
+  <div class="searchbar">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+    <input id="q" type="search" placeholder="搜索：氢 / H / 1 / Hydrogen / 稀有气体" autocomplete="off" aria-label="搜索元素">
+    <button class="clearbtn" id="qClear" type="button">清空</button>
+  </div>
+
+  <div class="chips" id="chips" aria-label="按类别筛选"></div>
+
+  <div class="subline">
+    <h2>周期表</h2>
+    <span class="hint" id="hint">点击任意元素查看详情</span>
+  </div>
+
+  <div class="tablewrap" id="tablewrap">
+    <div class="ptable" id="ptable" role="grid" aria-label="元素周期表"></div>
+  </div>
+
+  <div class="elist" id="elist" aria-label="元素列表"></div>
+  <div class="empty" id="empty">没有匹配的元素，换个关键词试试。</div>
+
+  <div class="legend" id="legend"></div>
+</div>
+
+<div class="mask" id="mask" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="cname" tabindex="-1">
+    <button class="close" id="closeBtn" type="button" aria-label="关闭">✕</button>
+    <div id="cardBody"></div>
+  </div>
+</div>
+
+<script>
+var CATS = {
+  AM:{t:'碱金属',c:'#c95a4d'}, AE:{t:'碱土金属',c:'#d99a3c'}, TM:{t:'过渡金属',c:'#4b6fbf'},
+  PTM:{t:'后过渡金属',c:'#7a8b99'}, ML:{t:'类金属',c:'#6c9a76'}, NM:{t:'非金属',c:'#3f8f8a'},
+  HL:{t:'卤素',c:'#8f5ab0'}, NG:{t:'稀有气体',c:'#3c7fb0'}, LN:{t:'镧系',c:'#b06a8f'},
+  AN:{t:'锕系',c:'#8c6a4f'}, UN:{t:'未知性质',c:'#8a8a86'}
+};
+function E(z,sym,cn,en,ms,cat,p,g,mp,bp,den,year,use,note){
+  return {z:z,sym:sym,cn:cn,en:en,ms:ms,cat:cat,p:p,g:g,mp:mp,bp:bp,den:den,year:year,use:use,note:note||''};
+}
+</script>
+
+<script>
+var ELEMENTS = [
+E(1,'H','氢','Hydrogen',1.008,'NM',1,1,-259.1,-252.9,0.00009,'1766','宇宙中最丰富的元素，约占普通物质质量的 74%；用于合成氨、燃料电池与氢冶金。','常温为双原子气体，是密度最小的元素。'),
+E(2,'He','氦','Helium',4.003,'NG',1,18,-272.2,-268.9,0.00018,'1868','沸点最低，用于低温超导磁体冷却、深海呼吸混合气与飞艇。','先在太阳光谱中发现，后才在地球找到。'),
+E(3,'Li','锂','Lithium',6.94,'AM',2,1,180.5,1342,0.534,'1817','最轻的金属，锂离子电池正极与电解液核心材料，也用于锂基润滑脂。','能与水剧烈反应。'),
+E(4,'Be','铍','Beryllium',9.012,'AE',2,2,1287,2470,1.85,'1798','铍铜合金弹性好、无磁，用于精密弹簧、X 射线窗口与航天结构件。','粉尘有毒性。'),
+E(5,'B','硼','Boron',10.81,'ML',2,13,2076,3927,2.34,'1808','硼硅玻璃耐热、硼纤维增强材料；硼酸用于阻燃与核反应堆控制。'),
+E(6,'C','碳','Carbon',12.011,'NM',2,14,3550,4027,3.51,'古代','有机物的骨架元素；金刚石、石墨、石墨烯、碳纤维皆为其同素异形体。','自然界存在多种同素异形体。'),
+E(7,'N','氮','Nitrogen',14.007,'NM',2,15,-210,-195.8,0.00125,'1772','空气主要成分（78%）；合成氨制化肥，也作食品包装与焊接保护气。'),
+E(8,'O','氧','Oxygen',15.999,'NM',2,16,-218.8,-183,0.00143,'1774','呼吸与燃烧必需；炼钢、医疗供氧、火箭氧化剂。','地壳中含量最高的元素。'),
+E(9,'F','氟','Fluorine',18.998,'HL',2,17,-219.7,-188.1,0.0017,'1886','最活泼的非金属；含氟牙膏防龋、含氟聚合物（PTFE）耐腐蚀。','单质腐蚀性极强。'),
+E(10,'Ne','氖','Neon',20.18,'NG',2,18,-248.6,-246.1,0.0009,'1898','霓虹灯与高压指示灯的经典发光气体。'),
+E(11,'Na','钠','Sodium',22.99,'AM',3,1,97.8,883,0.971,'1807','食盐与纯碱的来源；钠灯照明，液态钠用作核反应堆冷却剂。'),
+E(12,'Mg','镁','Magnesium',24.305,'AE',3,2,650,1090,1.738,'1755','最轻的工程结构金属之一；镁铝合金用于汽车、笔记本外壳，燃烧剂与闪光粉。'),
+E(13,'Al','铝','Aluminium',26.982,'PTM',3,13,660.3,2519,2.698,'1825','地壳含量最高的金属；轻质导线、包装箔、航空与建筑型材。','电解法炼铝使其成为廉价金属。'),
+E(14,'Si','硅','Silicon',28.085,'ML',3,14,1414,3265,2.329,'1824','半导体工业基石；硅钢、玻璃、水泥与硅胶。','芯片用的高纯单晶硅要求 99.9999999%。'),
+E(15,'P','磷','Phosphorus',30.974,'NM',3,15,44.1,280.5,1.823,'1669','磷肥三大养分之一；白磷用于火柴与燃烧弹，红磷用于安全火柴。','白磷剧毒且易自燃。'),
+E(16,'S','硫','Sulfur',32.06,'NM',3,16,115.2,444.6,2.067,'古代','制硫酸的原料；硫化橡胶、火药与农药。','火山口常见黄色晶体。'),
+E(17,'Cl','氯','Chlorine',35.45,'HL',3,17,-101.5,-34,0.0032,'1774','自来水与泳池消毒、PVC 生产、漂白剂。','一战中曾被用作毒气。'),
+E(18,'Ar','氩','Argon',39.95,'NG',3,18,-189.3,-185.8,0.0018,'1894','焊接与冶炼保护气、白炽灯填充气；大气中含量约 0.93%。'),
+E(19,'K','钾','Potassium',39.098,'AM',4,1,63.4,759,0.862,'1807','钾肥三大养分之一；氯化钾用于医药补钾与低钠盐。'),
+E(20,'Ca','钙','Calcium',40.078,'AE',4,2,842,1484,1.55,'1808','骨骼与牙齿主要成分；石灰石、水泥、炼钢脱氧剂。'),
+E(21,'Sc','钪','Scandium',44.956,'TM',4,3,1541,2836,2.985,'1879','铝钪合金强度高，用于自行车架、航天件与高端体育器材。'),
+E(22,'Ti','钛','Titanium',47.867,'TM',4,4,1668,3287,4.5,'1791','强度高、耐腐蚀、生物相容；航空发动机、人工关节、化工设备。','地壳含量第 10，但提取困难。'),
+E(23,'V','钒','Vanadium',50.942,'TM',4,5,1910,3407,6.11,'1801','钒钢强韧耐磨；全钒液流电池用于大规模储能。'),
+E(24,'Cr','铬','Chromium',51.996,'TM',4,6,1907,2673,7.19,'1797','不锈钢的关键成分；镀铬装饰与硬铬耐磨层。','六价铬有毒。'),
+E(25,'Mn','锰','Manganese',54.938,'TM',4,7,1246,2061,7.3,'1774','锰钢耐磨；干电池正极、铝合金添加剂与脱硫剂。'),
+E(26,'Fe','铁','Iron',55.845,'TM',4,8,1538,2861,7.874,'古代','钢铁工业的基础；血红蛋白携氧核心；地核主要成分。','人类进入铁器时代的标志。'),
+E(27,'Co','钴','Cobalt',58.933,'TM',4,9,1495,2927,8.9,'1735','锂电池正极材料；钴蓝颜料、超硬合金与磁体。'),
+E(28,'Ni','镍','Nickel',58.693,'TM',4,10,1455,2913,8.908,'1751','不锈钢与镍基高温合金；镀镍防腐、镍氢电池。'),
+E(29,'Cu','铜','Copper',63.546,'TM',4,11,1084.6,2562,8.92,'古代','导电导热优异，用于电线、电机、散热器；青铜为最早合金之一。','人类最早大量使用的金属。'),
+E(30,'Zn','锌','Zinc',65.38,'TM',4,12,419.5,907,7.134,'古代','镀锌防锈；干电池负极、黄铜与氧化锌防晒剂。'),
+E(31,'Ga','镓','Gallium',69.723,'PTM',4,13,29.8,2204,5.907,'1875','氮化镓（GaN）用于快充、5G 射频与 LED；熔点低，可在手心融化。'),
+E(32,'Ge','锗','Germanium',72.63,'ML',4,14,938.3,2833,5.323,'1886','早期晶体管材料；红外光学、光纤与太阳能电池。'),
+E(33,'As','砷','Arsenic',74.922,'ML',4,15,817,614,5.727,'古代','砷化镓用于高频器件；三氧化二砷曾作药物，本身剧毒。','砒霜即三氧化二砷。'),
+E(34,'Se','硒','Selenium',78.971,'NM',4,16,221,685,4.809,'1817','硒鼓与复印技术的起点；硒化镉薄膜太阳能、抗氧化营养元素。'),
+E(35,'Br','溴','Bromine',79.904,'HL',4,17,-7.2,58.8,3.1028,'1826','阻燃剂、感光胶片与药物合成。','常温下是唯一的液态非金属单质。'),
+E(36,'Kr','氪','Krypton',83.798,'NG',4,18,-157.4,-153.4,0.0018,'1898','高亮闪光灯、准分子激光与节能窗填充气。'),
+E(37,'Rb','铷','Rubidium',85.468,'AM',5,1,39.3,688,1.532,'1861','铷原子钟精度极高，用于卫星导航与科研；光电管材料。'),
+E(38,'Sr','锶','Strontium',87.62,'AE',5,2,777,1382,2.64,'1790','锶盐燃烧呈鲜红色，是烟花与信号弹的红色来源。'),
+E(39,'Y','钇','Yttrium',88.906,'TM',5,3,1522,3345,4.469,'1794','YAG 激光晶体、白光 LED 荧光粉与高温超导材料。'),
+E(40,'Zr','锆','Zirconium',91.224,'TM',5,4,1855,4409,6.506,'1789','核燃料包壳材料（低中子吸收）；氧化锆陶瓷刀具与人工牙。'),
+E(41,'Nb','铌','Niobium',92.906,'TM',5,5,2469,4744,8.57,'1801','铌钛超导线用于 MRI 与粒子加速器；微合金钢。'),
+E(42,'Mo','钼','Molybdenum',95.95,'TM',5,6,2623,4639,10.28,'1771','钼钢耐高温；二硫化钼固体润滑剂；植物必需微量元素。'),
+E(43,'Tc','锝','Technetium',98,'TM',5,7,2157,4265,11.5,'1937','首个被人工合成的元素；锝-99m 用于核医学显影。','无稳定同位素。'),
+E(44,'Ru','钌','Ruthenium',101.07,'TM',5,8,2334,4150,12.37,'1844','催化剂与电子触点；钌配合物用于染料敏化太阳能电池。'),
+E(45,'Rh','铑','Rhodium',102.91,'TM',5,9,1964,3695,12.41,'1803','汽车尾气三元催化器的核心；价格昂贵。'),
+E(46,'Pd','钯','Palladium',106.42,'TM',5,10,1555,2963,12.02,'1803','催化加氢、尾气净化；可吸收大量氢气。'),
+E(47,'Ag','银','Silver',107.87,'TM',5,11,961.8,2162,10.49,'古代','导电导热性能居所有金属之首；感光材料、抗菌与首饰。'),
+E(48,'Cd','镉','Cadmium',112.41,'TM',5,12,321.1,767,8.65,'1817','镍镉电池与颜料；有毒，已被多国限制使用。'),
+E(49,'In','铟','Indium',114.82,'PTM',5,13,156.6,2072,7.31,'1863','ITO 透明导电膜用于触摸屏与液晶面板。'),
+E(50,'Sn','锡','Tin',118.71,'PTM',5,14,231.9,2602,7.31,'古代','焊锡、镀锡铁皮（马口铁）与青铜。','低温下会“锡疫”碎裂。'),
+E(51,'Sb','锑','Antimony',121.76,'ML',5,15,630.6,1587,6.685,'古代','阻燃剂、铅酸电池合金与半导体掺杂。'),
+E(52,'Te','碲','Tellurium',127.6,'ML',5,16,449.5,988,6.232,'1782','碲化镉薄膜太阳能与热电材料；全球储量稀少。'),
+E(53,'I','碘','Iodine',126.9,'HL',5,17,113.7,184.3,4.933,'1811','甲状腺激素必需元素；碘酒消毒、食盐加碘。'),
+E(54,'Xe','氙','Xenon',131.29,'NG',5,18,-111.8,-108,0.0059,'1898','氙气大灯、离子推进器与麻醉气体。'),
+E(55,'Cs','铯','Caesium',132.91,'AM',6,1,28.4,671,1.879,'1860','铯原子钟是秒的定义基准；光电管与离子火箭。','最活泼的稳定金属之一。'),
+E(56,'Ba','钡','Barium',137.33,'AE',6,2,727,1897,3.594,'1808','硫酸钡作“钡餐”造影剂；钡盐燃烧呈绿色。'),
+E(57,'La','镧','Lanthanum',138.91,'LN',6,0,920,3464,6.145,'1839','光学玻璃、储氢合金与石油裂化催化剂。'),
+E(58,'Ce','铈','Cerium',140.12,'LN',6,0,795,3443,6.77,'1803','抛光粉、打火石与汽车尾气催化剂；地壳中含量最高的稀土。'),
+E(59,'Pr','镨','Praseodymium',140.91,'LN',6,0,931,3520,6.773,'1885','钕铁硼磁体添加剂、绿色玻璃着色。'),
+E(60,'Nd','钕','Neodymium',144.24,'LN',6,0,1024,3074,7.007,'1885','钕铁硼永磁材料是电机、耳机的核心；Nd:YAG 激光。'),
+E(61,'Pm','钷','Promethium',145,'LN',6,0,1042,3000,7.26,'1945','荧光涂层与核电池；具放射性，自然界几乎不存在。'),
+E(62,'Sm','钐','Samarium',150.36,'LN',6,0,1072,1794,7.52,'1879','钐钴磁体耐高温，用于航空航天与军工。'),
+E(63,'Eu','铕','Europium',151.96,'LN',6,0,822,1529,5.243,'1901','红色荧光粉与防伪油墨；液晶屏色彩重要元素。'),
+E(64,'Gd','钆','Gadolinium',157.25,'LN',6,0,1312,3273,7.895,'1880','钆对比剂用于 MRI；磁制冷与中子屏蔽。'),
+E(65,'Tb','铽','Terbium',158.93,'LN',6,0,1356,3230,8.229,'1843','绿色荧光粉、磁致伸缩材料与固态器件。'),
+E(66,'Dy','镝','Dysprosium',162.5,'LN',6,0,1407,2562,8.559,'1886','提高钕铁硼磁体耐热性，是关键稀土。'),
+E(67,'Ho','钬','Holmium',164.93,'LN',6,0,1461,2720,8.795,'1878','钬激光用于医疗碎石与手术；玻璃着色。'),
+E(68,'Er','铒','Erbium',167.26,'LN',6,0,1529,2863,9.066,'1843','掺铒光纤放大器（EDFA）是长距光通信的关键。'),
+E(69,'Tm','铥','Thulium',168.93,'LN',6,0,1545,1950,9.32,'1879','铥激光、便携 X 射线源。'),
+E(70,'Yb','镱','Ytterbium',173.05,'LN',6,0,819,1196,6.9,'1878','光纤激光器、原子钟与荧光体。'),
+E(71,'Lu','镥','Lutetium',174.97,'LN',6,0,1652,3402,9.841,'1907','PET 显影剂、石油裂化催化剂。'),
+E(72,'Hf','铪','Hafnium',178.49,'TM',6,4,2233,4603,13.31,'1923','核反应堆控制棒；氧化铪用于芯片高 k 栅介质。'),
+E(73,'Ta','钽','Tantalum',180.95,'TM',6,5,3017,5458,16.65,'1802','钽电容体积小容量大；医用植入体与耐蚀设备。'),
+E(74,'W','钨','Tungsten',183.84,'TM',6,6,3422,5555,19.25,'1783','熔点最高的金属；硬质合金刀具、灯丝与穿甲弹。'),
+E(75,'Re','铼','Rhenium',186.21,'TM',6,7,3186,5596,21.02,'1925','航空发动机单晶叶片的关键合金元素。'),
+E(76,'Os','锇','Osmium',190.23,'TM',6,8,3033,5012,22.59,'1803','密度最大的元素；用于笔尖与精密仪器触点。'),
+E(77,'Ir','铱','Iridium',192.22,'TM',6,9,2446,4428,22.56,'1803','耐蚀耐高温，用于火花塞与坩埚；陨石中含量是地壳的数十倍。'),
+E(78,'Pt','铂','Platinum',195.08,'TM',6,10,1768.3,3825,21.45,'1735','催化剂、首饰与实验室器皿；铂铑热电偶测温精度高。'),
+E(79,'Au','金','Gold',196.97,'TM',6,11,1064,2856,19.3,'古代','化学性质极稳定；电子触点、货币与首饰。','延展性极佳，1 克可拉成数千米金丝。'),
+E(80,'Hg','汞','Mercury',200.59,'TM',6,12,-38.8,356.7,13.534,'古代','常温唯一液态金属；曾用于温度计与血压计，现被限制。','蒸气有神经毒性。'),
+E(81,'Tl','铊','Thallium',204.38,'PTM',6,13,304,1473,11.85,'1861','红外探测器与光学材料；剧毒，曾被用作杀鼠剂。'),
+E(82,'Pb','铅','Lead',207.2,'PTM',6,14,327.5,1749,11.34,'古代','铅酸蓄电池、辐射屏蔽与配重；对神经系统有害。'),
+E(83,'Bi','铋','Bismuth',208.98,'PTM',6,15,271.4,1564,9.78,'1753','低熔点合金、胃药与无铅焊料；晶体呈彩虹色。'),
+E(84,'Po','钋','Polonium',209,'ML',6,16,254,962,9.2,'1898','居里夫妇发现，以波兰命名；强放射性，用作静电消除与热源。'),
+E(85,'At','砹','Astatine',210,'HL',6,17,302,337,7.0,'1940','地壳中最稀有的天然元素；强放射性。'),
+E(86,'Rn','氡','Radon',222,'NG',6,18,-71,-61.7,0.00973,'1899','放射性气体，室内污染与肺癌风险因素；地质勘探示踪。'),
+E(87,'Fr','钫','Francium',223,'AM',7,1,27,677,1.87,'1939','极不稳定的碱金属，半衰期仅 22 分钟。'),
+E(88,'Ra','镭','Radium',226,'AE',7,2,700,1737,5.5,'1898','居里夫妇发现；曾用于荧光涂料与放疗，现已被替代。'),
+E(89,'Ac','锕','Actinium',227,'AN',7,0,1050,3200,10.07,'1899','锕系首元素，强放射性；用于中子源与靶材。'),
+E(90,'Th','钍','Thorium',232.04,'AN',7,0,1750,4788,11.72,'1829','潜在核燃料，储量丰富；也曾用于煤气灯纱罩。'),
+E(91,'Pa','镤','Protactinium',231.04,'AN',7,0,1568,4027,15.37,'1913','稀有放射性元素，用于科研与年代测定。'),
+E(92,'U','铀','Uranium',238.03,'AN',7,0,1132.2,4131,18.95,'1789','核燃料与核武器核心；铀-235 可链式裂变。','天然铀以铀-238 为主。'),
+E(93,'Np','镎','Neptunium',237,'AN',7,0,644,3902,20.45,'1940','第一个超铀元素，以海王星命名。'),
+E(94,'Pu','钚','Plutonium',244,'AN',7,0,639.4,3228,19.84,'1940','核燃料与核电池；钚-238 为深空探测器供电。'),
+E(95,'Am','镅','Americium',243,'AN',7,0,1176,2011,14.78,'1944','镅-241 用于家用离子烟雾报警器。'),
+E(96,'Cm','锔','Curium',247,'AN',7,0,1340,3110,14.51,'1944','以居里夫妇命名；用于航天电源与科研。'),
+E(97,'Bk','锫','Berkelium',247,'AN',7,0,986,2627,14.78,'1949','以伯克利命名；仅用于科研。'),
+E(98,'Cf','锎','Californium',251,'AN',7,0,900,1470,15.1,'1950','锎-252 是强中子源，用于石油勘探与癌症治疗。'),
+E(99,'Es','锿','Einsteinium',252,'AN',7,0,860,996,15.2,'1952','以爱因斯坦命名；氢弹试验残骸中发现。'),
+E(100,'Fm','镄','Fermium',257,'AN',7,0,1527,2513,19.3,'1952','以费米命名；只能以极微量人工制得。'),
+E(101,'Md','钔','Mendelevium',258,'AN',7,0,827,2560,19.3,'1955','以门捷列夫命名。'),
+E(102,'No','锘','Nobelium',259,'AN',7,0,827,2600,20.0,'1957','以诺贝尔命名。'),
+E(103,'Lr','铹','Lawrencium',266,'AN',7,0,1622,3000,19.9,'1961','锕系末位，以劳伦斯命名。'),
+E(104,'Rf','lú','Rutherfordium',267,'TM',7,4,2100,5500,23.2,'1964','以卢瑟福命名；超重元素，性质近似铪。'),
+E(105,'Db','dù','Dubnium',268,'TM',7,5,2410,5500,29.3,'1967','以杜布纳命名。'),
+E(106,'Sg','xǐ','Seaborgium',269,'TM',7,6,2500,5500,35.0,'1974','以西博格命名。'),
+E(107,'Bh','bō','Bohrium',270,'TM',7,7,2600,5500,37.1,'1981','以玻尔命名。'),
+E(108,'Hs','hēi','Hassium',269,'TM',7,8,2700,5500,40.7,'1984','以黑森州命名。'),
+E(109,'Mt','mài','Meitnerium',278,'UN',7,9,2800,5500,37.4,'1982','以迈特纳命名。'),
+E(110,'Ds','dá','Darmstadtium',281,'UN',7,10,2800,5500,34.8,'1994','以达姆施塔特命名。'),
+E(111,'Rg','lún','Roentgenium',282,'UN',7,11,2800,5500,28.7,'1994','以伦琴命名。'),
+E(112,'Cn','gē','Copernicium',285,'UN',7,12,283,340,23.7,'1996','以哥白尼命名；可能为气态金属。'),
+E(113,'Nh','nǐ','Nihonium',286,'UN',7,13,430,1130,16,'2003','日本理化学研究所合成，以“日本”命名。'),
+E(114,'Fl','fū','Flerovium',289,'UN',7,14,200,147,14,'1999','以弗廖罗夫命名。'),
+E(115,'Mc','mò','Moscovium',290,'UN',7,15,400,1100,13.5,'2003','以莫斯科命名。'),
+E(116,'Lv','lì','Livermorium',293,'UN',7,16,709,1085,12.9,'2000','以利弗莫尔命名。'),
+E(117,'Ts','tián','Tennessine',294,'UN',7,17,700,883,11.7,'2010','以田纳西州命名。'),
+E(118,'Og','ào','Oganesson',294,'UN',7,18,325,450,11,'2002','以奥加涅相命名；已知最重的元素，可能为固态。')
+];
+</script>
+<script>
+(function(){
+  var qEl = document.getElementById('q');
+  var clearEl = document.getElementById('qClear');
+  var chipsEl = document.getElementById('chips');
+  var ptable = document.getElementById('ptable');
+  var elist = document.getElementById('elist');
+  var legend = document.getElementById('legend');
+  var empty = document.getElementById('empty');
+  var mask = document.getElementById('mask');
+  var cardBody = document.getElementById('cardBody');
+  var hint = document.getElementById('hint');
+  var state = { q: '', cat: 'ALL' };
+  var names = {};
+  ELEMENTS.forEach(function(e){ names[e.z] = e; });
+
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmt(v, unit){
+    if (v === null || v === undefined || v === '') return '—';
+    return v + (unit || '');
+  }
+  function mass(e){ return e.ms > 100 ? e.ms.toFixed(1) : e.ms.toFixed(3).replace(/0+$/,'' ).replace(/\.$/,''); }
+  function state25(e){
+    if (e.bp !== null && e.bp !== undefined && e.bp < 25) return '气态';
+    if (e.mp !== null && e.mp !== undefined && e.mp > 25) return '固态';
+    if (e.mp <= 25 && e.bp > 25) return '液态';
+    return '—';
+  }
+  function block(e){
+    if (e.cat === 'LN' || e.cat === 'AN') return 'f 区';
+    if (e.g <= 2) return 's 区';
+    if (e.g <= 12) return 'd 区';
+    return 'p 区';
+  }
+
+  function tone(hex, a){
+    var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+  function cellEl(e, compact){
+    var c = CATS[e.cat] || CATS.UN;
+    var cls = compact ? 'el' : 'el';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = cls;
+    btn.setAttribute('data-z', e.z);
+    btn.style.background = tone(c.c, .10);
+    btn.style.borderColor = tone(c.c, .30);
+    btn.innerHTML = '<span class="z">' + e.z + '</span><span class="sym">' + esc(e.sym) + '</span><span class="cn">' + esc(e.cn) + '</span><span class="ms">' + mass(e) + '</span>';
+    btn.addEventListener('click', function(){ openCard(e.z, btn); });
+    return btn;
+  }
+
+  function buildTable(){
+    ptable.innerHTML = '';
+    var pad = document.createElement('div');
+    pad.className = 'gh';
+    pad.style.gridColumn = '1';
+    pad.style.gridRow = '1';
+    ptable.appendChild(pad);
+    for (var g = 1; g <= 18; g++){
+      var gh = document.createElement('div');
+      gh.className = 'gh';
+      gh.textContent = g;
+      gh.style.gridColumn = (g + 1);
+      gh.style.gridRow = '1';
+      ptable.appendChild(gh);
+    }
+    for (var p = 1; p <= 7; p++){
+      var ph = document.createElement('div');
+      ph.className = 'phcell';
+      ph.textContent = p;
+      ph.style.gridColumn = '1';
+      ph.style.gridRow = (p + 1);
+      ptable.appendChild(ph);
+    }
+    ELEMENTS.forEach(function(e){
+      var btn = cellEl(e, true);
+      if (e.cat === 'LN' || e.cat === 'AN'){
+        btn.style.gridRow = (e.cat === 'LN' ? 10 : 11);
+        btn.style.gridColumn = (4 + (e.z - (e.cat === 'LN' ? 57 : 89)));
+      } else {
+        btn.style.gridRow = (e.p + 1);
+        btn.style.gridColumn = (e.g + 1);
+      }
+      ptable.appendChild(btn);
+    });
+    var ph1 = document.createElement('button');
+    ph1.type = 'button';
+    ph1.className = 'el';
+    ph1.style.gridRow = '7'; ph1.style.gridColumn = '4';
+    ph1.style.background = tone('#b06a8f', .08);
+    ph1.style.borderColor = tone('#b06a8f', .22);
+    ph1.innerHTML = '<span class="sym" style="font-size:11px">57–71</span><span class="cn">镧系</span>';
+    ph1.addEventListener('click', function(){ scrollToF('LN'); });
+    ptable.appendChild(ph1);
+    var ph2 = document.createElement('button');
+    ph2.type = 'button';
+    ph2.className = 'el';
+    ph2.style.gridRow = '8'; ph2.style.gridColumn = '4';
+    ph2.style.background = tone('#8c6a4f', .08);
+    ph2.style.borderColor = tone('#8c6a4f', .22);
+    ph2.innerHTML = '<span class="sym" style="font-size:11px">89–103</span><span class="cn">锕系</span>';
+    ph2.addEventListener('click', function(){ scrollToF('AN'); });
+    ptable.appendChild(ph2);
+  }
+  function scrollToF(kind){
+    var target = ptable.querySelector('.el[data-z="' + (kind === 'LN' ? 57 : 89) + '"]');
+    if (target) target.focus();
+  }
+
+  function buildChips(){
+    var all = document.createElement('button');
+    all.type = 'button'; all.className = 'chip on'; all.textContent = '全部';
+    all.addEventListener('click', function(){ state.cat = 'ALL'; paint(); });
+    chipsEl.appendChild(all);
+    Object.keys(CATS).forEach(function(k){
+      var c = CATS[k];
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.innerHTML = '<i class="dot" style="background:' + c.c + '"></i>' + c.t;
+      b.addEventListener('click', function(){ state.cat = (state.cat === k ? 'ALL' : k); paint(); });
+      chipsEl.appendChild(b);
+    });
+  }
+  function paintChips(){
+    var kids = chipsEl.querySelectorAll('.chip');
+    var idx = 0;
+    kids.forEach(function(b, i){
+      var isAll = i === 0;
+      b.classList.toggle('on', isAll ? state.cat === 'ALL' : (Object.keys(CATS)[i - 1] === state.cat));
+    });
+  }
+
+  function match(e, q){
+    if (!q) return true;
+    var s = (e.cn + ' ' + e.sym + ' ' + e.z + ' ' + e.en + ' ' + (CATS[e.cat] ? CATS[e.cat].t : '') + ' ' + (e.use || '')).toLowerCase();
+    return s.indexOf(q.toLowerCase()) >= 0;
+  }
+  function visible(e){
+    if (state.cat !== 'ALL' && e.cat !== state.cat) return false;
+    return match(e, state.q);
+  }
+
+  function paint(){
+    paintChips();
+    var any = 0;
+    var gridCells = ptable.querySelectorAll('.el[data-z]');
+    gridCells.forEach(function(c){
+      var e = names[+c.getAttribute('data-z')];
+      var ok = visible(e);
+      if (ok) any++;
+      c.classList.toggle('dim', !ok);
+      c.classList.toggle('hit', !!state.q && ok);
+    });
+    // 列表
+    elist.innerHTML = '';
+    var shown = 0;
+    ELEMENTS.forEach(function(e){
+      if (!visible(e)) return;
+      shown++;
+      var row = document.createElement('div');
+      row.className = 'erow';
+      var c = CATS[e.cat] || CATS.UN;
+      row.innerHTML = '<span class="z">' + e.z + '</span><span class="sym" style="color:' + c.c + '">' + esc(e.sym) + '</span>' +
+        '<span class="nm">' + esc(e.cn) + '<em>' + esc(e.en) + '</em></span><span class="ms">' + mass(e) + '</span>';
+      row.addEventListener('click', function(){ openCard(e.z, row); });
+      elist.appendChild(row);
+    });
+    empty.classList.toggle('show', shown === 0);
+    hint.textContent = shown === 118 ? '点击任意元素查看详情' : ('匹配 ' + shown + ' 种元素');
+    clearEl.classList.toggle('show', !!state.q);
+  }
+
+  function openCard(z, from){
+    var e = names[z];
+    if (!e) return;
+    var c = CATS[e.cat] || CATS.UN;
+    var st = state25(e);
+    cardBody.innerHTML =
+      '<div class="head">' +
+        '<div class="tile" style="background:' + tone(c.c, .10) + ';border-color:' + tone(c.c, .32) + '">' +
+          '<b style="color:' + c.c + '">' + esc(e.sym) + '</b><span>' + e.z + '</span>' +
+        '</div>' +
+        '<div>' +
+          '<h3 id="cname">' + esc(e.cn) + '<i>' + esc(e.en) + '</i></h3>' +
+          '<div class="meta">' + c.t + ' · 第 ' + e.p + ' 周期 · ' + (e.g ? ('第 ' + e.g + ' 族') : 'f 区') + ' · ' + block(e) + ' · 常温下为' + st + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="kv">' +
+        '<div><label>原子序数</label><p>' + e.z + '</p></div>' +
+        '<div><label>相对原子质量</label><p>' + mass(e) + '</p></div>' +
+        '<div><label>熔点</label><p>' + fmt(e.mp, ' °C') + '</p></div>' +
+        '<div><label>沸点</label><p>' + fmt(e.bp, ' °C') + '</p></div>' +
+        '<div><label>密度</label><p>' + fmt(e.den, ' g/cm³') + '</p></div>' +
+        '<div><label>发现年份</label><p>' + esc(e.year) + '</p></div>' +
+        '<div class="wide"><label>主要用途</label><p>' + esc(e.use) + '</p></div>' +
+        (e.note ? '<div class="wide"><label>补充</label><p>' + esc(e.note) + '</p></div>' : '') +
+      '</div>' +
+      '<div class="foot">' + (e.z>=104 ? '中文用字为扩展区汉字，部分设备字体缺字，此处以拼音标注。' : '') + '数据为常用近似值，不同来源在熔点、沸点、密度上可能有差异；超重元素多为理论预测值。</div>';
+    mask.hidden = false;
+    document.querySelector('.card').focus();
+    if (from) lastFocus = from;
+  }
+  var lastFocus = null;
+  function closeCard(){
+    mask.hidden = true;
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  document.getElementById('closeBtn').addEventListener('click', closeCard);
+  mask.addEventListener('click', function(ev){ if (ev.target === mask) closeCard(); });
+  document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape' && !mask.hidden) closeCard(); });
+
+  var timer = null;
+  qEl.addEventListener('input', function(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){ state.q = qEl.value.trim(); paint(); }, 120);
+  });
+  clearEl.addEventListener('click', function(){ qEl.value = ''; state.q = ''; paint(); qEl.focus(); });
+
+  function buildLegend(){
+    Object.keys(CATS).forEach(function(k){
+      var c = CATS[k];
+      var s = document.createElement('span');
+      s.className = 'lg';
+      s.innerHTML = '<i style="background:' + c.c + '"></i>' + c.t;
+      legend.appendChild(s);
+    });
+  }
+
+  buildTable();
+  buildChips();
+  buildLegend();
+  paint();
+})();
+</script>
+
+</body>
+</html>

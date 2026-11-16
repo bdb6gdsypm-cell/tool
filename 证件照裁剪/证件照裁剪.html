@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>证件照裁剪 · ID Photo Cropper</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='6' width='24' height='20' rx='3' fill='none' stroke='%2335566b' stroke-width='2'/%3E%3Ccircle cx='12' cy='13' r='2.4' fill='%2335566b'/%3E%3Cpath d='M8 22c1.6-4 6.4-4 8 0' fill='none' stroke='%2335566b' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --paper:#eef1ec; --paper-2:#e6ebe5; --card:#fbfcf9; --ink:#1b2527;
+    --muted:#63706c; --faint:#93a09a; --line:#d8e0d9; --line-2:#e6ece5;
+    --seal:#35566b; --seal-soft:rgba(53,86,107,.10); --warm:#a6553f;
+    --mono:"SF Mono","JetBrains Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .top{position:sticky;top:0;z-index:20;background:rgba(238,241,236,.94);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .top-in{max-width:1200px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;}
+  .back{flex:0 0 auto;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);
+    background:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;}
+  .back svg{width:15px;height:15px;stroke:var(--ink);}
+  .brand h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.01em;}
+  .brand h1 i{font-style:normal;font-weight:400;color:var(--faint);font-size:12px;margin-left:7px;}
+  .brand p{margin:2px 0 0;font-size:11.5px;color:var(--muted);}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:16px 16px 40px;
+    display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start;}
+  @media (max-width:900px){ .wrap{grid-template-columns:minmax(0,1fr);padding:12px 12px 32px;gap:12px;} }
+
+  .stage-card{background:var(--card);border:1px solid var(--line-2);border-radius:12px;overflow:hidden;}
+  .stage-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 14px;border-bottom:1px solid var(--line-2);}
+  .stage-bar .t{font-size:12.5px;color:var(--muted);}
+  .stage-bar .t b{color:var(--ink);font-weight:600;}
+  .stage-bar .t span{font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px;}
+
+  .stage{position:relative;display:flex;align-items:center;justify-content:center;
+    min-height:340px;padding:20px;background:
+      linear-gradient(45deg,#e9ede8 25%,transparent 25%,transparent 75%,#e9ede8 75%),
+      linear-gradient(45deg,#e9ede8 25%,transparent 25%,transparent 75%,#e9ede8 75%);
+    background-size:16px 16px;background-position:0 0,8px 8px;background-color:#f2f4f0;touch-action:none;}
+  #view{display:block;max-width:100%;max-height:62vh;border-radius:4px;
+    box-shadow:0 8px 26px rgba(27,37,39,.16);cursor:grab;background:#fff;}
+  #view.grabbing{cursor:grabbing;}
+
+  .drop{position:absolute;inset:20px;border:1px dashed #bfcbc4;border-radius:10px;
+    background:rgba(251,252,249,.86);display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:8px;text-align:center;padding:24px;}
+  .drop.hide{display:none;}
+  .drop b{font-size:15px;}
+  .drop small{font-size:12px;color:var(--muted);line-height:1.7;}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+    padding:9px 16px;font-size:13px;cursor:pointer;font-family:inherit;transition:.15s;}
+  .btn:hover{border-color:#b6c3bb;background:#f7f9f5;}
+  .btn.primary{background:var(--seal);border-color:var(--seal);color:#fff;}
+  .btn.primary:hover{background:#2d4a5c;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn.sm{padding:6px 10px;font-size:12px;border-radius:7px;}
+  .btn-row{display:flex;flex-wrap:wrap;gap:8px;}
+
+  .panel{display:flex;flex-direction:column;gap:12px;}
+  .sec{background:var(--card);border:1px solid var(--line-2);border-radius:12px;padding:14px;}
+  .sec h2{margin:0 0 10px;font-size:13px;font-weight:600;letter-spacing:.02em;
+    display:flex;align-items:center;gap:8px;color:var(--ink);}
+  .sec h2::before{content:"";width:3px;height:12px;background:var(--seal);border-radius:2px;}
+
+  .specs{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .spec{border:1px solid var(--line);background:#fff;border-radius:7px;padding:7px 9px;
+    cursor:pointer;text-align:left;font-family:inherit;transition:.15s;}
+  .spec:hover{border-color:#b6c3bb;}
+  .spec.on{border-color:var(--seal);background:var(--seal-soft);}
+  .spec .n{font-size:12.5px;line-height:1.3;}
+  .spec .d{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:2px;}
+  .spec.on .d{color:var(--seal);}
+
+  .rowline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0;}
+  .rowline label{font-size:12.5px;color:var(--muted);}
+  .morebtn{display:flex;align-items:center;gap:8px;width:100%;margin-top:7px;padding:8px 10px;
+    border:1px dashed #c3cfc8;border-radius:7px;background:#f7f9f4;cursor:pointer;
+    font-family:inherit;color:var(--ink);text-align:left;transition:.15s;}
+  .morebtn:hover{border-color:var(--seal);background:var(--seal-soft);}
+  .morebtn .mb-l{display:flex;align-items:baseline;gap:6px;flex:0 0 auto;}
+  .morebtn b{font-size:13px;font-weight:600;letter-spacing:.02em;}
+  .morebtn i{font-style:normal;font-size:11px;color:var(--faint);}
+  .morebtn .mb-cur{flex:1 1 auto;min-width:0;font-size:11.5px;color:var(--seal);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .morebtn .car{flex:0 0 auto;color:var(--muted);transition:transform .18s;}
+  .morebtn.open .car{transform:rotate(180deg);}
+  .morebox{margin-top:7px;}
+  .morebox.hide{display:none;}
+
+  /* 更多证件浮层：不再撑高页面 */
+  .moremask{position:fixed;inset:0;z-index:50;background:rgba(27,37,39,.34);
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}
+  .moremask.hide{display:none;}
+  .morepop{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;
+    width:min(94vw,560px);max-height:82vh;overflow:auto;padding:16px;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    box-shadow:0 18px 50px rgba(27,37,39,.28);}
+  .morepop.hide{display:none;}
+  .morepop-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:12px;}
+  .morepop-hd b{font-size:14px;font-weight:600;letter-spacing:.02em;}
+  .morepop-hd span{font-size:11px;color:var(--faint);}
+  #moreSpecs{display:block;}
+  .msearch{width:100%;margin:0 0 10px;padding:7px 10px;border:1px solid var(--line);
+    border-radius:7px;background:#fff;font-family:inherit;font-size:12.5px;color:var(--ink);}
+  .msearch:focus{outline:2px solid var(--seal-soft);border-color:var(--seal);}
+  .mempty{font-size:12px;color:var(--muted);padding:14px 2px;text-align:center;}
+  .mempty.hide{display:none;}
+  .ghd{display:flex;align-items:center;gap:7px;width:100%;margin:8px 0 0;padding:8px 9px;
+    border:1px solid var(--line);border-radius:7px;background:#f7f9f4;cursor:pointer;
+    font-family:inherit;color:var(--ink);text-align:left;transition:.15s;}
+  .ghd:first-child{margin-top:0;}
+  .ghd:hover{border-color:var(--seal);background:var(--seal-soft);}
+  .ghd.open{border-color:#c3cfc8;background:#fff;}
+  .ghd b{font-size:12px;font-weight:600;letter-spacing:.02em;}
+  .ghd i{font-style:normal;font-size:10.5px;color:var(--faint);}
+  .ghd .car{margin-left:auto;flex:0 0 auto;color:var(--muted);transition:transform .18s;}
+  .ghd.open .car{transform:rotate(180deg);}
+  .gspecs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:7px 0 0;}
+  .gspecs.hide{display:none;}
+  .ghd.hide{display:none;}
+  .spec.hide{display:none;}
+  @media (max-width:600px){ .gspecs{grid-template-columns:repeat(2,1fr);} }
+  .switch{position:relative;width:40px;height:22px;border-radius:999px;background:#d3ddd6;
+    border:0;cursor:pointer;transition:.18s;flex:0 0 auto;}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;
+    border-radius:50%;background:#fff;transition:.18s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .switch.on{background:#35566b !important;}
+  .switch.on::after{left:20px !important;}
+
+  .swatches{display:flex;gap:8px;margin-top:8px;}
+  .sw{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;
+    outline:1px solid var(--line);outline-offset:-3px;padding:0;}
+  .sw.on{border-color:var(--seal);}
+  .tolbox{margin-top:10px;}
+  .tolbox.hide{display:none;}
+  .tolbox .hd{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);}
+  .tolbox input[type=range]{width:100%;margin-top:6px;accent-color:var(--seal);}
+
+  .zoomline{display:flex;align-items:center;gap:10px;margin-top:4px;}
+  .zoomline input[type=range]{flex:1;min-width:0;accent-color:var(--seal);}
+  .zoomline .v{font-family:var(--mono);font-size:11px;color:var(--muted);width:38px;text-align:right;}
+  .hint{font-size:11px;color:var(--faint);line-height:1.7;margin-top:8px;}
+
+  .export .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+  .meta div{background:var(--paper-2);border-radius:7px;padding:7px 9px;}
+  .meta label{display:block;font-size:10px;color:var(--faint);}
+  .meta p{margin:2px 0 0;font-family:var(--mono);font-size:12px;}
+  .foot{margin-top:10px;font-size:10.5px;color:var(--faint);line-height:1.7;}
+
+  input[type=file]{display:none;}
+  .toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(10px);
+    background:rgba(27,37,39,.92);color:#fff;font-size:12.5px;padding:9px 16px;border-radius:999px;
+    opacity:0;pointer-events:none;transition:.2s;z-index:80;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <a class="back" href="../首页/首页.html" aria-label="返回首页">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    <div class="brand">
+      <h1>证件照裁剪<i>ID Photo</i></h1>
+      <p>标准尺寸 · 拖拽缩放 · 换底色 · 一键排版</p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- ============ 预览区 ============ -->
+  <div class="stage-card">
+    <div class="stage-bar">
+      <div class="t"><b id="specName">一寸</b><span id="specPx">295 × 413 px · 300 dpi</span></div>
+      <div class="btn-row">
+        <button class="btn sm" id="resetBtn" type="button" disabled>复位</button>
+        <button class="btn sm" id="pickBtn2" type="button">换照片</button>
+      </div>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="view" width="295" height="413" aria-label="证件照预览"></canvas>
+      <div class="drop" id="drop">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#35566b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="16 8 12 4 8 8"/><line x1="12" y1="4" x2="12" y2="16"/>
+        </svg>
+        <b>上传一张人像照片</b>
+        <small>建议正面免冠、背景干净<br>JPG / PNG，支持拖拽上传</small>
+        <button class="btn primary" id="pickBtn" type="button">选择照片</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 控制面板 ============ -->
+  <div class="panel">
+    <section class="sec">
+      <h2>尺寸规格</h2>
+      <div class="specs" id="specs"></div>
+      <button class="morebtn" id="moreBtn" type="button" aria-expanded="false" aria-haspopup="dialog">
+        <span class="mb-l"><b>更多证件</b><i id="moreCount">12 种</i></span>
+        <span class="mb-cur" id="moreCur"></span>
+        <svg class="car" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+      <div class="moremask hide" id="moreMask"></div>
+      <div class="morepop hide" id="morePop" role="dialog" aria-modal="true" aria-label="更多证件规格">
+        <div class="morepop-hd">
+          <b>更多证件</b>
+          <span id="moreCountSub">共 12 种 · 点击空白处关闭</span>
+        </div>
+        <input class="msearch" id="moreSearch" type="search" placeholder="搜索证件名称，如 日本 / 医师 / 广东" aria-label="搜索证件规格">
+        <div class="specs" id="moreSpecs"></div>
+        <div class="mempty hide" id="moreEmpty">没有匹配的证件，换个关键词试试。</div>
+      </div>
+      <div class="hint">常规规格按 300 dpi 换算；带官方像素要求的规格按官方像素直出，分辨率随规格变化。</div>
+    </section>
+
+    <section class="sec">
+      <h2>背景</h2>
+      <div class="rowline">
+        <label for="bgSwitch">替换背景色</label>
+        <button class="switch" id="bgSwitch" type="button" aria-pressed="false" aria-label="替换背景色"></button>
+      </div>
+      <div class="swatches" id="swatches"></div>
+      <div class="tolbox hide" id="tolBox">
+        <div class="hd"><span>识别容差</span><span id="tolVal">58</span></div>
+        <input type="range" id="tol" min="20" max="120" value="58" step="1" aria-label="背景识别容差">
+        <div class="hint">背景越干净可越小；发丝周围残留可用大一点。</div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>取景</h2>
+      <div class="rowline">
+        <label for="guideSwitch">构图辅助线</label>
+        <button class="switch on" id="guideSwitch" type="button" aria-pressed="true" aria-label="构图辅助线"></button>
+      </div>
+      <div class="zoomline">
+        <input type="range" id="zoom" min="80" max="320" value="100" step="1" aria-label="缩放">
+        <span class="v" id="zoomVal">100%</span>
+      </div>
+      <div class="hint">拖动照片调整位置，滚轮或双指缩放；双击画面可复位。</div>
+    </section>
+
+    <section class="sec export">
+      <h2>导出</h2>
+      <div class="meta">
+        <div><label>输出尺寸</label><p id="outPx">295 × 413</p></div>
+        <div><label>打印尺寸</label><p id="outMm">25 × 35 mm</p></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="dlJpg" type="button" disabled>保存 JPG</button>
+        <button class="btn" id="dlPng" type="button" disabled>保存 PNG</button>
+      </div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn" id="dlSheet" type="button" disabled>生成 6 寸相纸</button>
+      </div>
+      <div class="foot">6 寸相纸：152 × 102 mm（1800 × 1200 px），自动按当前尺寸拼版并带裁切线。</div>
+    </section>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*">
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var SPECS = [
+    {id:'one',  n:'一寸',    w:25, h:35},
+    {id:'oneS', n:'小一寸',  w:22, h:32},
+    {id:'oneL', n:'大一寸',  w:33, h:48},
+    {id:'two',  n:'二寸',    w:35, h:49},
+    {id:'twoS', n:'小二寸',  w:35, h:45},
+    {id:'twoL', n:'大二寸',  w:35, h:53},
+    {id:'pass', n:'护照',    w:33, h:48},
+    {id:'usa',  n:'美签',    w:51, h:51, pxw:600, pxh:600},
+    {id:'hk',   n:'港澳通行证', w:33, h:48},
+    {id:'social', n:'社保卡', w:26, h:32},
+    {id:'tw',   n:'台湾通行证', w:33, h:48, cat:'visa', more:1},
+    {id:'jp',   n:'日签',    w:45, h:45, cat:'visa', more:1},
+    {id:'schengen', n:'申根签', w:35, h:45, cat:'visa', more:1},
+    {id:'th',   n:'泰签',    w:40, h:60, cat:'visa', more:1},
+    {id:'drive', n:'机动车驾驶证', w:22, h:32, cat:'photo', more:1},
+    {id:'marry', n:'结婚证', w:53, h:35, cat:'photo', more:1},
+    {id:'divorce', n:'离婚证', w:35, h:53, cat:'photo', more:1},
+    {id:'chsi', n:'学信网毕业照', w:40, h:53, pxw:480, pxh:640, cat:'photo', more:1},
+    {id:'idcard', n:'身份证',     w:26, h:32, pxw:358, pxh:441, cat:'photo', more:1},
+    {id:'teacher', n:'教师资格证', w:25, h:35, cat:'job', more:1},
+    {id:'kaoyan', n:'考研报名',    w:36, h:48, pxw:480, pxh:640, cat:'exam', more:1},
+    {id:'zikao',  n:'自考报名',    w:35, h:45, cat:'exam', more:1},
+    {id:'canada', n:'加拿大签',  w:35, h:45, cat:'visa', more:1},
+    {id:'uk',     n:'英签',      w:35, h:45, cat:'visa', more:1},
+    {id:'kr',     n:'韩签',      w:35, h:45, cat:'visa', more:1},
+    {id:'au',     n:'澳签',      w:35, h:45, cat:'visa', more:1},
+    {id:'nz',     n:'新西兰签',  w:35, h:45, cat:'visa', more:1},
+    {id:'sg',     n:'新加坡签',  w:35, h:45, cat:'visa', more:1},
+    {id:'my',     n:'马来西亚签', w:35, h:50, cat:'visa', more:1},
+    {id:'vn',     n:'越南签',    w:40, h:60, cat:'visa', more:1},
+    {id:'ind',    n:'印度签',    w:51, h:51, cat:'visa', more:1},
+    {id:'ar',     n:'阿根廷签',  w:40, h:40, cat:'visa', more:1},
+    {id:'ru',     n:'俄罗斯签',  w:35, h:45, cat:'visa', more:1},
+    {id:'v_ie', n:'爱尔兰签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ua', n:'乌克兰签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_by', n:'白俄罗斯签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_md', n:'摩尔多瓦签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_rs', n:'塞尔维亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ba', n:'波黑签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_me', n:'黑山签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_mk', n:'北马其顿签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_al', n:'阿尔巴尼亚签', w:36, h:47, cat:'visa', more:1},
+    {id:'v_mx', n:'墨西哥签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_cl', n:'智利签', w:50, h:50, cat:'visa', more:1},
+    {id:'v_pe', n:'秘鲁签', w:35, h:43, cat:'visa', more:1},
+    {id:'v_co', n:'哥伦比亚签', w:30, h:40, cat:'visa', more:1},
+    {id:'v_ve', n:'委内瑞拉签', w:30, h:40, cat:'visa', more:1},
+    {id:'v_ec', n:'厄瓜多尔签', w:50, h:50, cat:'visa', more:1},
+    {id:'v_bo', n:'玻利维亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_py', n:'巴拉圭签', w:30, h:40, cat:'visa', more:1},
+    {id:'v_uy', n:'乌拉圭签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_cu', n:'古巴签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_jm', n:'牙买加签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_pa', n:'巴拿马签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_cr', n:'哥斯达黎加签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_do', n:'多米尼加签', w:40, h:50, cat:'visa', more:1},
+    {id:'v_sv', n:'萨尔瓦多签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_gt', n:'危地马拉签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_hn', n:'洪都拉斯签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ni', n:'尼加拉瓜签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_za', n:'南非签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ke', n:'肯尼亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ng', n:'尼日利亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_et', n:'埃塞俄比亚签', w:30, h:40, cat:'visa', more:1},
+    {id:'v_ma', n:'摩洛哥签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_tn', n:'突尼斯签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_dz', n:'阿尔及利亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_tz', n:'坦桑尼亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_gh', n:'加纳签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_sn', n:'塞内加尔签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_rw', n:'卢旺达签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ug', n:'乌干达签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_zm', n:'赞比亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_zw', n:'津巴布韦签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_mu', n:'毛里求斯签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_sc', n:'塞舌尔签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_fj', n:'斐济签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_pg', n:'巴布亚新几内亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_vu', n:'瓦努阿图签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ws', n:'萨摩亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_to', n:'汤加签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ph', n:'菲律宾签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_mm', n:'缅甸签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_bn', n:'文莱签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_np', n:'尼泊尔签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_lk', n:'斯里兰卡签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_mv', n:'马尔代夫签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_pk', n:'巴基斯坦签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_bd', n:'孟加拉签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_mn', n:'蒙古签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_kz', n:'哈萨克斯坦签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_uz', n:'乌兹别克斯坦签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_kg', n:'吉尔吉斯斯坦签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_tj', n:'塔吉克斯坦签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_tm', n:'土库曼斯坦签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_az', n:'阿塞拜疆签', w:30, h:40, cat:'visa', more:1},
+    {id:'v_am', n:'亚美尼亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ge', n:'格鲁吉亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_iq', n:'伊拉克签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_qa', n:'卡塔尔签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_bh', n:'巴林签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_jo', n:'约旦签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_lb', n:'黎巴嫩签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_sy', n:'叙利亚签', w:40, h:60, cat:'visa', more:1},
+    {id:'v_ye', n:'也门签', w:40, h:60, cat:'visa', more:1},
+    {id:'v_af', n:'阿富汗签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_kp', n:'朝鲜签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_id', n:'印尼签', w:40, h:60, cat:'visa', more:1},
+    {id:'v_kh', n:'柬埔寨签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_la', n:'老挝签', w:40, h:60, cat:'visa', more:1},
+    {id:'v_ir', n:'伊朗签', w:40, h:60, cat:'visa', more:1},
+    {id:'v_sa', n:'沙特签', w:40, h:60, cat:'visa', more:1},
+    {id:'v_ae', n:'阿联酋签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_kw', n:'科威特签', w:40, h:60, cat:'visa', more:1},
+    {id:'v_om', n:'阿曼签', w:40, h:60, cat:'visa', more:1},
+    {id:'v_eg', n:'埃及签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_tr', n:'土耳其签', w:50, h:60, cat:'visa', more:1},
+    {id:'v_il', n:'以色列签', w:50, h:50, cat:'visa', more:1},
+    {id:'v_br', n:'巴西签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_at', n:'奥地利签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_be', n:'比利时签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_bg', n:'保加利亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_hr', n:'克罗地亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_cz', n:'捷克签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_dk', n:'丹麦签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ee', n:'爱沙尼亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_fi', n:'芬兰签', w:36, h:47, cat:'visa', more:1},
+    {id:'v_fr', n:'法国签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_de', n:'德国签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_gr', n:'希腊签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_hu', n:'匈牙利签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_is', n:'冰岛签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_it', n:'意大利签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_lv', n:'拉脱维亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_li', n:'列支敦士登签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_lt', n:'立陶宛签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_lu', n:'卢森堡签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_mt', n:'马耳他签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_nl', n:'荷兰签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_no', n:'挪威签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_pl', n:'波兰签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_pt', n:'葡萄牙签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ro', n:'罗马尼亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_sk', n:'斯洛伐克签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_si', n:'斯洛文尼亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_es', n:'西班牙签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_se', n:'瑞典签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ch', n:'瑞士签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ad', n:'安道尔签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_mc', n:'摩纳哥签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_sm', n:'圣马力诺签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_va', n:'梵蒂冈签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_cy', n:'塞浦路斯签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_bt', n:'不丹签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_tl', n:'东帝汶签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_cv', n:'佛得角签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_gm', n:'冈比亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_gn', n:'几内亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_gw', n:'几内亚比绍签', w:30, h:40, cat:'visa', more:1},
+    {id:'v_sl', n:'塞拉利昂签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_lr', n:'利比里亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ci', n:'科特迪瓦签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ml', n:'马里签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_bf', n:'布基纳法索签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ne', n:'尼日尔签', w:40, h:40, cat:'visa', more:1},
+    {id:'v_bj', n:'贝宁签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_tg', n:'多哥签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_cm', n:'喀麦隆签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_td', n:'乍得签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_cf', n:'中非签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_cg', n:'刚果（布）签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_cd', n:'刚果（金）签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ga', n:'加蓬签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_gq', n:'赤道几内亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_st', n:'圣多美和普林西比签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ao', n:'安哥拉签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_mz', n:'莫桑比克签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_mw', n:'马拉维签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_bw', n:'博茨瓦纳签', w:30, h:40, cat:'visa', more:1},
+    {id:'v_na', n:'纳米比亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ls', n:'莱索托签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_sz', n:'斯威士兰签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_mg', n:'马达加斯加签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_km', n:'科摩罗签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_dj', n:'吉布提签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_er', n:'厄立特里亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_so', n:'索马里签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ss', n:'南苏丹签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_sd', n:'苏丹签', w:40, h:50, cat:'visa', more:1},
+    {id:'v_ly', n:'利比亚签', w:40, h:60, cat:'visa', more:1},
+    {id:'v_bi', n:'布隆迪签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_bz', n:'伯利兹签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_ht', n:'海地签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_lc', n:'圣卢西亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_vc', n:'圣文森特和格林纳丁斯签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_gd', n:'格林纳达签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ag', n:'安提瓜和巴布达签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_bs', n:'巴哈马签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_bb', n:'巴巴多斯签', w:51, h:51, cat:'visa', more:1},
+    {id:'v_tt', n:'特立尼达和多巴哥签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_sr', n:'苏里南签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_gy', n:'圭亚那签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_fm', n:'密克罗尼西亚签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_mh', n:'马绍尔群岛签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_pw', n:'帕劳签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_nr', n:'瑙鲁签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_tv', n:'图瓦卢签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_ki', n:'基里巴斯签', w:35, h:45, cat:'visa', more:1},
+    {id:'v_sb', n:'所罗门群岛签', w:35, h:45, cat:'visa', more:1},
+    {id:'gov',    n:'公务员/事业单位招考', w:25, h:35, cat:'exam', more:1},
+    {id:'cet',    n:'大学英语四六级', w:0, h:0, pxw:144, pxh:192, pxonly:1, cat:'exam', more:1},
+    {id:'psc',    n:'普通话水平测试证书', w:0, h:0, pxw:358, pxh:441, pxonly:1, cat:'exam', more:1},
+    {id:'zyjs', n:'专业技术人员资格证', w:25, h:35, cat:'job', more:1},
+    {id:'canji', n:'残疾人证',    w:35, h:49, cat:'photo', more:1},
+    {id:'vet', n:'退役军人优待证', w:25, h:35, cat:'photo', more:1},
+    {id:'doctor', n:'医师资格证', w:33, h:48, cat:'job', more:1},
+    {id:'nurse', n:'护士执业证', w:25, h:35, cat:'job', more:1},
+    {id:'guide', n:'导游证',     w:33, h:48, cat:'job', more:1},
+    {id:'press', n:'新闻记者证', w:35, h:49, cat:'job', more:1},
+    {id:'guard', n:'保安员证',   w:25, h:35, cat:'job', more:1},
+    {id:'tegang', n:'特种作业操作证', w:25, h:35, cat:'job', more:1},
+    {id:'lawyer', n:'法律职业资格证', w:35, h:49, cat:'job', more:1},
+    {id:'cpa', n:'注册会计师证', w:25, h:35, cat:'job', more:1},
+    {id:'scjg', n:'伤残军人证',  w:35, h:49, cat:'photo', more:1},
+    {id:'scjc', n:'伤残人民警察证', w:35, h:49, cat:'photo', more:1},
+    {id:'zjj', n:'浙江居住证', w:25, h:35, cat:'res', more:1},
+    {id:'adopt', n:'收养登记证', w:35, h:49, cat:'photo', more:1},
+    {id:'railway', n:'铁路职员工作证', w:25, h:35, cat:'job', more:1},
+    {id:'mariner', n:'海事船员证', w:35, h:49, cat:'job', more:1},
+    {id:'cost', n:'造价工程师等住建类证书', w:25, h:35, cat:'job', more:1},
+    {id:'notary', n:'公证员执业证', w:35, h:49, cat:'job', more:1},
+    {id:'seafarer', n:'海员证', w:33, h:48, cat:'job', more:1},
+    {id:'crewlic', n:'船员适任证', w:35, h:49, cat:'job', more:1},
+    {id:'roadtrans', n:'道路运输从业人员资格证', w:25, h:35, cat:'job', more:1},
+    {id:'taxidriver', n:'出租汽车驾驶员证', w:25, h:35, cat:'job', more:1},
+    {id:'hkmo_res', n:'港澳居民居住证', w:25, h:35, cat:'res', more:1},
+    {id:'tw_res', n:'台湾居民居住证', w:25, h:35, cat:'res', more:1},
+    {id:'patent', n:'专利代理人执业证', w:25, h:35, cat:'job', more:1},
+    {id:'auction', n:'拍卖师执业证', w:35, h:49, cat:'job', more:1},
+    {id:'driveteach', n:'机动车教练员证（含各等级）', w:25, h:35, cat:'job', more:1},
+    {id:'rideshare', n:'网络预约出租汽车驾驶员证', w:25, h:35, cat:'job', more:1},
+    {id:'ruankao', n:'计算机技术与软件考试', w:25, h:35, cat:'exam', more:1},
+    {id:'fire', n:'一级注册消防工程师', w:25, h:35, cat:'exam', more:1},
+    {id:'blood', n:'献血证', w:25, h:35, cat:'photo', more:1},
+    {id:'bodydonate', n:'遗体捐献登记证', w:25, h:35, cat:'photo', more:1},
+    {id:'militia', n:'民兵证', w:25, h:35, cat:'photo', more:1},
+    {id:'gasec', n:'国家安全机关人民警察证', w:25, h:35, cat:'photo', more:1},
+    {id:'pilot', n:'引航员证书', w:35, h:49, cat:'job', more:1},
+    {id:'planner', n:'注册城乡规划师', w:25, h:35, cat:'job', more:1},
+    {id:'surveyor', n:'注册测绘师', w:25, h:35, cat:'job', more:1},
+    {id:'res_bj', n:'北京居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_tj', n:'天津居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_he', n:'河北居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_sx', n:'山西居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_nm', n:'内蒙古居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_ln', n:'辽宁居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_jl', n:'吉林居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_hl', n:'黑龙江居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_sh', n:'上海居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_js', n:'江苏居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_ah', n:'安徽居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_fj', n:'福建居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_jx', n:'江西居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_sd', n:'山东居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_ha', n:'河南居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_hb', n:'湖北居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_hn', n:'湖南居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_gd', n:'广东居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_gx', n:'广西居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_hi', n:'海南居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_cq', n:'重庆居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_sc', n:'四川居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_gz', n:'贵州居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_yn', n:'云南居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_xz', n:'西藏居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_sn', n:'陕西居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_gs', n:'甘肃居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_qh', n:'青海居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_nx', n:'宁夏居住证', w:25, h:35, cat:'res', more:1},
+    {id:'res_xj', n:'新疆居住证', w:25, h:35, cat:'res', more:1},
+    {id:'c1', n:'不动产登记代理专业人员职业资格', w:25, h:35, cat:'job', more:1},
+    {id:'c2', n:'专利代理师', w:25, h:35, cat:'job', more:1},
+    {id:'c3', n:'中国委托公证人资格（澳门/香港）', w:25, h:35, cat:'job', more:1},
+    {id:'c5', n:'乡村医生执业证书', w:25, h:35, cat:'job', more:1},
+    {id:'c6', n:'会计专业技术资格（初/中/高级）', w:25, h:35, cat:'job', more:1},
+    {id:'c9', n:'公路水运工程试验检测专业技术人员职业资格', w:25, h:35, cat:'job', more:1},
+    {id:'c10', n:'出版专业技术人员职业资格（中级/初级）', w:25, h:35, cat:'job', more:1},
+    {id:'c12', n:'卫生专业技术资格（含各专业方向）', w:25, h:35, cat:'job', more:1},
+    {id:'c69', n:'危险货物水路运输从业人员', w:25, h:35, cat:'job', more:1},
+    {id:'c70', n:'危险货物道路运输从业人员', w:25, h:35, cat:'job', more:1},
+    {id:'c71', n:'国防科技工业军用核安全设备无损检验人员资格', w:25, h:35, cat:'job', more:1},
+    {id:'c72', n:'国防科技工业军用核安全设备焊接人员', w:25, h:35, cat:'job', more:1},
+    {id:'c73', n:'国防科技工业军用核设施操纵人员资格', w:25, h:35, cat:'job', more:1},
+    {id:'c74', n:'基金从业资格', w:25, h:35, cat:'job', more:1},
+    {id:'c75', n:'审计专业技术资格（中级/初级/高级）', w:25, h:35, cat:'job', more:1},
+    {id:'c78', n:'家畜繁殖员', w:25, h:35, cat:'job', more:1},
+    {id:'c79', n:'导游资格证书', w:25, h:35, cat:'job', more:1},
+    {id:'c80', n:'工程咨询（投资）专业技术人员职业资格', w:25, h:35, cat:'job', more:1},
+    {id:'c81', n:'广播电视播音员主持人资格', w:25, h:35, cat:'job', more:1},
+    {id:'c82', n:'应急救援员', w:25, h:35, cat:'job', more:1},
+    {id:'c83', n:'建筑施工特种作业人员（10个作业类别19个项目）', w:25, h:35, cat:'job', more:1},
+    {id:'c84', n:'建造师（含各级）', w:25, h:35, cat:'job', more:1},
+    {id:'c102', n:'房地产估价师', w:25, h:35, cat:'job', more:1},
+    {id:'c103', n:'房地产经纪专业人员职业资格（协理/经纪人）', w:25, h:35, cat:'job', more:1},
+    {id:'c105', n:'执业兽医', w:25, h:35, cat:'job', more:1},
+    {id:'c106', n:'执业药师', w:25, h:35, cat:'job', more:1},
+    {id:'c107', n:'拍卖师', w:25, h:35, cat:'job', more:1},
+    {id:'c108', n:'放射性物品道路运输从业人员', w:25, h:35, cat:'job', more:1},
+    {id:'c109', n:'文物保护工程从业资格（勘察设计/施工/监理）', w:25, h:35, cat:'job', more:1},
+    {id:'c112', n:'期货从业资格', w:25, h:35, cat:'job', more:1},
+    {id:'c113', n:'机动车检测维修专业技术人员职业资格', w:25, h:35, cat:'job', more:1},
+    {id:'c114', n:'机场运行指挥员', w:25, h:35, cat:'job', more:1},
+    {id:'c115', n:'森林消防员', w:25, h:35, cat:'job', more:1},
+    {id:'c116', n:'母婴保健技术服务人员资格', w:25, h:35, cat:'job', more:1},
+    {id:'c117', n:'民用核安全设备无损检验人员资格', w:25, h:35, cat:'job', more:1},
+    {id:'c118', n:'民用核安全设备焊工、焊接操作工', w:25, h:35, cat:'job', more:1},
+    {id:'c119', n:'民用核设施操纵人员资格', w:25, h:35, cat:'job', more:1},
+    {id:'c120', n:'民用航空器驾驶员执照（商用/私用/航线运输）', w:25, h:35, cat:'job', more:1},
+    {id:'c123', n:'民航乘务员', w:25, h:35, cat:'job', more:1},
+    {id:'c124', n:'民航安全检查员', w:25, h:35, cat:'job', more:1},
+    {id:'c125', n:'民航飞行签派员执照', w:25, h:35, cat:'job', more:1},
+    {id:'c126', n:'水利工程质量检测员资格', w:25, h:35, cat:'job', more:1},
+    {id:'c127', n:'注册公用设备工程师（动力/暖通空调/给水排水）', w:25, h:35, cat:'job', more:1},
+    {id:'c130', n:'注册化工工程师', w:25, h:35, cat:'job', more:1},
+    {id:'c131', n:'注册土木工程师（岩土/水利水电工程/港口与航道工程/道路工程）', w:25, h:35, cat:'job', more:1},
+    {id:'c135', n:'注册安全工程师（中级/高级）', w:25, h:35, cat:'job', more:1},
+    {id:'c137', n:'注册建筑师（一级/二级）', w:25, h:35, cat:'job', more:1},
+    {id:'c139', n:'注册核安全工程师', w:25, h:35, cat:'job', more:1},
+    {id:'c140', n:'注册环保工程师', w:25, h:35, cat:'job', more:1},
+    {id:'c141', n:'注册电气工程师（供配电/发输变电）', w:25, h:35, cat:'job', more:1},
+    {id:'c143', n:'注册结构工程师（一级/二级）', w:25, h:35, cat:'job', more:1},
+    {id:'c145', n:'注册计量师（一级/二级）', w:25, h:35, cat:'job', more:1},
+    {id:'c147', n:'注册验船师', w:25, h:35, cat:'job', more:1},
+    {id:'c148', n:'消防员', w:25, h:35, cat:'job', more:1},
+    {id:'c149', n:'消防设施操作员', w:25, h:35, cat:'job', more:1},
+    {id:'c150', n:'渔业船员证书', w:25, h:35, cat:'job', more:1},
+    {id:'c151', n:'游泳救生员', w:25, h:35, cat:'job', more:1},
+    {id:'c152', n:'演出经纪人员资格', w:25, h:35, cat:'job', more:1},
+    {id:'c153', n:'特种作业人员（应急管理类11个作业类别62个项目）', w:25, h:35, cat:'job', more:1},
+    {id:'c154', n:'特种设备安全管理和作业人员', w:25, h:35, cat:'job', more:1},
+    {id:'c155', n:'特种设备检测人员资格', w:25, h:35, cat:'job', more:1},
+    {id:'c156', n:'特种设备检验人员资格', w:25, h:35, cat:'job', more:1},
+    {id:'c157', n:'环境影响评价工程师', w:25, h:35, cat:'job', more:1},
+    {id:'c158', n:'监理工程师', w:25, h:35, cat:'job', more:1},
+    {id:'c159', n:'监理工程师（交通运输工程/土木建筑工程/水利工程）', w:25, h:35, cat:'job', more:1},
+    {id:'c162', n:'矿业权评估师', w:25, h:35, cat:'job', more:1},
+    {id:'c163', n:'社会体育指导员（游泳/滑雪/潜水/攀岩/等级认定）', w:25, h:35, cat:'job', more:1},
+    {id:'c164', n:'社会工作者职业资格（助理社工师/社工师/高级社工师）', w:25, h:35, cat:'job', more:1},
+    {id:'c167', n:'税务师', w:25, h:35, cat:'job', more:1},
+    {id:'c168', n:'精算师（准精算师/正精算师）', w:25, h:35, cat:'job', more:1},
+    {id:'c170', n:'经济专业技术资格（中级/初级/高级）', w:25, h:35, cat:'job', more:1},
+    {id:'c173', n:'经营性道路旅客运输驾驶员', w:25, h:35, cat:'job', more:1},
+    {id:'c174', n:'经营性道路货物运输驾驶员', w:25, h:35, cat:'job', more:1},
+    {id:'c175', n:'统计专业技术资格（中级/初级/高级）', w:25, h:35, cat:'job', more:1},
+    {id:'c178', n:'翻译专业资格（CATTI）一级', w:25, h:35, cat:'job', more:1},
+    {id:'c179', n:'翻译专业资格（CATTI）二三级', w:25, h:35, cat:'job', more:1},
+    {id:'c180', n:'航空安全员资格', w:25, h:35, cat:'job', more:1},
+    {id:'c181', n:'计算机技术与软件专业技术资格（中级/初级/高级）', w:25, h:35, cat:'job', more:1},
+    {id:'c184', n:'认证人员职业资格', w:25, h:35, cat:'job', more:1},
+    {id:'c185', n:'设备监理师', w:25, h:35, cat:'job', more:1},
+    {id:'c186', n:'证券从业资格', w:25, h:35, cat:'job', more:1},
+    {id:'c187', n:'资产评估师', w:25, h:35, cat:'job', more:1},
+    {id:'c188', n:'轨道列车司机', w:25, h:35, cat:'job', more:1},
+    {id:'c189', n:'软考（含各级）', w:25, h:35, cat:'job', more:1},
+    {id:'c210', n:'通信专业技术人员职业资格', w:25, h:35, cat:'job', more:1},
+    {id:'c211', n:'银行业专业人员职业资格（中级/初级）', w:25, h:35, cat:'job', more:1},
+    {id:'c213', n:'冶金、有色、建材生产安全作业·煤气作业', w:25, h:35, cat:'spec', more:1},
+    {id:'c214', n:'危险化学品安全作业（含各作业项目）', w:25, h:35, cat:'spec', more:1},
+    {id:'c230', n:'危险化学品安全作业·裂解（裂化）工艺作业', w:25, h:35, cat:'spec', more:1},
+    {id:'c233', n:'场（厂）内专用机动车辆司机（叉车、装载机）', w:25, h:35, cat:'spec', more:1},
+    {id:'c234', n:'建筑有限空间作业监护工', w:25, h:35, cat:'spec', more:1},
+    {id:'c235', n:'建筑架子工（普通脚手架/附着升降脚手架）', w:25, h:35, cat:'spec', more:1},
+    {id:'c237', n:'建筑桩机操作工', w:25, h:35, cat:'spec', more:1},
+    {id:'c238', n:'建筑焊工', w:25, h:35, cat:'spec', more:1},
+    {id:'c239', n:'建筑电工', w:25, h:35, cat:'spec', more:1},
+    {id:'c240', n:'建筑起重司索信号工', w:25, h:35, cat:'spec', more:1},
+    {id:'c241', n:'建筑起重机械司机（塔式起重机/施工升降机/物料提升机）', w:25, h:35, cat:'spec', more:1},
+    {id:'c244', n:'建筑起重机械安装拆卸工（塔式起重机/施工升降机/物料提升机）', w:25, h:35, cat:'spec', more:1},
+    {id:'c247', n:'有限空间作业人员（培训合格证）', w:25, h:35, cat:'spec', more:1},
+    {id:'c248', n:'有限空间安全作业', w:25, h:35, cat:'spec', more:1},
+    {id:'c249', n:'有限空间监护作业', w:25, h:35, cat:'spec', more:1},
+    {id:'c250', n:'水下作业潜水员', w:25, h:35, cat:'spec', more:1},
+    {id:'c251', n:'涉氨制冷作业（设备安装修理/设备运行操作）', w:25, h:35, cat:'spec', more:1},
+    {id:'c253', n:'烟花爆竹安全作业（烟火药及效果件制造作业/烟花爆竹储存作业）', w:25, h:35, cat:'spec', more:1},
+    {id:'c255', n:'焊接与热切割作业（压力焊作业/熔化焊接与热切割作业/钎焊作业）', w:25, h:35, cat:'spec', more:1},
+    {id:'c258', n:'煤矿安全作业（含各作业项目）', w:25, h:35, cat:'spec', more:1},
+    {id:'c267', n:'煤矿安全作业·煤矿采煤机（掘进机）操作作业', w:25, h:35, cat:'spec', more:1},
+    {id:'c269', n:'电工作业（低压电工作业/防爆电气作业/高压电工作业）', w:25, h:35, cat:'spec', more:1},
+    {id:'c272', n:'登高设备操作工（吊篮、移动式升降工作平台）', w:25, h:35, cat:'spec', more:1},
+    {id:'c273', n:'石油天然气安全作业·司钻作业', w:25, h:35, cat:'spec', more:1},
+    {id:'c274', n:'绳索技术作业员（行业认证）', w:25, h:35, cat:'spec', more:1},
+    {id:'c275', n:'金属非金属矿山安全作业（含各作业项目）', w:25, h:35, cat:'spec', more:1},
+    {id:'c283', n:'高处作业（登高架设作业/高处安装、维护、拆除作业）', w:25, h:35, cat:'spec', more:1},
+    {id:'c285', n:'压力管道巡检维护（D1）', w:25, h:35, cat:'spec', more:1},
+    {id:'c286', n:'叉车司机（N1/等级）', w:25, h:35, cat:'spec', more:1},
+    {id:'c287', n:'大型游乐设施修理（Y1）', w:25, h:35, cat:'spec', more:1},
+    {id:'c288', n:'大型游乐设施操作（Y2）', w:25, h:35, cat:'spec', more:1},
+    {id:'c289', n:'客运索道修理（S2）', w:25, h:35, cat:'spec', more:1},
+    {id:'c290', n:'客运索道司机（S3）', w:25, h:35, cat:'spec', more:1},
+    {id:'c291', n:'客运索道安装（S1）', w:25, h:35, cat:'spec', more:1},
+    {id:'c292', n:'工业锅炉司炉（G1）', w:25, h:35, cat:'spec', more:1},
+    {id:'c293', n:'快开门式压力容器操作（R1）', w:25, h:35, cat:'spec', more:1},
+    {id:'c294', n:'搬运车、牵引车、推顶车司机（N2）', w:25, h:35, cat:'spec', more:1},
+    {id:'c295', n:'气瓶充装（P）', w:25, h:35, cat:'spec', more:1},
+    {id:'c296', n:'氧舱维护保养（R3）', w:25, h:35, cat:'spec', more:1},
+    {id:'c297', n:'特种设备安全管理（A）', w:25, h:35, cat:'spec', more:1},
+    {id:'c298', n:'电梯修理（T）', w:25, h:35, cat:'spec', more:1},
+    {id:'c299', n:'电站锅炉司炉（G2）', w:25, h:35, cat:'spec', more:1},
+    {id:'c300', n:'移动式压力容器充装（R2）', w:25, h:35, cat:'spec', more:1},
+    {id:'c301', n:'起重机司机（Q2）', w:25, h:35, cat:'spec', more:1},
+    {id:'c302', n:'起重机指挥（Q1）', w:25, h:35, cat:'spec', more:1},
+    {id:'c303', n:'金属焊接操作', w:25, h:35, cat:'spec', more:1},
+    {id:'c304', n:'锅炉水处理（G3）', w:25, h:35, cat:'spec', more:1},
+    {id:'c305', n:'非金属焊接操作', w:25, h:35, cat:'spec', more:1},
+    {id:'c306', n:'AHA心肺复苏急救证书', w:25, h:35, cat:'skill', more:1},
+    {id:'c307', n:'SMT表面贴装操作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c308', n:'下料工', w:25, h:35, cat:'skill', more:1},
+    {id:'c309', n:'专利工程师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c310', n:'中医康复理疗师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c311', n:'中央空调系统运行操作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c312', n:'中式烹调师', w:25, h:35, cat:'skill', more:1},
+    {id:'c313', n:'中式面点师', w:25, h:35, cat:'skill', more:1},
+    {id:'c314', n:'中药材种植员', w:25, h:35, cat:'skill', more:1},
+    {id:'c315', n:'中药调剂员', w:25, h:35, cat:'skill', more:1},
+    {id:'c316', n:'乐器维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c317', n:'书法教师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c318', n:'书画装裱师', w:25, h:35, cat:'skill', more:1},
+    {id:'c319', n:'乳品加工工', w:25, h:35, cat:'skill', more:1},
+    {id:'c320', n:'二手车鉴定评估师', w:25, h:35, cat:'skill', more:1},
+    {id:'c321', n:'云计算工程技术人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c322', n:'互联网营销师', w:25, h:35, cat:'skill', more:1},
+    {id:'c323', n:'井下作业工', w:25, h:35, cat:'skill', more:1},
+    {id:'c324', n:'井下电钳工', w:25, h:35, cat:'skill', more:1},
+    {id:'c325', n:'产后恢复师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c326', n:'人力资源管理师', w:25, h:35, cat:'skill', more:1},
+    {id:'c327', n:'人工影响天气作业员', w:25, h:35, cat:'skill', more:1},
+    {id:'c328', n:'人工智能训练师', w:25, h:35, cat:'skill', more:1},
+    {id:'c329', n:'人民调解员（培训）', w:25, h:35, cat:'skill', more:1},
+    {id:'c330', n:'仓储管理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c331', n:'代理记账从业人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c332', n:'仪器仪表装调工', w:25, h:35, cat:'skill', more:1},
+    {id:'c333', n:'企业合规师', w:25, h:35, cat:'skill', more:1},
+    {id:'c334', n:'企业培训师', w:25, h:35, cat:'skill', more:1},
+    {id:'c335', n:'休闲农业服务员', w:25, h:35, cat:'skill', more:1},
+    {id:'c336', n:'会展策划师', w:25, h:35, cat:'skill', more:1},
+    {id:'c337', n:'体能训练师', w:25, h:35, cat:'skill', more:1},
+    {id:'c338', n:'供应链管理师', w:25, h:35, cat:'skill', more:1},
+    {id:'c339', n:'供应链金融分析师', w:25, h:35, cat:'skill', more:1},
+    {id:'c340', n:'保健按摩师', w:25, h:35, cat:'skill', more:1},
+    {id:'c341', n:'保育师', w:25, h:35, cat:'skill', more:1},
+    {id:'c342', n:'保险公估从业人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c343', n:'保险经纪从业人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c344', n:'信息安全测试员', w:25, h:35, cat:'skill', more:1},
+    {id:'c345', n:'信息系统适配验证师', w:25, h:35, cat:'skill', more:1},
+    {id:'c346', n:'信息通信网络终端维修员', w:25, h:35, cat:'skill', more:1},
+    {id:'c347', n:'信息通信网络运行管理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c348', n:'健康照护师', w:25, h:35, cat:'skill', more:1},
+    {id:'c349', n:'健康管理师', w:25, h:35, cat:'skill', more:1},
+    {id:'c350', n:'储能电站运维员', w:25, h:35, cat:'skill', more:1},
+    {id:'c351', n:'储运工', w:25, h:35, cat:'skill', more:1},
+    {id:'c352', n:'催乳师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c353', n:'充电设施运维员', w:25, h:35, cat:'skill', more:1},
+    {id:'c354', n:'光伏发电运维员', w:25, h:35, cat:'skill', more:1},
+    {id:'c355', n:'光伏组件制造工', w:25, h:35, cat:'skill', more:1},
+    {id:'c356', n:'全媒体运营师', w:25, h:35, cat:'skill', more:1},
+    {id:'c357', n:'公交驾驶员', w:25, h:35, cat:'skill', more:1},
+    {id:'c358', n:'公共营养师', w:25, h:35, cat:'skill', more:1},
+    {id:'c359', n:'公关员', w:25, h:35, cat:'skill', more:1},
+    {id:'c360', n:'公司律师（企业内部）', w:25, h:35, cat:'skill', more:1},
+    {id:'c361', n:'公证员助理', w:25, h:35, cat:'skill', more:1},
+    {id:'c362', n:'养老护理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c363', n:'兽医化验员', w:25, h:35, cat:'skill', more:1},
+    {id:'c364', n:'内控风险管理师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c365', n:'农业技术员', w:25, h:35, cat:'skill', more:1},
+    {id:'c366', n:'农业经理人', w:25, h:35, cat:'skill', more:1},
+    {id:'c367', n:'农产品经纪人', w:25, h:35, cat:'skill', more:1},
+    {id:'c368', n:'农作物植保员', w:25, h:35, cat:'skill', more:1},
+    {id:'c369', n:'农作物种子繁育员', w:25, h:35, cat:'skill', more:1},
+    {id:'c370', n:'农机修理工', w:25, h:35, cat:'skill', more:1},
+    {id:'c371', n:'农艺工', w:25, h:35, cat:'skill', more:1},
+    {id:'c372', n:'冲压工', w:25, h:35, cat:'skill', more:1},
+    {id:'c373', n:'冶炼工', w:25, h:35, cat:'skill', more:1},
+    {id:'c374', n:'冷链物流员', w:25, h:35, cat:'skill', more:1},
+    {id:'c375', n:'创业指导师', w:25, h:35, cat:'skill', more:1},
+    {id:'c376', n:'制冷空调系统安装维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c377', n:'制剂工', w:25, h:35, cat:'skill', more:1},
+    {id:'c378', n:'制糖工', w:25, h:35, cat:'skill', more:1},
+    {id:'c379', n:'制鞋工', w:25, h:35, cat:'skill', more:1},
+    {id:'c380', n:'剪辑师', w:25, h:35, cat:'skill', more:1},
+    {id:'c381', n:'加工中心操作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c382', n:'动物检疫检验员', w:25, h:35, cat:'skill', more:1},
+    {id:'c383', n:'动物疫病防治员', w:25, h:35, cat:'skill', more:1},
+    {id:'c384', n:'动画制作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c385', n:'动车组机械师', w:25, h:35, cat:'skill', more:1},
+    {id:'c386', n:'助听器验配师', w:25, h:35, cat:'skill', more:1},
+    {id:'c387', n:'劳动人事争议调解员', w:25, h:35, cat:'skill', more:1},
+    {id:'c388', n:'劳动关系协调师', w:25, h:35, cat:'skill', more:1},
+    {id:'c389', n:'包装工', w:25, h:35, cat:'skill', more:1},
+    {id:'c390', n:'化妆师', w:25, h:35, cat:'skill', more:1},
+    {id:'c391', n:'化学检验员', w:25, h:35, cat:'skill', more:1},
+    {id:'c392', n:'化工总控工', w:25, h:35, cat:'skill', more:1},
+    {id:'c393', n:'化工检修钳工', w:25, h:35, cat:'skill', more:1},
+    {id:'c394', n:'区块链应用操作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c395', n:'医学检验辅助人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c396', n:'医疗器械维修工程师', w:25, h:35, cat:'skill', more:1},
+    {id:'c397', n:'医疗器械装配工', w:25, h:35, cat:'skill', more:1},
+    {id:'c398', n:'医药商品购销员', w:25, h:35, cat:'skill', more:1},
+    {id:'c399', n:'医院陪护员', w:25, h:35, cat:'skill', more:1},
+    {id:'c400', n:'半导体芯片制造工', w:25, h:35, cat:'skill', more:1},
+    {id:'c401', n:'印刷操作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c402', n:'印前处理和制作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c403', n:'危险品运输押运员（等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c404', n:'危险废物处理工', w:25, h:35, cat:'skill', more:1},
+    {id:'c406', n:'反洗钱师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c407', n:'发酵工', w:25, h:35, cat:'skill', more:1},
+    {id:'c408', n:'变电站值班员', w:25, h:35, cat:'skill', more:1},
+    {id:'c409', n:'口腔修复体制作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c410', n:'口腔护理员（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c411', n:'古建筑修缮工', w:25, h:35, cat:'skill', more:1},
+    {id:'c412', n:'古籍修复师', w:25, h:35, cat:'skill', more:1},
+    {id:'c413', n:'司法鉴定人', w:25, h:35, cat:'skill', more:1},
+    {id:'c414', n:'司法鉴定辅助人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c415', n:'听力检测员', w:25, h:35, cat:'skill', more:1},
+    {id:'c416', n:'咖啡师', w:25, h:35, cat:'skill', more:1},
+    {id:'c417', n:'咖啡种植加工工', w:25, h:35, cat:'skill', more:1},
+    {id:'c418', n:'品酒师', w:25, h:35, cat:'skill', more:1},
+    {id:'c419', n:'商业地产运营管理师', w:25, h:35, cat:'skill', more:1},
+    {id:'c420', n:'商品营业员', w:25, h:35, cat:'skill', more:1},
+    {id:'c421', n:'噪声与振动控制工', w:25, h:35, cat:'skill', more:1},
+    {id:'c422', n:'园林养护工', w:25, h:35, cat:'skill', more:1},
+    {id:'c423', n:'园林绿化工', w:25, h:35, cat:'skill', more:1},
+    {id:'c424', n:'园艺工', w:25, h:35, cat:'skill', more:1},
+    {id:'c425', n:'固体废物处理工', w:25, h:35, cat:'skill', more:1},
+    {id:'c426', n:'图书发行员', w:25, h:35, cat:'skill', more:1},
+    {id:'c427', n:'图书资料业务人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c428', n:'土地估价师（行业）', w:25, h:35, cat:'skill', more:1},
+    {id:'c429', n:'土壤修复工', w:25, h:35, cat:'skill', more:1},
+    {id:'c430', n:'地图制图员', w:25, h:35, cat:'skill', more:1},
+    {id:'c431', n:'地球化学勘探工', w:25, h:35, cat:'skill', more:1},
+    {id:'c432', n:'地球物理勘探工', w:25, h:35, cat:'skill', more:1},
+    {id:'c433', n:'地理信息采集员', w:25, h:35, cat:'skill', more:1},
+    {id:'c434', n:'地籍测绘员', w:25, h:35, cat:'skill', more:1},
+    {id:'c435', n:'地质调查员', w:25, h:35, cat:'skill', more:1},
+    {id:'c436', n:'地铁施工员', w:25, h:35, cat:'skill', more:1},
+    {id:'c437', n:'地震监测员', w:25, h:35, cat:'skill', more:1},
+    {id:'c438', n:'城市轨道交通信号工', w:25, h:35, cat:'skill', more:1},
+    {id:'c439', n:'城市轨道交通检修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c440', n:'城市轨道交通站务员', w:25, h:35, cat:'skill', more:1},
+    {id:'c441', n:'城市轨道交通行车值班员', w:25, h:35, cat:'skill', more:1},
+    {id:'c442', n:'基金经理资格（协会备案）', w:25, h:35, cat:'skill', more:1},
+    {id:'c443', n:'塑料制品成型制作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c444', n:'增材制造设备操作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c445', n:'声乐演员', w:25, h:35, cat:'skill', more:1},
+    {id:'c446', n:'复合材料成型工', w:25, h:35, cat:'skill', more:1},
+    {id:'c447', n:'外汇交易员（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c448', n:'大地测量员', w:25, h:35, cat:'skill', more:1},
+    {id:'c449', n:'大数据工程技术人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c450', n:'天然气净化操作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c451', n:'太阳能利用工', w:25, h:35, cat:'skill', more:1},
+    {id:'c452', n:'奢侈品鉴定师', w:25, h:35, cat:'skill', more:1},
+    {id:'c453', n:'婚介师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c454', n:'婚姻家庭咨询师', w:25, h:35, cat:'skill', more:1},
+    {id:'c455', n:'婚庆主持人', w:25, h:35, cat:'skill', more:1},
+    {id:'c456', n:'婴儿游泳师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c457', n:'孤残儿童护理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c458', n:'安保管理师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c459', n:'安全员（生产经营单位）', w:25, h:35, cat:'skill', more:1},
+    {id:'c460', n:'安全生产管理工程技术人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c461', n:'安装起重工', w:25, h:35, cat:'skill', more:1},
+    {id:'c462', n:'宠物医疗辅助员', w:25, h:35, cat:'skill', more:1},
+    {id:'c463', n:'宠物美容师', w:25, h:35, cat:'skill', more:1},
+    {id:'c464', n:'客房服务员', w:25, h:35, cat:'skill', more:1},
+    {id:'c465', n:'家具制作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c466', n:'家庭厨师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c467', n:'家庭教育指导师', w:25, h:35, cat:'skill', more:1},
+    {id:'c468', n:'家政服务员', w:25, h:35, cat:'skill', more:1},
+    {id:'c469', n:'家政服务员（等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c470', n:'家用电器维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c471', n:'家电清洗工', w:25, h:35, cat:'skill', more:1},
+    {id:'c472', n:'家畜饲养员', w:25, h:35, cat:'skill', more:1},
+    {id:'c473', n:'家禽饲养员', w:25, h:35, cat:'skill', more:1},
+    {id:'c474', n:'密码技术应用员', w:25, h:35, cat:'skill', more:1},
+    {id:'c475', n:'小儿推拿师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c476', n:'居家照护员', w:25, h:35, cat:'skill', more:1},
+    {id:'c477', n:'屠宰加工工', w:25, h:35, cat:'skill', more:1},
+    {id:'c478', n:'工业废水处理工', w:25, h:35, cat:'skill', more:1},
+    {id:'c479', n:'工业机器人系统操作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c480', n:'工业机器人系统运维员', w:25, h:35, cat:'skill', more:1},
+    {id:'c481', n:'工具钳工', w:25, h:35, cat:'skill', more:1},
+    {id:'c482', n:'工程测量员', w:25, h:35, cat:'skill', more:1},
+    {id:'c483', n:'工艺美术师', w:25, h:35, cat:'skill', more:1},
+    {id:'c484', n:'市政管道工', w:25, h:35, cat:'skill', more:1},
+    {id:'c485', n:'市政道路工', w:25, h:35, cat:'skill', more:1},
+    {id:'c486', n:'平台管理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c487', n:'平版印刷工', w:25, h:35, cat:'skill', more:1},
+    {id:'c488', n:'幼儿教育教师（等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c489', n:'应急救援员（等级认定）', w:25, h:35, cat:'skill', more:1},
+    {id:'c490', n:'废气治理工', w:25, h:35, cat:'skill', more:1},
+    {id:'c491', n:'康复辅助技术咨询师', w:25, h:35, cat:'skill', more:1},
+    {id:'c492', n:'建筑信息模型技术员（BIM）', w:25, h:35, cat:'skill', more:1},
+    {id:'c493', n:'建筑幕墙制作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c494', n:'建筑模型制作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c495', n:'建筑门窗幕墙安装工', w:25, h:35, cat:'skill', more:1},
+    {id:'c496', n:'录音师', w:25, h:35, cat:'skill', more:1},
+    {id:'c497', n:'形象设计师', w:25, h:35, cat:'skill', more:1},
+    {id:'c498', n:'影视后期制作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c499', n:'快件处理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c500', n:'快递员', w:25, h:35, cat:'skill', more:1},
+    {id:'c501', n:'急救员（红十字会救护员证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c502', n:'总装工', w:25, h:35, cat:'skill', more:1},
+    {id:'c503', n:'慈善组织工作人员（培训）', w:25, h:35, cat:'skill', more:1},
+    {id:'c504', n:'戏曲演员', w:25, h:35, cat:'skill', more:1},
+    {id:'c505', n:'房产测绘员', w:25, h:35, cat:'skill', more:1},
+    {id:'c506', n:'房地产策划师', w:25, h:35, cat:'skill', more:1},
+    {id:'c507', n:'房地产经纪人协理（等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c508', n:'房屋安全鉴定员', w:25, h:35, cat:'skill', more:1},
+    {id:'c509', n:'托育教师', w:25, h:35, cat:'skill', more:1},
+    {id:'c510', n:'护林员', w:25, h:35, cat:'skill', more:1},
+    {id:'c511', n:'报刊发行员', w:25, h:35, cat:'skill', more:1},
+    {id:'c512', n:'抹灰工', w:25, h:35, cat:'skill', more:1},
+    {id:'c513', n:'拓片制作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c514', n:'掘进工', w:25, h:35, cat:'skill', more:1},
+    {id:'c515', n:'接触网工', w:25, h:35, cat:'skill', more:1},
+    {id:'c516', n:'推销员', w:25, h:35, cat:'skill', more:1},
+    {id:'c517', n:'摄像师', w:25, h:35, cat:'skill', more:1},
+    {id:'c518', n:'摄影师', w:25, h:35, cat:'skill', more:1},
+    {id:'c519', n:'摩托车维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c520', n:'攀岩指导员', w:25, h:35, cat:'skill', more:1},
+    {id:'c521', n:'支护工', w:25, h:35, cat:'skill', more:1},
+    {id:'c522', n:'收银员', w:25, h:35, cat:'skill', more:1},
+    {id:'c523', n:'救生员（泳池）', w:25, h:35, cat:'skill', more:1},
+    {id:'c524', n:'数字出版编辑', w:25, h:35, cat:'skill', more:1},
+    {id:'c525', n:'数字化管理师', w:25, h:35, cat:'skill', more:1},
+    {id:'c526', n:'数字化解决方案设计师', w:25, h:35, cat:'skill', more:1},
+    {id:'c527', n:'数据安全工程技术人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c528', n:'数据库运行管理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c529', n:'数据标注员', w:25, h:35, cat:'skill', more:1},
+    {id:'c530', n:'数控车工', w:25, h:35, cat:'skill', more:1},
+    {id:'c531', n:'数控铣工', w:25, h:35, cat:'skill', more:1},
+    {id:'c532', n:'整烫工', w:25, h:35, cat:'skill', more:1},
+    {id:'c533', n:'整理收纳师', w:25, h:35, cat:'skill', more:1},
+    {id:'c534', n:'文创产品设计师', w:25, h:35, cat:'skill', more:1},
+    {id:'c535', n:'文物修复师', w:25, h:35, cat:'skill', more:1},
+    {id:'c536', n:'旅店服务员', w:25, h:35, cat:'skill', more:1},
+    {id:'c537', n:'旅游团队领队', w:25, h:35, cat:'skill', more:1},
+    {id:'c538', n:'旅行社计调员', w:25, h:35, cat:'skill', more:1},
+    {id:'c539', n:'无人机植保员（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c540', n:'无人机测绘员（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c541', n:'无人机测绘操控员', w:25, h:35, cat:'skill', more:1},
+    {id:'c542', n:'无人机驾驶员', w:25, h:35, cat:'skill', more:1},
+    {id:'c543', n:'无损检测员', w:25, h:35, cat:'skill', more:1},
+    {id:'c544', n:'日用化工产品制造工', w:25, h:35, cat:'skill', more:1},
+    {id:'c545', n:'早教师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c546', n:'普拉提教练（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c547', n:'智能制造工程技术人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c548', n:'智能楼宇管理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c549', n:'智能硬件装调员', w:25, h:35, cat:'skill', more:1},
+    {id:'c550', n:'月子中心护理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c551', n:'有色金属冶炼工', w:25, h:35, cat:'skill', more:1},
+    {id:'c552', n:'服装制版师', w:25, h:35, cat:'skill', more:1},
+    {id:'c553', n:'期货投资分析师', w:25, h:35, cat:'skill', more:1},
+    {id:'c554', n:'木制品加工工', w:25, h:35, cat:'skill', more:1},
+    {id:'c555', n:'木工', w:25, h:35, cat:'skill', more:1},
+    {id:'c556', n:'机修钳工', w:25, h:35, cat:'skill', more:1},
+    {id:'c557', n:'机动车检验工', w:25, h:35, cat:'skill', more:1},
+    {id:'c559', n:'机场值机员', w:25, h:35, cat:'skill', more:1},
+    {id:'c560', n:'机床装调维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c561', n:'机车乘务员', w:25, h:35, cat:'skill', more:1},
+    {id:'c562', n:'林木种苗工', w:25, h:35, cat:'skill', more:1},
+    {id:'c563', n:'果树工', w:25, h:35, cat:'skill', more:1},
+    {id:'c564', n:'架子工（社会化等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c565', n:'校外培训从业人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c566', n:'核反应堆运行值班员', w:25, h:35, cat:'skill', more:1},
+    {id:'c567', n:'核电厂维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c568', n:'档案业务人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c569', n:'桥梁工', w:25, h:35, cat:'skill', more:1},
+    {id:'c570', n:'森林抚育工', w:25, h:35, cat:'skill', more:1},
+    {id:'c571', n:'模具工', w:25, h:35, cat:'skill', more:1},
+    {id:'c572', n:'橡胶制品生产工', w:25, h:35, cat:'skill', more:1},
+    {id:'c573', n:'橡胶割胶工', w:25, h:35, cat:'skill', more:1},
+    {id:'c574', n:'殡仪服务员', w:25, h:35, cat:'skill', more:1},
+    {id:'c575', n:'殡葬礼仪师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c576', n:'母婴护理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c577', n:'民宿管家', w:25, h:35, cat:'skill', more:1},
+    {id:'c578', n:'民航客运员', w:25, h:35, cat:'skill', more:1},
+    {id:'c579', n:'民航货运员', w:25, h:35, cat:'skill', more:1},
+    {id:'c580', n:'气象观测员', w:25, h:35, cat:'skill', more:1},
+    {id:'c581', n:'氢能制备工', w:25, h:35, cat:'skill', more:1},
+    {id:'c582', n:'水产养殖人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c583', n:'水文勘测工', w:25, h:35, cat:'skill', more:1},
+    {id:'c584', n:'水泥生产工', w:25, h:35, cat:'skill', more:1},
+    {id:'c585', n:'水电站运行值班员', w:25, h:35, cat:'skill', more:1},
+    {id:'c586', n:'水质监测工', w:25, h:35, cat:'skill', more:1},
+    {id:'c587', n:'水轮发电机组值班员', w:25, h:35, cat:'skill', more:1},
+    {id:'c588', n:'污水处理工', w:25, h:35, cat:'skill', more:1},
+    {id:'c589', n:'汽车维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c590', n:'汽车美容装潢工', w:25, h:35, cat:'skill', more:1},
+    {id:'c591', n:'汽车装调工', w:25, h:35, cat:'skill', more:1},
+    {id:'c592', n:'油气管道保护工', w:25, h:35, cat:'skill', more:1},
+    {id:'c593', n:'油漆工', w:25, h:35, cat:'skill', more:1},
+    {id:'c594', n:'油茶种植加工工', w:25, h:35, cat:'skill', more:1},
+    {id:'c595', n:'法律事务助理', w:25, h:35, cat:'skill', more:1},
+    {id:'c596', n:'洗染工', w:25, h:35, cat:'skill', more:1},
+    {id:'c597', n:'测量放线工', w:25, h:35, cat:'skill', more:1},
+    {id:'c598', n:'海洋测绘员', w:25, h:35, cat:'skill', more:1},
+    {id:'c599', n:'涂料生产工', w:25, h:35, cat:'skill', more:1},
+    {id:'c600', n:'涂装工', w:25, h:35, cat:'skill', more:1},
+    {id:'c601', n:'消防设施操作员（等级认定）', w:25, h:35, cat:'skill', more:1},
+    {id:'c602', n:'混凝土工', w:25, h:35, cat:'skill', more:1},
+    {id:'c603', n:'港口岸桥司机', w:25, h:35, cat:'skill', more:1},
+    {id:'c604', n:'港口理货员', w:25, h:35, cat:'skill', more:1},
+    {id:'c605', n:'游泳指导员', w:25, h:35, cat:'skill', more:1},
+    {id:'c606', n:'滑雪指导员', w:25, h:35, cat:'skill', more:1},
+    {id:'c607', n:'演出监督', w:25, h:35, cat:'skill', more:1},
+    {id:'c608', n:'潜水指导员', w:25, h:35, cat:'skill', more:1},
+    {id:'c609', n:'灯光师', w:25, h:35, cat:'skill', more:1},
+    {id:'c610', n:'炭素工', w:25, h:35, cat:'skill', more:1},
+    {id:'c611', n:'炼油工', w:25, h:35, cat:'skill', more:1},
+    {id:'c612', n:'烘焙工', w:25, h:35, cat:'skill', more:1},
+    {id:'c613', n:'烟花爆竹制作工（非危险工序）', w:25, h:35, cat:'skill', more:1},
+    {id:'c614', n:'烟草制品加工工', w:25, h:35, cat:'skill', more:1},
+    {id:'c615', n:'烟草种植工', w:25, h:35, cat:'skill', more:1},
+    {id:'c616', n:'焊工（社会化等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c617', n:'煤层气排采工', w:25, h:35, cat:'skill', more:1},
+    {id:'c618', n:'燃气供应服务员', w:25, h:35, cat:'skill', more:1},
+    {id:'c619', n:'燃气具安装维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c620', n:'物业管理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c621', n:'物业管理师', w:25, h:35, cat:'skill', more:1},
+    {id:'c622', n:'物业管理师（等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c623', n:'物流信息员', w:25, h:35, cat:'skill', more:1},
+    {id:'c624', n:'物流服务师', w:25, h:35, cat:'skill', more:1},
+    {id:'c625', n:'物联网安装调试员', w:25, h:35, cat:'skill', more:1},
+    {id:'c626', n:'物联网工程技术人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c627', n:'特殊教育辅助人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c628', n:'环境监测员', w:25, h:35, cat:'skill', more:1},
+    {id:'c629', n:'玻璃熔化工', w:25, h:35, cat:'skill', more:1},
+    {id:'c630', n:'玻璃纤维及制品工', w:25, h:35, cat:'skill', more:1},
+    {id:'c631', n:'珠宝玉石鉴定师', w:25, h:35, cat:'skill', more:1},
+    {id:'c632', n:'瑜伽教练（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c633', n:'瓦斯检查工（等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c634', n:'甘蔗种植工', w:25, h:35, cat:'skill', more:1},
+    {id:'c635', n:'生物制药工', w:25, h:35, cat:'skill', more:1},
+    {id:'c636', n:'电切削工', w:25, h:35, cat:'skill', more:1},
+    {id:'c637', n:'电力电缆工', w:25, h:35, cat:'skill', more:1},
+    {id:'c638', n:'电力营销员', w:25, h:35, cat:'skill', more:1},
+    {id:'c639', n:'电力调度员', w:25, h:35, cat:'skill', more:1},
+    {id:'c640', n:'电器计量工', w:25, h:35, cat:'skill', more:1},
+    {id:'c641', n:'电子元器件检验员', w:25, h:35, cat:'skill', more:1},
+    {id:'c642', n:'电子商务师', w:25, h:35, cat:'skill', more:1},
+    {id:'c643', n:'电子设备装接工', w:25, h:35, cat:'skill', more:1},
+    {id:'c644', n:'电工（社会化等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c645', n:'电梯安装维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c646', n:'电梯装配调试工', w:25, h:35, cat:'skill', more:1},
+    {id:'c647', n:'电气设备安装工', w:25, h:35, cat:'skill', more:1},
+    {id:'c648', n:'电池制造工', w:25, h:35, cat:'skill', more:1},
+    {id:'c649', n:'电线电缆制造工', w:25, h:35, cat:'skill', more:1},
+    {id:'c650', n:'畜禽屠宰检验员', w:25, h:35, cat:'skill', more:1},
+    {id:'c651', n:'登记结算业务人员（证券）', w:25, h:35, cat:'skill', more:1},
+    {id:'c652', n:'白蚁防治工', w:25, h:35, cat:'skill', more:1},
+    {id:'c653', n:'皮革加工工', w:25, h:35, cat:'skill', more:1},
+    {id:'c654', n:'直播销售员', w:25, h:35, cat:'skill', more:1},
+    {id:'c655', n:'眼镜定配工', w:25, h:35, cat:'skill', more:1},
+    {id:'c656', n:'眼镜验光员', w:25, h:35, cat:'skill', more:1},
+    {id:'c657', n:'知识产权管理师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c658', n:'石油钻井工', w:25, h:35, cat:'skill', more:1},
+    {id:'c659', n:'矿井开掘工', w:25, h:35, cat:'skill', more:1},
+    {id:'c660', n:'矿井通风工', w:25, h:35, cat:'skill', more:1},
+    {id:'c661', n:'砌筑工', w:25, h:35, cat:'skill', more:1},
+    {id:'c662', n:'研学旅行指导师', w:25, h:35, cat:'skill', more:1},
+    {id:'c663', n:'碳排放核算员', w:25, h:35, cat:'skill', more:1},
+    {id:'c664', n:'碳管理师', w:25, h:35, cat:'skill', more:1},
+    {id:'c665', n:'磨工', w:25, h:35, cat:'skill', more:1},
+    {id:'c666', n:'礼仪主持人', w:25, h:35, cat:'skill', more:1},
+    {id:'c667', n:'社会救助经办员', w:25, h:35, cat:'skill', more:1},
+    {id:'c668', n:'社区网格员', w:25, h:35, cat:'skill', more:1},
+    {id:'c669', n:'社群健康助理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c670', n:'科技咨询师', w:25, h:35, cat:'skill', more:1},
+    {id:'c671', n:'秘书', w:25, h:35, cat:'skill', more:1},
+    {id:'c672', n:'税务师（等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c673', n:'管工', w:25, h:35, cat:'skill', more:1},
+    {id:'c674', n:'管道工', w:25, h:35, cat:'skill', more:1},
+    {id:'c675', n:'纤维检验员', w:25, h:35, cat:'skill', more:1},
+    {id:'c676', n:'织造工', w:25, h:35, cat:'skill', more:1},
+    {id:'c677', n:'继电保护工', w:25, h:35, cat:'skill', more:1},
+    {id:'c678', n:'缝纫工', w:25, h:35, cat:'skill', more:1},
+    {id:'c679', n:'网约配送员', w:25, h:35, cat:'skill', more:1},
+    {id:'c680', n:'网络与信息安全管理员', w:25, h:35, cat:'skill', more:1},
+    {id:'c681', n:'网络编辑', w:25, h:35, cat:'skill', more:1},
+    {id:'c682', n:'美发师', w:25, h:35, cat:'skill', more:1},
+    {id:'c683', n:'美容师', w:25, h:35, cat:'skill', more:1},
+    {id:'c684', n:'美术教师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c685', n:'美甲师', w:25, h:35, cat:'skill', more:1},
+    {id:'c686', n:'老年人能力评估师', w:25, h:35, cat:'skill', more:1},
+    {id:'c687', n:'考古探掘工', w:25, h:35, cat:'skill', more:1},
+    {id:'c688', n:'职业指导师', w:25, h:35, cat:'skill', more:1},
+    {id:'c689', n:'肉制品加工工', w:25, h:35, cat:'skill', more:1},
+    {id:'c690', n:'育婴员', w:25, h:35, cat:'skill', more:1},
+    {id:'c691', n:'育幼员', w:25, h:35, cat:'skill', more:1},
+    {id:'c692', n:'能源管理师', w:25, h:35, cat:'skill', more:1},
+    {id:'c693', n:'自行车装配工', w:25, h:35, cat:'skill', more:1},
+    {id:'c694', n:'舞台技术人员', w:25, h:35, cat:'skill', more:1},
+    {id:'c695', n:'舞台灯光师（等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c696', n:'舞台音响师', w:25, h:35, cat:'skill', more:1},
+    {id:'c697', n:'舞蹈演员', w:25, h:35, cat:'skill', more:1},
+    {id:'c698', n:'航空器地面设备操作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c699', n:'航空器清洁工', w:25, h:35, cat:'skill', more:1},
+    {id:'c700', n:'航空货运员', w:25, h:35, cat:'skill', more:1},
+    {id:'c701', n:'航空配载员', w:25, h:35, cat:'skill', more:1},
+    {id:'c702', n:'船舶机工', w:25, h:35, cat:'skill', more:1},
+    {id:'c703', n:'船舶水手', w:25, h:35, cat:'skill', more:1},
+    {id:'c704', n:'船舶电工', w:25, h:35, cat:'skill', more:1},
+    {id:'c705', n:'船舶轮机员（等级认定）', w:25, h:35, cat:'skill', more:1},
+    {id:'c706', n:'船舶驾驶员（等级认定）', w:25, h:35, cat:'skill', more:1},
+    {id:'c707', n:'艾灸师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c708', n:'节能评估师', w:25, h:35, cat:'skill', more:1},
+    {id:'c709', n:'花卉园艺师', w:25, h:35, cat:'skill', more:1},
+    {id:'c710', n:'苗圃工', w:25, h:35, cat:'skill', more:1},
+    {id:'c711', n:'茶叶加工工', w:25, h:35, cat:'skill', more:1},
+    {id:'c712', n:'茶艺师', w:25, h:35, cat:'skill', more:1},
+    {id:'c713', n:'药物制剂工', w:25, h:35, cat:'skill', more:1},
+    {id:'c714', n:'药物提取工', w:25, h:35, cat:'skill', more:1},
+    {id:'c715', n:'营养配餐员', w:25, h:35, cat:'skill', more:1},
+    {id:'c716', n:'营销员', w:25, h:35, cat:'skill', more:1},
+    {id:'c717', n:'蔬菜园艺工', w:25, h:35, cat:'skill', more:1},
+    {id:'c718', n:'虚拟现实（VR）制作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c719', n:'蚕业生产工', w:25, h:35, cat:'skill', more:1},
+    {id:'c720', n:'蜂业生产工', w:25, h:35, cat:'skill', more:1},
+    {id:'c721', n:'行政办事员', w:25, h:35, cat:'skill', more:1},
+    {id:'c722', n:'衡器计量工', w:25, h:35, cat:'skill', more:1},
+    {id:'c723', n:'裁剪工', w:25, h:35, cat:'skill', more:1},
+    {id:'c724', n:'装订工', w:25, h:35, cat:'skill', more:1},
+    {id:'c725', n:'装配工', w:25, h:35, cat:'skill', more:1},
+    {id:'c726', n:'装配式建筑施工员', w:25, h:35, cat:'skill', more:1},
+    {id:'c727', n:'装配钳工', w:25, h:35, cat:'skill', more:1},
+    {id:'c728', n:'装饰装修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c729', n:'西式烹调师', w:25, h:35, cat:'skill', more:1},
+    {id:'c730', n:'西式面点师', w:25, h:35, cat:'skill', more:1},
+    {id:'c731', n:'视光师（行业认证）', w:25, h:35, cat:'skill', more:1},
+    {id:'c732', n:'视频创推员', w:25, h:35, cat:'skill', more:1},
+    {id:'c733', n:'计算机程序设计员', w:25, h:35, cat:'skill', more:1},
+    {id:'c734', n:'计算机维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c735', n:'讲解员', w:25, h:35, cat:'skill', more:1},
+    {id:'c736', n:'证券投资顾问（协会注册）', w:25, h:35, cat:'skill', more:1},
+    {id:'c737', n:'评茶员', w:25, h:35, cat:'skill', more:1},
+    {id:'c738', n:'调酒师', w:25, h:35, cat:'skill', more:1},
+    {id:'c739', n:'豆制品制作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c740', n:'质检员', w:25, h:35, cat:'skill', more:1},
+    {id:'c741', n:'贵金属冶炼工', w:25, h:35, cat:'skill', more:1},
+    {id:'c742', n:'资产评估师（等级）', w:25, h:35, cat:'skill', more:1},
+    {id:'c743', n:'起重装卸机械操作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c744', n:'足部按摩师', w:25, h:35, cat:'skill', more:1},
+    {id:'c745', n:'跨境电商操作员', w:25, h:35, cat:'skill', more:1},
+    {id:'c746', n:'跨境电商物流员', w:25, h:35, cat:'skill', more:1},
+    {id:'c747', n:'车工', w:25, h:35, cat:'skill', more:1},
+    {id:'c748', n:'车站值班员（铁路）', w:25, h:35, cat:'skill', more:1},
+    {id:'c749', n:'轧钢工', w:25, h:35, cat:'skill', more:1},
+    {id:'c750', n:'转炉炼钢工', w:25, h:35, cat:'skill', more:1},
+    {id:'c751', n:'软件测试员', w:25, h:35, cat:'skill', more:1},
+    {id:'c752', n:'输电线路工', w:25, h:35, cat:'skill', more:1},
+    {id:'c753', n:'运动康复师', w:25, h:35, cat:'skill', more:1},
+    {id:'c754', n:'运动营养师', w:25, h:35, cat:'skill', more:1},
+    {id:'c755', n:'连铸工', w:25, h:35, cat:'skill', more:1},
+    {id:'c756', n:'连锁经营管理师', w:25, h:35, cat:'skill', more:1},
+    {id:'c757', n:'选品员', w:25, h:35, cat:'skill', more:1},
+    {id:'c758', n:'选煤工', w:25, h:35, cat:'skill', more:1},
+    {id:'c759', n:'选矿工', w:25, h:35, cat:'skill', more:1},
+    {id:'c760', n:'通风工', w:25, h:35, cat:'skill', more:1},
+    {id:'c761', n:'造林更新工', w:25, h:35, cat:'skill', more:1},
+    {id:'c762', n:'造纸工', w:25, h:35, cat:'skill', more:1},
+    {id:'c763', n:'道路客运汽车驾驶员', w:25, h:35, cat:'skill', more:1},
+    {id:'c764', n:'道路货运汽车驾驶员', w:25, h:35, cat:'skill', more:1},
+    {id:'c765', n:'遗体防腐整容师', w:25, h:35, cat:'skill', more:1},
+    {id:'c766', n:'配电线路工', w:25, h:35, cat:'skill', more:1},
+    {id:'c767', n:'酒店前厅服务员', w:25, h:35, cat:'skill', more:1},
+    {id:'c768', n:'酿酒工', w:25, h:35, cat:'skill', more:1},
+    {id:'c769', n:'采油工', w:25, h:35, cat:'skill', more:1},
+    {id:'c770', n:'采矿工', w:25, h:35, cat:'skill', more:1},
+    {id:'c771', n:'采购员', w:25, h:35, cat:'skill', more:1},
+    {id:'c772', n:'金属热处理工', w:25, h:35, cat:'skill', more:1},
+    {id:'c773', n:'钟表维修工', w:25, h:35, cat:'skill', more:1},
+    {id:'c774', n:'钟表鉴定师', w:25, h:35, cat:'skill', more:1},
+    {id:'c775', n:'钢琴调律师', w:25, h:35, cat:'skill', more:1},
+    {id:'c776', n:'钢筋工', w:25, h:35, cat:'skill', more:1},
+    {id:'c777', n:'钢结构制作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c778', n:'钢结构安装工', w:25, h:35, cat:'skill', more:1},
+    {id:'c779', n:'钣金工', w:25, h:35, cat:'skill', more:1},
+    {id:'c780', n:'钳工', w:25, h:35, cat:'skill', more:1},
+    {id:'c781', n:'钻探工', w:25, h:35, cat:'skill', more:1},
+    {id:'c782', n:'铁路信号工', w:25, h:35, cat:'skill', more:1},
+    {id:'c783', n:'铁路客运员', w:25, h:35, cat:'skill', more:1},
+    {id:'c784', n:'铁路线路工', w:25, h:35, cat:'skill', more:1},
+    {id:'c785', n:'铁路货运员', w:25, h:35, cat:'skill', more:1},
+    {id:'c786', n:'铆工', w:25, h:35, cat:'skill', more:1},
+    {id:'c787', n:'铣工', w:25, h:35, cat:'skill', more:1},
+    {id:'c788', n:'银行信贷分析师', w:25, h:35, cat:'skill', more:1},
+    {id:'c789', n:'铸造工', w:25, h:35, cat:'skill', more:1},
+    {id:'c790', n:'锅炉设备安装工', w:25, h:35, cat:'skill', more:1},
+    {id:'c791', n:'锅炉运行值班员', w:25, h:35, cat:'skill', more:1},
+    {id:'c792', n:'锻造工', w:25, h:35, cat:'skill', more:1},
+    {id:'c793', n:'镀层工', w:25, h:35, cat:'skill', more:1},
+    {id:'c794', n:'镗工', w:25, h:35, cat:'skill', more:1},
+    {id:'c795', n:'镶贴工', w:25, h:35, cat:'skill', more:1},
+    {id:'c796', n:'长度计量工', w:25, h:35, cat:'skill', more:1},
+    {id:'c797', n:'防水工', w:25, h:35, cat:'skill', more:1},
+    {id:'c798', n:'陶瓷工艺师', w:25, h:35, cat:'skill', more:1},
+    {id:'c799', n:'隧道工', w:25, h:35, cat:'skill', more:1},
+    {id:'c800', n:'集输工', w:25, h:35, cat:'skill', more:1},
+    {id:'c801', n:'青少年体适能教练', w:25, h:35, cat:'skill', more:1},
+    {id:'c802', n:'页岩气开采工', w:25, h:35, cat:'skill', more:1},
+    {id:'c803', n:'风力发电运维员', w:25, h:35, cat:'skill', more:1},
+    {id:'c804', n:'风电机组制造工', w:25, h:35, cat:'skill', more:1},
+    {id:'c805', n:'食品安全管理师', w:25, h:35, cat:'skill', more:1},
+    {id:'c806', n:'食品检验员', w:25, h:35, cat:'skill', more:1},
+    {id:'c807', n:'食用菌生产工', w:25, h:35, cat:'skill', more:1},
+    {id:'c808', n:'餐厅服务员', w:25, h:35, cat:'skill', more:1},
+    {id:'c809', n:'饮料制作工', w:25, h:35, cat:'skill', more:1},
+    {id:'c810', n:'高炉炼铁工', w:25, h:35, cat:'skill', more:1},
+    {id:'c811', n:'齿轮工', w:25, h:35, cat:'skill', more:1},
+    {id:'c812', n:'地方特色小吃制作（专项）', w:25, h:35, cat:'mini', more:1},
+    {id:'c813', n:'家居保洁（专项）', w:25, h:35, cat:'mini', more:1},
+    {id:'c814', n:'新能源汽车充电设施安装维护（专项）', w:25, h:35, cat:'mini', more:1},
+    {id:'c815', n:'无人机驾驶（专项）', w:25, h:35, cat:'mini', more:1},
+    {id:'c816', n:'母婴护理（专项）', w:25, h:35, cat:'mini', more:1},
+    {id:'c817', n:'病患陪护（专项）', w:25, h:35, cat:'mini', more:1},
+    {id:'c818', n:'直播销售（专项）', w:25, h:35, cat:'mini', more:1},
+    {id:'c819', n:'网约配送（专项）', w:25, h:35, cat:'mini', more:1},
+    {id:'c820', n:'老人照护（专项）', w:25, h:35, cat:'mini', more:1},
+    {id:'c821', n:'面包烘焙（专项）', w:25, h:35, cat:'mini', more:1},
+    {id:'c822', n:'AFP金融理财师', w:25, h:35, cat:'ind', more:1},
+    {id:'c823', n:'AWS认证', w:25, h:35, cat:'ind', more:1},
+    {id:'c824', n:'CFP国际金融理财师', w:25, h:35, cat:'ind', more:1},
+    {id:'c825', n:'三支一扶计划招募考试', w:25, h:35, cat:'ind', more:1},
+    {id:'c826', n:'专职安全生产管理人员考核合格证（C证）', w:25, h:35, cat:'ind', more:1},
+    {id:'c829', n:'乡村兽医资格（已退出目录）', w:25, h:35, cat:'ind', more:1},
+    {id:'c830', n:'仲裁员（聘任）', w:25, h:35, cat:'ind', more:1},
+    {id:'c831', n:'健身教练职业能力培训证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c832', n:'公路水运工程施工企业安全生产管理人员考核合格证', w:25, h:35, cat:'ind', more:1},
+    {id:'c833', n:'出入境检疫处理人员资格（已退出目录）', w:25, h:35, cat:'ind', more:1},
+    {id:'c834', n:'劳务员岗位证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c835', n:'医师执业证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c836', n:'医疗器械经营质量管理（培训合格证）', w:25, h:35, cat:'ind', more:1},
+    {id:'c837', n:'华为认证HCIA/HCIP/HCIE', w:25, h:35, cat:'ind', more:1},
+    {id:'c839', n:'商标代理人（备案）', w:25, h:35, cat:'ind', more:1},
+    {id:'c840', n:'国际中文教师证书（CTCSOL）', w:25, h:35, cat:'ind', more:1},
+    {id:'c841', n:'国际道路运输驾驶员从业资格证', w:25, h:35, cat:'ind', more:1},
+    {id:'c842', n:'安全员岗位证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c844', n:'建筑施工企业主要负责人安全生产考核合格证（A证）', w:25, h:35, cat:'ind', more:1},
+    {id:'c845', n:'微软认证（Azure/M365等）', w:25, h:35, cat:'ind', more:1},
+    {id:'c846', n:'心理咨询师（原国家职业资格，2017年已取消）', w:25, h:35, cat:'ind', more:1},
+    {id:'c848', n:'思科认证CCNA/CCNP/CCIE', w:25, h:35, cat:'ind', more:1},
+    {id:'c849', n:'报关人员备案（原报关员资格已取消）', w:25, h:35, cat:'ind', more:1},
+    {id:'c850', n:'拖拉机、联合收割机驾驶证', w:25, h:35, cat:'ind', more:1},
+    {id:'c852', n:'施工员岗位证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c862', n:'机械员岗位证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c863', n:'材料员岗位证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c864', n:'标准员岗位证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c865', n:'残疾人职业技能等级证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c866', n:'母婴保健技术考核合格证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c867', n:'民用无人驾驶航空器操控员执照（CAAC）', w:25, h:35, cat:'ind', more:1},
+    {id:'c868', n:'民用航空器维修人员执照（CAAC）', w:25, h:35, cat:'ind', more:1},
+    {id:'c869', n:'民航客舱乘务员训练合格证', w:25, h:35, cat:'ind', more:1},
+    {id:'c870', n:'水利水电工程施工企业安全生产管理人员考核合格证', w:25, h:35, cat:'ind', more:1},
+    {id:'c871', n:'注册信息安全专业人员CISP', w:25, h:35, cat:'ind', more:1},
+    {id:'c872', n:'渔业船舶职务船员证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c873', n:'游泳救生员（等级认定）', w:25, h:35, cat:'ind', more:1},
+    {id:'c874', n:'爆破作业人员许可证（保管员/安全员/爆破员）', w:25, h:35, cat:'ind', more:1},
+    {id:'c877', n:'特种设备安全管理人员证', w:25, h:35, cat:'ind', more:1},
+    {id:'c880', n:'药师注册证（执业药师）', w:25, h:35, cat:'ind', more:1},
+    {id:'c882', n:'裁判员等级证书（三级至国际级）', w:25, h:35, cat:'ind', more:1},
+    {id:'c883', n:'质量员岗位证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c884', n:'资料员岗位证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c885', n:'运动员技术等级证书（三级至国际健将）', w:25, h:35, cat:'ind', more:1},
+    {id:'c886', n:'退伍士兵职业技能鉴定证书', w:25, h:35, cat:'ind', more:1},
+    {id:'c887', n:'道路运输企业安全生产管理人员考核合格证', w:25, h:35, cat:'ind', more:1},
+    {id:'c888', n:'铁路机车车辆驾驶证', w:25, h:35, cat:'ind', more:1},
+    {id:'c889', n:'阿里云认证ACA/ACP/ACE', w:25, h:35, cat:'ind', more:1},
+    {id:'c890', n:'项目负责人安全生产考核合格证（B证）', w:25, h:35, cat:'ind', more:1},
+    {id:'c891', n:'食品安全管理员（培训合格证）', w:25, h:35, cat:'ind', more:1},  ];
+  var DPI = 300, MM2PX = DPI / 25.4;
+  var SHEET_W = 1800, SHEET_H = 1200;
+
+  var view = document.getElementById('view');
+  var stage = document.getElementById('stage');
+  var drop = document.getElementById('drop');
+  var specsBox = document.getElementById('specs');
+  var swBox = document.getElementById('swatches');
+  var tolBox = document.getElementById('tolBox');
+  var tol = document.getElementById('tol');
+  var tolVal = document.getElementById('tolVal');
+  var bgSwitch = document.getElementById('bgSwitch');
+  var guideSwitch = document.getElementById('guideSwitch');
+  var zoom = document.getElementById('zoom');
+  var zoomVal = document.getElementById('zoomVal');
+  var resetBtn = document.getElementById('resetBtn');
+  var fileInput = document.getElementById('fileInput');
+  var toastEl = document.getElementById('toast');
+
+  var state = {
+    img: null, spec: SPECS[0], zoom: 1, ox: 0, oy: 0,
+    bgOn: false, bgColor: '#ffffff', guide: true
+  };
+  var dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  var viewW = 295, viewH = 413;
+
+  function px(mm){ return Math.round(mm * MM2PX); }
+  function outSize(){ var sp = state.spec; return { w: sp.pxw || px(sp.w), h: sp.pxh || px(sp.h) }; }
+  /* 实际分辨率：按当前规格的像素与毫米反算，取整到 10 dpi */
+  function outDpi(){
+    var o = outSize(), sp = state.spec;
+    if (!sp.w) return DPI;
+    return Math.round((o.w / (sp.w / 25.4)) / 10) * 10;
+  }
+
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 1800);
+  }
+
+  /* ---------- 尺寸与画布 ---------- */
+  function syncSizeLabels(){
+    var o = outSize();
+    document.getElementById('specName').textContent = state.spec.n;
+    document.getElementById('specPx').textContent = o.w + ' × ' + o.h + ' px' +
+      (state.spec.pxonly ? ' · 报名系统像素' : ' · ' + outDpi() + ' dpi');
+    document.getElementById('outPx').textContent = o.w + ' × ' + o.h;
+    document.getElementById('outMm').textContent = state.spec.pxonly ? '— 按像素上传' : (state.spec.w + ' × ' + state.spec.h + ' mm');
+  }
+
+  function layoutCanvas(){
+    var o = outSize();
+    var ratio = o.w / o.h;
+    var pad = 40;
+    var availW = Math.max(160, stage.clientWidth - pad);
+    var availH = Math.max(200, Math.min(window.innerHeight * 0.62, 620));
+    var w = Math.min(availW, availH * ratio);
+    if (window.innerWidth <= 900) w = Math.min(availW, 300 * ratio + 40);
+    var h = w / ratio;
+    viewW = Math.round(w); viewH = Math.round(h);
+    view.style.width = viewW + 'px';
+    view.style.height = viewH + 'px';
+    view.width = Math.round(viewW * dpr);
+    view.height = Math.round(viewH * dpr);
+    draw();
+  }
+
+  /* ---------- 绘制 ---------- */
+  function baseScale(){
+    if (!state.img) return 1;
+    return Math.max(viewW / state.img.naturalWidth, viewH / state.img.naturalHeight);
+  }
+  function geometry(){
+    var s = baseScale() * state.zoom;
+    var dw = state.img.naturalWidth * s;
+    var dh = state.img.naturalHeight * s;
+    return { s: s, dw: dw, dh: dh,
+      x: (viewW - dw) / 2 + state.ox,
+      y: (viewH - dh) / 2 + state.oy };
+  }
+  function clampOffsets(){
+    if (!state.img) return;
+    var s = baseScale() * state.zoom;
+    var dw = state.img.naturalWidth * s, dh = state.img.naturalHeight * s;
+    var mx = Math.max(0, (dw - viewW) / 2);
+    var my = Math.max(0, (dh - viewH) / 2);
+    state.ox = Math.max(-mx, Math.min(mx, state.ox));
+    state.oy = Math.max(-my, Math.min(my, state.oy));
+  }
+
+  function drawImageScaled(ctx, oW, oH){
+    var k = oW / viewW;
+    var g = geometry();
+    ctx.drawImage(state.img, g.x * k, g.y * k, g.dw * k, g.dh * k);
+  }
+  function draw(){
+    var ctx = view.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, viewW, viewH);
+    ctx.fillStyle = state.bgOn ? state.bgColor : '#ffffff';
+    ctx.fillRect(0, 0, viewW, viewH);
+    if (!state.img){
+      ctx.fillStyle = '#c3cfc7';
+      ctx.font = '13px "PingFang SC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('上传照片后在此预览', viewW / 2, viewH / 2);
+      return;
+    }
+    if (state.bgOn){
+      var tmp = document.createElement('canvas');
+      tmp.width = view.width; tmp.height = view.height;
+      var tctx = tmp.getContext('2d');
+      tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawImageScaled(tctx, viewW, viewH);
+      ctx.drawImage(colorKey(tmp, +tol.value), 0, 0, viewW, viewH);
+    } else {
+      drawImageScaled(ctx, viewW, viewH);
+    }
+    if (state.guide) drawGuides(ctx);
+  }
+
+  function drawGuides(ctx){
+    var line = 'rgba(53,86,107,.52)';
+    ctx.save();
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([5, 4]);
+    // 头顶 / 下巴 / 肩线
+    [0.08, 0.48, 0.78].forEach(function(r){
+      var y = Math.round(viewH * r) + .5;
+      ctx.beginPath(); ctx.moveTo(14, y); ctx.lineTo(viewW - 14, y); ctx.stroke();
+    });
+    // 面部椭圆
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.ellipse(viewW / 2, viewH * 0.33, viewW * 0.23, viewH * 0.185, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    // 中心竖线
+    ctx.setLineDash([3, 5]);
+    ctx.strokeStyle = 'rgba(53,86,107,.28)';
+    ctx.beginPath(); ctx.moveTo(viewW / 2 + .5, 10); ctx.lineTo(viewW / 2 + .5, viewH - 10); ctx.stroke();
+    ctx.restore();
+  }
+
+  /* ---------- 背景替换 ---------- */
+  function colorKey(src, threshold){
+    var c = document.createElement('canvas');
+    c.width = src.width; c.height = src.height;
+    var ctx = c.getContext('2d');
+    ctx.drawImage(src, 0, 0);
+    var img = ctx.getImageData(0, 0, c.width, c.height);
+    var d = img.data, w = c.width, h = c.height;
+    // 取四角 6px 区域平均色作为背景色
+    var rs = 0, gs = 0, bs = 0, cnt = 0;
+    var picks = [[3,3],[w-4,3],[3,Math.round(h*0.22)],[w-4,Math.round(h*0.22)],
+                 [Math.round(w*0.2),3],[Math.round(w*0.8),3]];
+    picks.forEach(function(p){
+      for (var dx = -3; dx <= 3; dx++){
+        for (var dy = -3; dy <= 3; dy++){
+          var x = Math.min(w-1, Math.max(0, p[0]+dx)), y = Math.min(h-1, Math.max(0, p[1]+dy));
+          var i = (y * w + x) * 4;
+          rs += d[i]; gs += d[i+1]; bs += d[i+2]; cnt++;
+        }
+      }
+    });
+    var br = rs / cnt, bg = gs / cnt, bb = bs / cnt;
+    var visited = new Uint8Array(w * h);
+    var stack = [];
+    function test(i){
+      if (visited[i >> 2]) return false;
+      var p = i * 4;
+      var dr = d[p] - br, dg = d[p+1] - bg, db = d[p+2] - bb;
+      return Math.sqrt(dr*dr + dg*dg + db*db) <= threshold;
+    }
+    function visit(i){
+      if (visited[i]) return false;
+      var p = i * 4;
+      var dr = d[p] - br, dg = d[p+1] - bg, db = d[p+2] - bb;
+      if (Math.sqrt(dr*dr + dg*dg + db*db) > threshold) return false;
+      visited[i] = 1;
+      d[p+3] = 0;
+      stack.push(i);
+      return true;
+    }
+    // 边界种子
+    for (var x = 0; x < w; x++){ visit(x); visit((h-1)*w + x); }
+    for (var y = 0; y < h; y++){ visit(y*w); visit(y*w + w - 1); }
+    while (stack.length){
+      var idx = stack.pop();
+      var cx = idx % w, cy = (idx - cx) / w;
+      if (cx > 0) visit(idx - 1);
+      if (cx < w-1) visit(idx + 1);
+      if (cy > 0) visit(idx - w);
+      if (cy < h-1) visit(idx + w);
+    }
+    ctx.putImageData(img, 0, 0);
+    return c;
+  }
+
+  function renderOutput(){
+    var o = outSize();
+    var k = o.w / viewW;
+    var c = document.createElement('canvas');
+    c.width = o.w; c.height = o.h;
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = state.bgOn ? state.bgColor : '#ffffff';
+    ctx.fillRect(0, 0, o.w, o.h);
+    if (!state.img) return c;
+
+    var tmp = document.createElement('canvas');
+    tmp.width = o.w; tmp.height = o.h;
+    var tctx = tmp.getContext('2d');
+    drawImageScaled(tctx, o.w, o.h);
+
+    if (state.bgOn){
+      ctx.drawImage(colorKey(tmp, +tol.value), 0, 0);
+    } else {
+      ctx.drawImage(tmp, 0, 0);
+    }
+    return c;
+  }
+
+  /* ---------- 导出 ---------- */
+  function download(canvas, name, type, q){
+    canvas.toBlob(function(blob){
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1200);
+    }, type, q || 0.92);
+  }
+  function baseName(){ return '证件照_' + state.spec.n; }
+
+  function makeSheet(){
+    var o = outSize();
+    var s = document.createElement('canvas');
+    s.width = SHEET_W; s.height = SHEET_H;
+    var ctx = s.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, SHEET_W, SHEET_H);
+
+    var photo = renderOutput();
+    var gap = 14, margin = 60;
+    var cols = Math.max(1, Math.floor((SHEET_W - margin*2 + gap) / (o.w + gap)));
+    var rows = Math.max(1, Math.floor((SHEET_H - margin*2 + gap) / (o.h + gap)));
+    var totalW = cols * o.w + (cols-1) * gap;
+    var totalH = rows * o.h + (rows-1) * gap;
+    var x0 = (SHEET_W - totalW) / 2, y0 = (SHEET_H - totalH) / 2;
+
+    for (var r = 0; r < rows; r++){
+      for (var cIdx = 0; cIdx < cols; cIdx++){
+        var x = x0 + cIdx * (o.w + gap), y = y0 + r * (o.h + gap);
+        ctx.drawImage(photo, x, y, o.w, o.h);
+        ctx.strokeStyle = 'rgba(150,160,155,.75)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x - .5, y - .5, o.w + 1, o.h + 1);
+      }
+    }
+    return { canvas: s, count: cols * rows };
+  }
+
+  /* ---------- 交互 ---------- */
+  var pointers = {}, dragBase = null, pinchBase = null;
+
+  view.addEventListener('pointerdown', function(ev){
+    if (!state.img) return;
+    view.setPointerCapture(ev.pointerId);
+    pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+    if (Object.keys(pointers).length === 2){
+      var ids = Object.keys(pointers);
+      var p1 = pointers[ids[0]], p2 = pointers[ids[1]];
+      pinchBase = { dist: Math.hypot(p1.x - p2.x, p1.y - p2.y), zoom: state.zoom };
+    } else {
+      dragBase = { x: ev.clientX, y: ev.clientY, ox: state.ox, oy: state.oy };
+      view.classList.add('grabbing');
+    }
+  });
+  view.addEventListener('pointermove', function(ev){
+    if (!state.img || !pointers[ev.pointerId]) return;
+    pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+    if (pinchBase && Object.keys(pointers).length === 2){
+      var ids = Object.keys(pointers);
+      var d = Math.hypot(pointers[ids[0]].x - pointers[ids[1]].x, pointers[ids[0]].y - pointers[ids[1]].y);
+      setZoom(pinchBase.zoom * (d / pinchBase.dist));
+      return;
+    }
+    if (!dragBase) return;
+    state.ox = dragBase.ox + (ev.clientX - dragBase.x);
+    state.oy = dragBase.oy + (ev.clientY - dragBase.y);
+    clampOffsets();
+    draw();
+  });
+  function endPointer(ev){
+    delete pointers[ev.pointerId];
+    if (Object.keys(pointers).length < 2) pinchBase = null;
+    if (!Object.keys(pointers).length){ dragBase = null; view.classList.remove('grabbing'); }
+  }
+  view.addEventListener('pointerup', endPointer);
+  view.addEventListener('pointercancel', endPointer);
+
+  view.addEventListener('wheel', function(ev){
+    if (!state.img) return;
+    ev.preventDefault();
+    setZoom(state.zoom * Math.exp(-ev.deltaY * 0.0016));
+  }, { passive: false });
+
+  view.addEventListener('dblclick', function(){ resetView(); });
+
+  function setZoom(z){
+    state.zoom = Math.max(.8, Math.min(3.2, z));
+    zoom.value = Math.round(state.zoom * 100);
+    zoomVal.textContent = Math.round(state.zoom * 100) + '%';
+    clampOffsets();
+    draw();
+  }
+  function resetView(){
+    state.zoom = 1; state.ox = 0; state.oy = 0;
+    zoom.value = 100; zoomVal.textContent = '100%';
+    draw();
+  }
+
+  zoom.addEventListener('input', function(){ setZoom(+zoom.value / 100); });
+  resetBtn.addEventListener('click', resetView);
+  guideSwitch.addEventListener('click', function(){
+    state.guide = !state.guide;
+    guideSwitch.classList.toggle('on', state.guide);
+    guideSwitch.setAttribute('aria-pressed', String(state.guide));
+    draw();
+  });
+
+  /* ---------- 规格 / 背景 ---------- */
+  var moreBox = document.getElementById('moreSpecs');
+  var morePop = document.getElementById('morePop');
+  var moreMask = document.getElementById('moreMask');
+  var moreBtn = document.getElementById('moreBtn');
+  var moreCur = document.getElementById('moreCur');
+  var moreCount = document.getElementById('moreCount');
+  var moreCountSub = document.getElementById('moreCountSub');
+  var moreOpen = false;
+  var catGroups = [];
+
+  function buildSpecs(){
+    var cards = {};
+    function mk(s, box){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'spec' + (s === state.spec ? ' on' : '');
+      b.setAttribute('data-id', s.id);
+      b.innerHTML = '<div class="n">' + s.n + '</div><div class="d">' +
+        (s.pxonly ? (s.pxw + '×' + s.pxh + ' px')
+                  : (s.w + '×' + s.h + ' mm · ' + (s.pxw || px(s.w)) + '×' + (s.pxh || px(s.h)))) + '</div>';
+      b.addEventListener('click', function(){
+        state.spec = s;
+        paintSel(s);
+        if (s.more && moreOpen) setMore(false); else syncMore();
+        syncSizeLabels();
+        layoutCanvas();
+      });
+      box.appendChild(b);
+      cards[s.id] = b;
+    }
+    SPECS.forEach(function(s){ if (!s.more) mk(s, specsBox); });
+    [{k:'visa', t:'签证 / 出入境'}, {k:'photo', t:'证件照'}, {k:'res', t:'居住证'}, {k:'job', t:'职业资格证'}, {k:'skill', t:'职业技能等级'}, {k:'spec', t:'特种作业 / 特种设备'}, {k:'ind', t:'行业证书'}, {k:'mini', t:'专项职业能力'}, {k:'exam', t:'考试报名'}].forEach(function(g){
+      var list = SPECS.filter(function(s){ return s.more && s.cat === g.k; });
+      if (!list.length) return;
+      var hd = document.createElement('button');
+      hd.type = 'button';
+      hd.className = 'ghd';
+      hd.setAttribute('aria-expanded', 'false');
+      hd.innerHTML = '<b>' + g.t + '</b><i data-total="' + list.length + '">' + list.length + ' 项</i>' +
+        '<svg class="car" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">' +
+        '<path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+      var box = document.createElement('div');
+      box.className = 'gspecs hide';
+      moreBox.appendChild(hd);
+      moreBox.appendChild(box);
+      list.forEach(function(s){ mk(s, box); });
+      hd.addEventListener('click', function(){
+        var open = !hd.classList.contains('open');
+        closeCats(hd);
+        hd.classList.toggle('open', open);
+        box.classList.toggle('hide', !open);
+        hd.setAttribute('aria-expanded', String(open));
+        if (open) morePop.scrollTop = 0;
+      });
+      catGroups.push({hd:hd, box:box});
+    });
+    var moreTotal = SPECS.filter(function(s){ return s.more; }).length;
+    if (moreCount) moreCount.textContent = moreTotal + ' 种';
+    if (moreCountSub) moreCountSub.textContent = '共 ' + moreTotal + ' 种 · 点击空白处关闭';
+    paintSel(state.spec);
+    syncMore();
+    moreBtn.addEventListener('click', function(){ setMore(!moreOpen); });
+    moreSearch.addEventListener('input', applyFilter);
+    moreMask.addEventListener('click', function(){ setMore(false); });
+    document.addEventListener('keydown', function(ev){
+      if (ev.key === 'Escape' && moreOpen) setMore(false);
+    });
+    return cards;
+  }
+
+  function paintSel(sel){
+    Array.prototype.forEach.call(document.querySelectorAll('.spec'), function(c){
+      var on = c.getAttribute('data-id') === sel.id;
+      c.classList.toggle('on', on);
+      c.style.borderColor = on ? '#35566b' : '';
+      c.style.background = on ? 'rgba(53,86,107,.10)' : '';
+    });
+  }
+
+  var moreSearch = document.getElementById('moreSearch');
+  var moreEmpty = document.getElementById('moreEmpty');
+
+  function applyFilter(){
+    var q = (moreSearch.value || '').trim().toLowerCase();
+    var shown = 0;
+    catGroups.forEach(function(g){
+      var vis = 0;
+      Array.prototype.forEach.call(g.box.querySelectorAll('.spec'), function(c){
+        var hit = !q || c.querySelector('.n').textContent.toLowerCase().indexOf(q) >= 0 ||
+                  c.querySelector('.d').textContent.toLowerCase().indexOf(q) >= 0;
+        c.classList.toggle('hide', !hit);
+        if (hit) vis++;
+      });
+      var num = g.hd.querySelector('i');
+      var total = num ? num.getAttribute('data-total') : '';
+      if (num) num.textContent = (q ? vis + ' / ' + total : total) + ' 项';
+      g.hd.classList.toggle('hide', q && !vis);
+      if (q){
+        g.box.classList.toggle('hide', !vis);
+        g.hd.classList.add('open');
+        g.hd.setAttribute('aria-expanded', 'true');
+      }
+      shown += vis;
+    });
+    moreEmpty.classList.toggle('hide', !q || shown > 0);
+  }
+
+  function closeCats(except){
+    catGroups.forEach(function(g){
+      if (g.hd === except) return;
+      g.hd.classList.remove('open');
+      g.box.classList.add('hide');
+      g.hd.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function openCatOf(sel){
+    var gs = catGroups || [];
+    for (var i = 0; i < gs.length; i++){
+      var has = sel && gs[i].box.querySelector('.spec[data-id="' + sel.id + '"]');
+      if (has){
+        closeCats(gs[i].hd);
+        gs[i].hd.classList.add('open');
+        gs[i].box.classList.remove('hide');
+        gs[i].hd.setAttribute('aria-expanded', 'true');
+        return;
+      }
+    }
+  }
+
+  function setMore(on){
+    moreOpen = !!on;
+    if (on){
+      var sp = state.spec && state.spec.more ? state.spec : null;
+      moreSearch.value = '';
+      applyFilter();
+      if (sp) openCatOf(sp); else closeCats(null);
+      morePop.scrollTop = 0;
+    }
+    morePop.classList.toggle('hide', !moreOpen);
+    moreMask.classList.toggle('hide', !moreOpen);
+    moreBtn.classList.toggle('open', moreOpen);
+    moreBtn.setAttribute('aria-expanded', String(moreOpen));
+    syncMore();
+  }
+
+  function syncMore(){
+    if (!moreCur) return;
+    moreCur.textContent = state.spec && state.spec.more ? '当前 · ' + state.spec.n : '通行证 / 各国签证 / 婚证驾照 / 考试报名';
+  }
+
+  var BG = [
+    { v:'#ffffff', n:'白底' },
+    { v:'#438edb', n:'蓝底' },
+    { v:'#c9403a', n:'红底' },
+    { v:'#e9ebe8', n:'浅灰' }
+  ];
+  function buildSwatches(){
+    BG.forEach(function(bg, i){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sw' + (i === 0 ? ' on' : '');
+      b.style.background = bg.v;
+      b.title = bg.n;
+      b.setAttribute('aria-label', bg.n);
+      b.addEventListener('click', function(){
+        state.bgColor = bg.v;
+        Array.prototype.forEach.call(swBox.children, function(c){ c.classList.toggle('on', c === b); });
+        if (!state.bgOn) toggleBg(true);
+        draw();
+      });
+      swBox.appendChild(b);
+    });
+  }
+  function toggleBg(on){
+    state.bgOn = on;
+    bgSwitch.classList.toggle('on', on);
+    bgSwitch.style.background = on ? '#35566b' : '#d3ddd6';
+    bgSwitch.setAttribute('aria-pressed', String(on));
+    tolBox.classList.toggle('hide', !on);
+    draw();
+  }
+  bgSwitch.addEventListener('click', function(){ toggleBg(!state.bgOn); });
+  tol.addEventListener('input', function(){ tolVal.textContent = tol.value; draw(); });
+
+  /* ---------- 图片载入 ---------- */
+  function loadFile(file){
+    if (!file || !/^image\//.test(file.type)){ toast('请选择图片文件'); return; }
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function(){
+      state.img = img;
+      state.zoom = 1; state.ox = 0; state.oy = 0;
+      zoom.value = 100; zoomVal.textContent = '100%';
+      drop.classList.add('hide');
+      resetBtn.disabled = false;
+      document.getElementById('dlJpg').disabled = false;
+      document.getElementById('dlPng').disabled = false;
+      document.getElementById('dlSheet').disabled = false;
+      layoutCanvas();
+      toast('照片已载入，拖动调整取景');
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = function(){ toast('图片无法打开，请换一张'); URL.revokeObjectURL(url); };
+    img.src = url;
+  }
+
+  document.getElementById('pickBtn').addEventListener('click', function(){ fileInput.click(); });
+  document.getElementById('pickBtn2').addEventListener('click', function(){ fileInput.click(); });
+  fileInput.addEventListener('change', function(){
+    if (fileInput.files && fileInput.files[0]) loadFile(fileInput.files[0]);
+    fileInput.value = '';
+  });
+  ['dragenter','dragover'].forEach(function(t){
+    stage.addEventListener(t, function(ev){ ev.preventDefault(); });
+  });
+  stage.addEventListener('drop', function(ev){
+    ev.preventDefault();
+    var f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+    if (f) loadFile(f);
+  });
+  document.addEventListener('paste', function(ev){
+    var items = ev.clipboardData && ev.clipboardData.items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++){
+      if (items[i].type.indexOf('image') === 0){
+        loadFile(items[i].getAsFile());
+        break;
+      }
+    }
+  });
+
+  /* ---------- 导出按钮 ---------- */
+  document.getElementById('dlJpg').addEventListener('click', function(){
+    if (!state.img) return;
+    download(renderOutput(), baseName() + '_' + outSize().w + 'x' + outSize().h + '.jpg', 'image/jpeg', .92);
+    toast('已保存 JPG');
+  });
+  document.getElementById('dlPng').addEventListener('click', function(){
+    if (!state.img) return;
+    download(renderOutput(), baseName() + '_' + outSize().w + 'x' + outSize().h + '.png', 'image/png');
+    toast('已保存 PNG');
+  });
+  document.getElementById('dlSheet').addEventListener('click', function(){
+    if (!state.img) return;
+    var sh = makeSheet();
+    download(sh.canvas, '6寸相纸_' + state.spec.n + '_' + sh.count + '张.jpg', 'image/jpeg', .92);
+    toast('已生成 6 寸相纸（' + sh.count + ' 张）');
+  });
+
+  window.addEventListener('resize', function(){ layoutCanvas(); });
+  window.addEventListener('orientationchange', function(){ setTimeout(layoutCanvas, 200); });
+
+  buildSpecs();
+  buildSwatches();
+  syncSizeLabels();
+  layoutCanvas();
+  requestAnimationFrame(layoutCanvas);
+  window.addEventListener('load', function(){ layoutCanvas(); });
+})();
+</script>
+</body>
+</html>

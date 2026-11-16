@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中国历史朝代 · 起止年份 / 都城 / 君主</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a83a2c'/%3E%3Ctext x='32' y='45' font-size='28' font-family='serif' fill='%23fff' text-anchor='middle'%3E史%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --paper:#f5efe3;--paper-2:#efe6d5;--card:#fffdf8;--ink:#1d1c19;--muted:#6c665c;
+    --faint:#9a9186;--line:#e0d6c3;--seal:#a83a2c;--seal-soft:#f6e4dd;
+    --jade:#2f5d4f;--ochre:#8a5a2b;--slate:#3f5d7a;--plum:#6b5b8a;
+    --radius:12px;
+    --serif:"Songti SC","STSong","Noto Serif SC","Source Han Serif SC",serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    --mono:"SF Mono","JetBrains Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+
+  .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:11px;padding:10px 18px;
+    background:rgba(245,239,227,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .back{flex:0 0 auto;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--card);
+    display:flex;align-items:center;justify-content:center;text-decoration:none;}
+  .back svg{width:16px;height:16px;stroke:var(--ink);}
+  .brand h1{margin:0;font-family:var(--serif);font-size:19px;font-weight:700;letter-spacing:.02em;}
+  .brand h1 i{font-style:normal;font-weight:400;color:var(--faint);font-size:12.5px;font-family:var(--sans);letter-spacing:0;}
+  .brand p{margin:1px 0 0;font-size:12px;color:var(--muted);}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 18px 44px;}
+
+  /* 统计条 */
+  .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;}
+  @media (min-width:760px){.stats{grid-template-columns:repeat(4,1fr);}}
+  .stats div{background:var(--card);padding:12px 14px;}
+  .stats b{display:block;font-family:var(--mono);font-size:20px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;}
+  .stats span{font-size:11.5px;color:var(--muted);}
+
+  /* 检索 */
+  .searchbar{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:0 15px;height:44px;margin-bottom:10px;}
+  .searchbar:focus-within{border-color:var(--seal);box-shadow:0 0 0 3px rgba(168,58,44,.08);}
+  .searchbar svg{width:16px;height:16px;stroke:var(--faint);flex:0 0 auto;}
+  .searchbar input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-family:var(--sans);font-size:15px;color:var(--ink);}
+  .searchbar input::placeholder{color:var(--faint);}
+  .clear{border:0;background:transparent;color:var(--faint);font-size:12px;cursor:pointer;padding:4px;}
+
+  .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:14px;scrollbar-width:none;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chips button{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--muted);
+    font-family:var(--sans);font-size:12.5px;padding:6px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;}
+  .chips button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fbf7ef;}
+
+  /* 时间尺 */
+  .ruler-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px 8px;margin-bottom:16px;}
+  .ruler-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;gap:8px;}
+  .ruler-head h2{margin:0;font-family:var(--serif);font-size:14.5px;font-weight:700;white-space:nowrap;}
+  .ruler-head span{font-size:11.5px;color:var(--faint);}
+  .ruler-scroll{overflow-x:auto;padding-bottom:6px;}
+  .ruler-track{position:relative;min-width:1150px;}
+  .seg{position:absolute;height:16px;border-radius:3px;cursor:pointer;overflow:hidden;opacity:.92;transition:opacity .15s, transform .15s;}
+  .sl-out{position:absolute;font-family:var(--serif);font-size:10px;line-height:17px;font-weight:600;color:#5f594f;white-space:nowrap;pointer-events:none;}
+  .tickline{position:absolute;top:0;bottom:20px;width:1px;background:rgba(31,28,25,.06);}
+  .seg .sl{position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:10px;line-height:1;color:#f7f2e7;white-space:nowrap;letter-spacing:.2px;}
+  .seg:hover,.seg.on{opacity:1;transform:translateY(-1px);box-shadow:0 2px 0 rgba(29,28,25,.18);}
+  .seg-label{position:absolute;font-size:10.5px;color:var(--muted);white-space:nowrap;transform:translateX(-50%);}
+  .ruler-axis{position:absolute;bottom:0;left:0;right:0;border-top:1px solid var(--line);}
+  .tick{position:absolute;bottom:0;font-family:var(--mono);font-size:10px;color:var(--faint);transform:translateX(-50%);}
+  .tick::before{content:"";position:absolute;left:50%;bottom:14px;width:1px;height:4px;background:var(--line);}
+  .swipe-hint{display:inline;}
+  @media (min-width:760px){.swipe-hint{display:none;}}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted);}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
+
+  /* 列表 */
+  .list-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;gap:8px;}
+  .list-head h2{margin:0;font-family:var(--serif);font-size:15px;font-weight:700;}
+  .list-head span{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums;}
+
+  .dyn{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:9px;overflow:hidden;}
+  .dyn.open{border-color:#d3c3a8;box-shadow:0 1px 0 rgba(29,28,25,.04);}
+  .dyn-btn{display:block;width:100%;text-align:left;border:0;background:transparent;padding:13px 15px;cursor:pointer;font-family:var(--sans);}
+  .dyn-top{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;}
+  .dyn-name{font-family:var(--serif);font-size:17px;font-weight:700;letter-spacing:.01em;}
+  .dyn-years{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .badge{font-size:10.5px;padding:2px 7px;border-radius:5px;background:var(--paper-2);color:var(--muted);white-space:nowrap;}
+  .badge.seal{background:var(--seal-soft);color:var(--seal);}
+  .dyn-meta{margin-top:5px;display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);}
+  .dyn-meta b{font-weight:500;color:var(--ink);}
+  .dyn-desc{margin-top:6px;font-size:12.5px;line-height:1.65;color:#4a463e;}
+
+  .dyn-body{display:none;padding:0 15px 14px;}
+  .dyn.open .dyn-body{display:block;}
+  .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin:9px 0 10px;padding-top:10px;border-top:1px dashed var(--line);}
+  @media (min-width:760px){.kv{grid-template-columns:repeat(3,minmax(0,1fr));}}
+  .kv div{font-size:12.5px;}
+  .kv span{display:block;font-size:11px;color:var(--faint);margin-bottom:1px;}
+  .states-head{display:flex;align-items:baseline;gap:8px;margin:13px 0 7px;padding-top:11px;border-top:1px solid rgba(31,28,25,.09);font-size:12px;color:#6d675d;}
+  .states-head b{font-family:var(--serif);font-size:13.5px;font-weight:600;color:#1f1c19;}
+  .state-grid{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr;gap:0;}
+  @media (min-width:760px){.state-grid{grid-template-columns:1fr 1fr;gap:0 26px;}}
+  @media (min-width:1180px){.state-grid{grid-template-columns:repeat(2,1fr);}}
+  .state-grid li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;padding:6px 0;border-bottom:1px dashed rgba(31,28,25,.11);}
+  .state-grid li:last-child,.state-grid li:nth-last-child(2){border-bottom:none;}
+  .sn{font-family:var(--serif);font-size:13px;color:#1f1c19;white-space:nowrap;}
+  .sy{font-family:var(--mono);font-size:11.5px;color:#5f594f;font-variant-numeric:tabular-nums;white-space:nowrap;align-self:center;}
+  .sx{grid-column:1 / -1;font-size:11.5px;color:#8a8578;}
+  .sx em{font-style:normal;color:#a83a2c;}
+  .rulers{margin-top:13px;padding-top:11px;border-top:1px solid rgba(31,28,25,.09);}
+  .rulers-head{display:flex;align-items:baseline;gap:8px;margin-bottom:7px;font-size:12px;color:#6d675d;letter-spacing:.02em;}
+  .rulers-head b{font-family:var(--serif);font-size:13.5px;font-weight:600;color:#1f1c19;}
+  .ruler-tl{margin:0;padding:0;list-style:none;}
+  .ruler-tl li{display:grid;grid-template-columns:112px 16px minmax(0,1fr);align-items:start;min-width:0;}
+  .rt-year{grid-column:1;font-family:var(--mono);font-size:10.5px;color:#5f594f;font-variant-numeric:tabular-nums;text-align:right;padding:3px 8px 0 0;white-space:normal;line-height:1.5;letter-spacing:0;}
+  .rt-node{grid-column:2;position:relative;align-self:stretch;min-height:26px;}
+  .rt-node:before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(31,28,25,.16);transform:translateX(-50%);}
+  .rt-node:after{content:'';position:absolute;left:50%;top:9px;width:7px;height:7px;border-radius:50%;background:var(--seal);transform:translate(-50%,-50%);}
+  .ruler-tl li:first-child .rt-node:before{top:9px;}
+  .ruler-tl li:last-child .rt-node:before{bottom:auto;height:9px;}
+  .rt-body{grid-column:3;padding:0 0 13px 6px;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;}
+  .rt-name{font-family:var(--serif);font-size:13px;color:#1f1c19;line-height:1.35;}
+  .rt-era{font-style:normal;font-size:11.5px;color:var(--seal);letter-spacing:.01em;}
+  .rt-name{cursor:pointer;border-bottom:1px dotted rgba(168,58,44,.35);}
+  .rt-name:hover{color:var(--seal);border-bottom-color:var(--seal);}
+  .emp-mask{position:fixed;inset:0;background:rgba(31,28,25,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:70;}
+  .emp-mask[hidden]{display:none;}
+  .emp-card{box-sizing:border-box;background:var(--paper);width:100%;max-width:540px;max-height:84vh;overflow:auto;position:relative;padding:22px 24px 20px;border:1px solid rgba(31,28,25,.16);border-top:3px solid var(--seal);box-shadow:0 18px 40px rgba(31,28,25,.18);}
+  .emp-close{position:absolute;top:8px;right:10px;width:30px;height:30px;border:0;background:none;font-size:19px;line-height:1;color:#8a8578;cursor:pointer;}
+  .emp-close:hover{color:var(--seal);}
+  .emp-title{font-family:var(--serif);font-size:19px;font-weight:600;color:#1f1c19;margin:0 0 3px;letter-spacing:.5px;}
+  .emp-sub{font-size:12px;color:#6d675d;}
+  .emp-kv{display:grid;grid-template-columns:1fr 1fr;align-content:start;gap:9px 20px;margin:13px 0 12px;padding:11px 0;border-top:1px dashed rgba(31,28,25,.18);border-bottom:1px dashed rgba(31,28,25,.18);font-size:12.5px;color:#1f1c19;}
+  .emp-kv label{display:block;font-size:11px;color:#8a8578;margin-bottom:2px;}
+  .emp-kv .wide{grid-column:1/-1;}
+  .emp-kv .kid-grid{display:block;font-size:12.5px;line-height:1.65;}
+  .emp-kv .kid-row{display:flex;align-items:baseline;flex-wrap:wrap;}
+  .emp-kv .kid-row span{min-width:0;}
+  .emp-kv .kid-sum{margin-top:5px;font-size:11.5px;color:#6d675d;}
+  .emp-kv .kid-grid .sep{font-style:normal;font-size:10px;color:#9a948a;margin:0 3px;}
+  .emp-text{font-size:13px;line-height:1.9;color:#3d382f;}
+  @media (max-width:520px){
+    .emp-kv .kid-grid{font-size:12px;} .emp-kv{grid-template-columns:1fr;gap:8px;} .emp-card{padding:18px 16px 16px;} .emp-title{font-size:17px;} }
+  .emp-foot{margin-top:12px;font-size:11.5px;color:#8a8578;}
+  .rt-queen{font-size:11px;color:#7c7263;padding-left:7px;border-left:1px solid rgba(168,58,44,.35);}
+  .rt-note{font-size:11.5px;color:#8a8578;}
+  @media (max-width:520px){
+    .ruler-tl li{grid-template-columns:96px 14px minmax(0,1fr);}
+    .rt-year{font-size:9.5px;padding-right:5px;}
+    .rt-body{padding-bottom:11px;}
+  }
+  .refs{margin-top:13px;padding-top:11px;border-top:1px solid rgba(31,28,25,.09);display:grid;grid-template-columns:1fr;gap:12px;}
+  .ref-head{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;font-size:12px;color:#6d675d;}
+  .ref-head b{font-family:var(--serif);font-size:13.5px;font-weight:600;color:#1f1c19;}
+  .ref-list{margin:0;padding:0;list-style:none;}
+  .ref-list li{border-left:2px solid rgba(168,58,44,.42);padding:3px 0 3px 10px;font-size:12px;line-height:1.6;color:#463f35;}
+  .ref-list .rk{font-family:var(--serif);font-weight:600;color:#1f1c19;}
+  @media (min-width:900px){ .refs{grid-template-columns:1fr 1fr;gap:0 26px;} }
+  .grp{margin-top:13px;padding-top:11px;border-top:1px solid rgba(31,28,25,.09);}
+  .grp-head{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;font-size:12px;color:#6d675d;}
+  .grp-head b{font-family:var(--serif);font-size:13.5px;font-weight:600;color:#1f1c19;}
+  .grp-row{display:grid;grid-template-columns:1fr auto;gap:0 10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px dashed rgba(31,28,25,.11);padding:7px 0;cursor:pointer;font:inherit;color:inherit;}
+  .grp-row:last-child{border-bottom:none;}
+  .grp-row:hover .gn{color:var(--seal);}
+  .gn{font-family:var(--serif);font-size:13px;color:#1f1c19;transition:color .15s;}
+  .gy{font-family:var(--mono);font-size:11.5px;color:#5f594f;white-space:nowrap;}
+  .gm{font-size:11.5px;color:#8a8578;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sub{border-left:2px solid var(--seal);padding-left:10px;margin:10px 0 0;}
+  .sub-btn{display:grid;grid-template-columns:auto 1fr auto;align-items:baseline;gap:0 8px;width:100%;background:none;border:0;padding:6px 0;cursor:pointer;font:inherit;color:inherit;text-align:left;}
+  .sub-name{font-family:var(--serif);font-size:13px;color:#1f1c19;}
+  .sub-btn[aria-expanded="true"] .sub-name{color:var(--seal);}
+  .sub-body{padding-bottom:8px;}
+  .sub-kv{display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;font-size:11.5px;color:#5f594f;margin-bottom:8px;}
+  .sub-kv span{color:#8a8578;margin-right:4px;}
+  @media (min-width:760px){.sub-kv{grid-template-columns:1fr 1fr 1fr;}}
+  .rnote i{font-style:normal;color:#b9b3a6;}
+
+@media (max-width:600px){  }
+  .events{margin:0;padding:0;list-style:none;}
+  .events li{position:relative;padding-left:13px;font-size:12.5px;line-height:1.75;color:#3f3b34;}
+  .events li::before{content:"";position:absolute;left:0;top:.72em;width:5px;height:5px;border-radius:50%;background:var(--seal);opacity:.55;}
+
+  .empty{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:34px 18px;text-align:center;color:var(--muted);font-size:13px;}
+  .empty p{margin:0 0 8px;}
+  .empty button{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 14px;font-size:12.5px;color:var(--seal);cursor:pointer;font-family:var(--sans);}
+
+  .foot{margin-top:22px;font-size:11.5px;line-height:1.8;color:var(--faint);}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,10px);background:var(--ink);color:#fbf7ef;
+    font-size:12.5px;padding:8px 14px;border-radius:8px;opacity:0;pointer-events:none;transition:.2s;z-index:60;white-space:nowrap;}
+  .toast.on{opacity:1;transform:translate(-50%,0);}
+
+  @media (max-width:600px){
+    .topbar{padding:8px 12px;}
+    .brand h1 i{display:none;}
+    .wrap{padding:13px 12px 34px;}
+    .dyn-name{font-size:16px;}
+  }
+</style>
+</head>
+<body>
+<div class="emp-mask" id="empMask" hidden>
+  <div class="emp-card" role="dialog" aria-modal="true" aria-labelledby="empTitle">
+    <button class="emp-close" id="empClose" type="button" aria-label="关闭">×</button>
+    <div id="empBody"></div>
+  </div>
+</div>
+
+
+<header class="topbar">
+  <a class="back" href="../首页/首页.html" aria-label="返回首页" title="返回首页">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <div class="brand">
+    <h1>中国历史朝代 <i>· Chinese Dynasties</i></h1>
+    <p>从三皇五帝到清 · 起止年份 / 都城 / 帝王世系</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="stats">
+    <div><b id="statCount">—</b><span>收录朝代与政权</span></div>
+    <div><b id="statSpan">—</b><span>时间跨度（年）</span></div>
+    <div><b id="statLong">—</b><span>存续最久的政权</span></div>
+    <div><b id="statSplit">—</b><span>并立 / 分裂时期</span></div>
+  </div>
+
+  <div class="searchbar">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+    <input id="q" type="search" placeholder="搜索朝代、都城、帝王、事件，如「唐」「长安」「李世民」" autocomplete="off">
+    <button class="clear" type="button" id="qClear" hidden>清空</button>
+  </div>
+
+  <div class="chips" id="chips" role="group" aria-label="时期筛选"></div>
+
+  <section class="ruler-card">
+    <div class="ruler-head">
+      <h2>朝代时间尺</h2>
+      <span>宽度与年数成正比 · 并立者分层 · 选时期可放大<span class="swipe-hint"> · 左右滑动</span></span>
+    </div>
+    <div class="ruler-scroll">
+      <div class="ruler-track" id="track"></div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <div class="list-head">
+    <h2>朝代一览</h2>
+    <span id="listCount">—</span>
+  </div>
+  <div id="list"></div>
+  <div id="empty" class="empty" hidden>
+    <p>没有匹配的朝代。</p>
+    <button type="button" id="resetAll">查看全部朝代</button>
+  </div>
+
+  <p class="foot">年代依据通行史学分期整理，三皇五帝与夏、商及周初年代为约数或传说，不同研究结论存在差异；分裂时期的起止以主要政权为准，仅作查询参考。</p>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* 朝代数据：start/end 为公元纪年，负数表示公元前 */
+var DYNASTIES = [
+{ name:'三皇五帝', era:'先秦', start:-2852, end:-2070, cap:'迁徙不定', founder:'黄帝（传说）', last:'舜', grp:'三皇五帝', grpLabel:'上古帝王',
+  nat:'华夏族', tag:'传说时代', desc:'燧人、伏羲、神农三皇与黄帝、颛顼、帝喾、尧、舜五帝的传说时代，尧舜禅让，为后世所追述的上古谱系，年代皆为古籍推演。',
+  events:['伏羲画八卦、结网罟，教民渔猎','神农尝百草、教耕稼','黄帝败炎帝、诛蚩尤，部落联盟成形','尧禅位于舜，舜禅位于禹']},
+{ name:'三皇五帝·燧人', child:true, par:'三皇五帝', person:true, era:'先秦', start:-2852, end:-2790, cap:'燧明国（传说）', founder:'燧人氏', last:'—',
+  nat:'华夏族', tag:'传说时代', desc:'传说三皇之首，钻木取火、教民熟食，使先民脱于茹毛饮血，被奉为火祖。',
+  events:['钻木取火，以化腥臊','教民熟食，结绳记事']},
+{ name:'三皇五帝·伏羲', child:true, par:'三皇五帝', person:true, era:'先秦', start:-2790, end:-2737, cap:'陈（宛丘）', founder:'伏羲氏', last:'—',
+  nat:'华夏族', tag:'传说时代', desc:'传说三皇之一，画八卦、结网罟，教民渔猎婚娶，被奉为华夏人文初祖。',
+  events:['始画八卦，以代结绳之政','教民结网捕鱼、驯养牲畜']},
+{ name:'三皇五帝·神农（炎帝）', child:true, par:'三皇五帝', person:true, era:'先秦', start:-2737, end:-2697, cap:'曲阜（传说）', founder:'神农氏', last:'—',
+  nat:'华夏族', tag:'传说时代', desc:'传说始教耕稼、尝百草而创医药，日中为市，被后世奉为农神、药神。',
+  events:['制耒耜，教民耕种','尝百草，始有医药']},
+{ name:'三皇五帝·黄帝', child:true, par:'三皇五帝', person:true, era:'先秦', start:-2697, end:-2597, cap:'有熊（今新郑）', founder:'轩辕氏', last:'—',
+  nat:'华夏族', tag:'传说时代', desc:'败炎帝于阪泉、诛蚩尤于涿鹿，合部落为联盟，后世尊为华夏共祖。',
+  events:['阪泉之战，与炎帝部落合流','涿鹿之战，擒杀蚩尤']},
+{ name:'三皇五帝·颛顼', child:true, par:'三皇五帝', person:true, era:'先秦', start:-2597, end:-2514, cap:'帝丘（今濮阳）', founder:'高阳氏', last:'—',
+  nat:'华夏族', tag:'传说时代', desc:'黄帝之孙，五帝之一，传说命重、黎分管天事民事，绝地天通。',
+  events:['绝地天通，整顿祭祀','定婚姻、制历法']},
+{ name:'三皇五帝·帝喾', child:true, par:'三皇五帝', person:true, era:'先秦', start:-2514, end:-2437, cap:'亳（今商丘）', founder:'高辛氏', last:'—',
+  nat:'华夏族', tag:'传说时代', desc:'五帝之一，传说其四子分掌四时，商、周之祖皆溯其世系。',
+  events:['观测日月，定四时节令','后世商、周皆奉为远祖']},
+{ name:'三皇五帝·尧', child:true, par:'三皇五帝', person:true, era:'先秦', start:-2377, end:-2259, cap:'平阳（今临汾）', founder:'陶唐氏', last:'—',
+  nat:'华夏族', tag:'传说时代', desc:'五帝之一，设官治民、命羲和观天授时，晚年禅位于舜。',
+  events:['命羲和观测天象，定历授时','年老时禅位于舜']},
+{ name:'三皇五帝·舜', child:true, par:'三皇五帝', person:true, era:'先秦', start:-2259, end:-2208, cap:'蒲阪（今永济）', founder:'有虞氏', last:'—',
+  nat:'华夏族', tag:'传说时代', desc:'受尧禅位，命禹治水、皋陶掌刑，巡狩四方，晚年禅位于禹。',
+  events:['命禹治水，平定水土','南巡狩，死于苍梧']},
+{ name:'夏', era:'先秦', start:-2070, end:-1600, cap:'阳城、斟鄩等', founder:'禹', last:'桀',
+  nat:'华夏族', tag:'部落联盟', desc:'中国史籍记载的第一个王朝，由禹之子启确立世袭制，「家天下」由此开始。',
+  events:['禹之子启继位，禅让制转为世袭制','末年桀荒淫暴虐，诸侯叛离','约前 1600 年商汤灭夏']},
+{ name:'商', era:'先秦', start:-1600, end:-1046, cap:'亳、殷（今安阳）', founder:'商汤', last:'帝辛（纣王）',
+  nat:'华夏族', tag:'青铜文明', desc:'甲骨文与青铜器高度发达，屡次迁都，至盘庚迁殷后稳定，晚期又称殷。',
+  events:['商汤灭夏，建立商朝','盘庚迁殷，国势复振','武丁时期国力鼎盛','牧野之战后帝辛自焚，商亡']},
+{ name:'西周', era:'先秦', start:-1046, end:-771, cap:'镐京（今西安）', founder:'周武王', last:'周幽王',
+  nat:'华夏族', tag:'分封制', desc:'实行分封制与宗法制，制礼作乐，形成「普天之下莫非王土」的封建秩序。',
+  events:['武王伐纣，牧野之战灭商','周公制礼作乐、营建洛邑','国人暴动，厉王出奔','犬戎攻破镐京，幽王被杀，西周结束']},
+{ name:'东周·春秋', era:'先秦', start:-770, end:-476, cap:'洛邑（今洛阳）', founder:'周平王', last:'周敬王',
+  nat:'华夏族', tag:'诸侯争霸', desc:'周王室东迁后权势衰落，齐桓、晋文等霸主「挟天子以令诸侯」，孔子、老子等思想家辈出。',
+  events:['平王东迁洛邑','齐桓公、晋文公相继称霸','孔子讲学，私学兴起']},
+{ name:'东周·战国', era:'先秦', start:-475, end:-221, cap:'洛邑（今洛阳）', founder:'周元王', last:'周赧王',
+  nat:'华夏族', tag:'七雄并立', desc:'齐楚燕韩赵魏秦七雄争战，变法图强，百家争鸣，最终由秦完成统一。',
+  events:['三家分晋、田氏代齐','商鞅变法，秦迅速崛起','长平之战，赵元气大伤','前 256 年周王室灭亡，前 221 年秦统一']},
+{ name:'秦', era:'秦汉', start:-221, end:-207, cap:'咸阳', founder:'秦始皇', last:'子婴',
+  nat:'华夏族', tag:'大一统', unify:true, desc:'中国第一个中央集权的统一王朝，废分封行郡县，统一文字、度量衡与货币。',
+  events:['前 221 年灭六国，称皇帝','书同文、车同轨、统一度量衡','修长城、筑驰道、开灵渠','严刑峻法与徭役过重，陈胜吴广起义','前 207 年子婴降刘邦']},
+{ name:'西汉', era:'秦汉', start:-202, end:8, cap:'长安', founder:'刘邦', last:'刘婴',
+  nat:'汉族', tag:'大一统', unify:true, desc:'休养生息后国力渐盛，汉武帝北击匈奴、通西域、独尊儒术，奠定两汉制度格局。',
+  events:['楚汉相争，刘邦称帝','文景之治','汉武帝盐铁官营、丝绸之路开通','王莽代汉，西汉结束']},
+{ name:'新', era:'秦汉', start:9, end:23, cap:'长安', founder:'王莽', last:'王莽',
+  nat:'汉族', tag:'短命王朝', desc:'王莽代汉建立，推行托古改制，币制与土地政策混乱，引发绿林、赤眉起义。',
+  events:['王莽篡汉称帝，改国号「新」','推行王田制与频繁币改','绿林军攻入长安，王莽被杀']},
+{ name:'东汉', era:'秦汉', start:25, end:220, cap:'洛阳', founder:'刘秀', last:'刘协（汉献帝）',
+  nat:'汉族', tag:'大一统', unify:true, desc:'光武中兴后重现盛世，中后期外戚宦官交替专权，黄巾起义后陷入军阀割据。',
+  events:['光武中兴','明章之治、班超经营西域','党锢之祸与外戚宦官之争','黄巾起义','曹丕代汉，东汉结束']},
+{ name:'三国', era:'三国两晋', start:220, end:280, cap:'洛阳、成都、建业', founder:'曹丕、刘备、孙权', last:'曹奂、刘禅、孙皓',
+  nat:'汉族', tag:'并立', split:true, grp:'三国', desc:'魏、蜀、吴三国鼎立：曹魏据中原，蜀汉据益州，东吴据江东，后期大权归司马氏。',
+  events:['曹丕代汉称帝，魏国建立','刘备称帝于成都，孙权称帝于建业','司马氏掌魏政，遣军灭蜀','司马炎代魏建晋，晋灭吴']},
+{ name:'三国·曹魏', child:true, era:'三国两晋', start:220, end:266, cap:'洛阳', founder:'曹丕', last:'曹奂',
+  nat:'汉族', tag:'三国', desc:'据有中原，行九品中正制，屯田兴修水利，后期被司马氏掌控。',
+  events:['曹丕代汉称帝','九品中正制确立','司马懿发动高平陵之变','司马炎代魏建晋']},
+{ name:'三国·蜀汉', child:true, era:'三国两晋', start:221, end:263, cap:'成都', founder:'刘备', last:'刘禅',
+  nat:'汉族', tag:'三国', desc:'据益州，以汉室正统自居，诸葛亮治蜀、六出祁山，国力最弱而治理有序。',
+  events:['刘备成都称帝','诸葛亮南征、北伐','邓艾偷渡阴平，刘禅出降']},
+{ name:'三国·东吴', child:true, era:'三国两晋', start:229, end:280, cap:'建业（今南京）', founder:'孙权', last:'孙皓',
+  nat:'汉族', tag:'三国', desc:'据江东，水师强盛，开发江南，是三国中存续最久的政权。',
+  events:['孙权称帝','赤壁之战奠定三分格局','后期孙皓暴虐，王濬楼船破吴']},
+{ name:'西晋', era:'三国两晋', start:266, end:316, cap:'洛阳', founder:'司马炎', last:'司马邺（晋愍帝）',
+  nat:'汉族', tag:'短暂统一', unify:true, desc:'灭吴结束三国分裂，但八王之乱与永嘉之乱迅速耗尽国力。',
+  events:['司马炎代魏，后灭吴统一','占田制与门阀势力膨胀','八王之乱','永嘉之乱，洛阳、长安相继陷落']},
+{ name:'东晋', era:'三国两晋', start:317, end:420, cap:'建康（今南京）', founder:'司马睿', last:'司马德文',
+  nat:'汉族', tag:'偏安江南', desc:'衣冠南渡后建立，与北方十六国对峙，淝水之战以少胜多，江南文化大兴。',
+  events:['永嘉南渡，定都建康','淝水之战击败前秦','王羲之、顾恺之等文化艺术繁荣','刘裕代晋建宋']},
+{ name:'十六国', era:'三国两晋', start:304, end:439, cap:'各政权不一', founder:'刘渊、石勒等', last:'—',
+  nat:'匈奴、鲜卑、羯、氐、羌等', tag:'并立', split:true, grp:'十六国', desc:'北方先后出现十六个主要政权，另有成汉、冉魏等并立，更迭频繁，439 年北魏统一北方而终。',
+  events:['永嘉之乱后北方分裂','前秦苻坚一度统一北方','淝水之战后再度分裂','北魏统一北方，十六国结束']},
+{ name:'十六国·成汉', child:true, era:'三国两晋', start:304, end:347, cap:'成都', founder:'李雄', last:'李势',
+  nat:'巴氐（賨人）', tag:'十六国', split:true, desc:'賨人李雄据蜀称帝，是十六国中最早建国的政权之一，后期内乱，为东晋桓温所灭。',
+  events:['李雄据成都称成都王，后称帝','李寿改国号为汉','桓温伐蜀，李势出降，成汉亡']},
+{ name:'十六国·前赵（汉赵）', child:true, era:'三国两晋', start:304, end:329, cap:'平阳 → 长安', founder:'刘渊', last:'刘曜',
+  nat:'匈奴', tag:'十六国', split:true, desc:'匈奴刘渊以复汉为号召起兵，都平阳，后刘曜改国号为赵，与后赵争雄而亡。',
+  events:['刘渊称汉王，建汉国','刘聪攻破洛阳、长安，灭西晋','刘曜改国号赵','洛阳之战败于石勒，前赵亡']},
+{ name:'十六国·后赵', child:true, era:'三国两晋', start:319, end:351, cap:'襄国 → 邺', founder:'石勒', last:'石祗',
+  nat:'羯', tag:'十六国', split:true, desc:'羯族石勒由奴隶起家，统一北方大部，石虎继位后暴政，冉闵之乱后国灭。',
+  events:['石勒称赵王，都襄国','石虎迁都邺，穷兵黩武','冉闵屠杀羯人，后赵瓦解']},
+{ name:'十六国·前凉', child:true, era:'三国两晋', start:301, end:376, cap:'姑臧', founder:'张轨', last:'张天锡',
+  nat:'汉族', tag:'十六国', split:true, desc:'张轨出任凉州刺史，保据河西，中原战乱中保存汉文化，后被前秦所灭。',
+  events:['张轨据凉州，保境安民','张骏、张重华时国力鼎盛','前秦苻坚攻凉，张天锡出降']},
+{ name:'十六国·前燕', child:true, era:'三国两晋', start:337, end:370, cap:'龙城 → 邺', founder:'慕容皝', last:'慕容暐',
+  nat:'鲜卑', tag:'十六国', split:true, desc:'慕容皝称燕王，入中原灭冉魏，与前秦对峙，后被前秦所灭。',
+  events:['慕容皝称燕王，都龙城','慕容儁入中原，灭冉魏','枋头之战后国势转衰','前秦灭前燕']},
+{ name:'十六国·后燕', child:true, era:'三国两晋', start:384, end:407, cap:'中山', founder:'慕容垂', last:'慕容熙',
+  nat:'鲜卑', tag:'十六国', split:true, desc:'慕容垂复国称燕，参合陂之战败于北魏，此后内乱，被北燕取代。',
+  events:['慕容垂复国，都中山','参合陂之战大败于北魏','慕容熙被杀，后燕亡']},
+{ name:'十六国·南燕', child:true, era:'三国两晋', start:400, end:410, cap:'广固', founder:'慕容德', last:'慕容超',
+  nat:'鲜卑', tag:'十六国', split:true, desc:'慕容德据青州称帝，都广固，刘裕北伐时灭亡。',
+  events:['慕容德据滑台、青州称帝','慕容超继位，政事混乱','刘裕北伐，广固城破，南燕亡']},
+{ name:'十六国·北燕', child:true, era:'三国两晋', start:407, end:436, cap:'龙城', founder:'高云', last:'冯弘',
+  nat:'鲜卑化汉族', tag:'十六国', split:true, desc:'高云、冯跋相继据辽西称燕，偏安东北，后被北魏所灭。',
+  events:['高云被拥立为天王','冯跋继位，保境安民','北魏攻龙城，冯弘奔高句丽']},
+{ name:'十六国·前秦', child:true, era:'三国两晋', start:351, end:394, cap:'长安', founder:'苻健', last:'苻崇',
+  nat:'氐', tag:'十六国', split:true, desc:'氐族苻氏据关中，苻坚时一度统一北方，淝水之战後崩溃。',
+  events:['苻健称帝，都长安','苻坚统一北方，重用王猛','淝水之战大败','苻登战死，前秦亡']},
+{ name:'十六国·后秦', child:true, era:'三国两晋', start:384, end:417, cap:'长安', founder:'姚苌', last:'姚泓',
+  nat:'羌', tag:'十六国', split:true, desc:'羌族姚苌据关中建秦，姚兴时崇佛兴学，后为刘裕所灭。',
+  events:['姚苌缢杀苻坚，称帝于长安','姚兴迎鸠摩罗什译经','刘裕北伐，姚泓出降']},
+{ name:'十六国·西秦', child:true, era:'三国两晋', start:385, end:431, cap:'苑川 → 金城', founder:'乞伏国仁', last:'乞伏暮末',
+  nat:'鲜卑', tag:'十六国', split:true, desc:'乞伏鲜卑据陇西建秦，屡与后秦、北凉争战，终为胡夏所灭。',
+  events:['乞伏国仁据苑川称王','乞伏乾归迁都金城','胡夏攻破，西秦亡']},
+{ name:'十六国·后凉', child:true, era:'三国两晋', start:386, end:403, cap:'姑臧', founder:'吕光', last:'吕隆',
+  nat:'氐', tag:'十六国', split:true, desc:'吕光西征西域后据凉州称王，诸子内争，后秦来攻而降。',
+  events:['吕光据姑臧称凉王','诸子相争，国势衰微','吕隆降后秦，后凉亡']},
+{ name:'十六国·南凉', child:true, era:'三国两晋', start:397, end:414, cap:'乐都', founder:'秃发乌孤', last:'秃发傉檀',
+  nat:'鲜卑', tag:'十六国', split:true, desc:'秃发鲜卑据河湟建凉，与北凉、西秦反复争战，终为西秦所灭。',
+  events:['秃发乌孤据乐都称王','利鹿孤、傉檀时与北凉争河西','西秦袭破乐都，南凉亡']},
+{ name:'十六国·北凉', child:true, era:'三国两晋', start:397, end:439, cap:'张掖 → 姑臧', founder:'沮渠蒙逊', last:'沮渠牧犍',
+  nat:'匈奴（卢水胡）', tag:'十六国', split:true, desc:'卢水胡沮渠氏据河西，灭西凉统一走廊，后为北魏所灭。',
+  events:['沮渠蒙逊起兵，后据张掖','灭西凉，统一河西','北魏攻姑臧，牧犍出降']},
+{ name:'十六国·西凉', child:true, era:'三国两晋', start:400, end:421, cap:'敦煌 → 酒泉', founder:'李暠', last:'李恂',
+  nat:'汉族', tag:'十六国', split:true, desc:'李暠据敦煌建凉，奉晋正朔，保存中原制度文化，后为北凉所灭。',
+  events:['李暠据敦煌称凉公','迁都酒泉，与北凉争战','北凉破酒泉，李恂自尽']},
+{ name:'十六国·胡夏', child:true, era:'三国两晋', start:407, end:431, cap:'统万城', founder:'赫连勃勃', last:'赫连定',
+  nat:'匈奴', tag:'十六国', split:true, desc:'赫连勃勃建大夏，筑统万城，以骑兵扰关中，后为北魏所灭。',
+  events:['赫连勃勃称天王，建大夏','筑统万城，攻取长安','北魏攻统万，赫连定被擒']},
+
+{ name:'南朝·宋', era:'南北朝', start:420, end:479, cap:'建康', founder:'刘裕', last:'刘准',
+  nat:'汉族', tag:'南朝', split:true, desc:'南朝首个政权，疆域最广，元嘉之治时期国力较强。',
+  events:['刘裕代晋称帝','元嘉之治','北魏南侵，元嘉北伐失败']},
+{ name:'南朝·齐', era:'南北朝', start:479, end:502, cap:'建康', founder:'萧道成', last:'萧宝融',
+  nat:'汉族', tag:'南朝', split:true, desc:'存续仅 23 年，宗室内乱频繁，但永明年间文学与佛学兴盛。',
+  events:['萧道成代宋建齐','永明体诗歌兴起','宗室相残，萧衍代齐']},
+{ name:'南朝·梁', era:'南北朝', start:502, end:557, cap:'建康', founder:'萧衍（梁武帝）', last:'萧方智',
+  nat:'汉族', tag:'南朝', split:true, desc:'梁武帝在位近五十年，佛教极盛；侯景之乱使江南残破。',
+  events:['梁武帝崇佛，四次舍身同泰寺','侯景之乱，建康残破','陈霸先平乱后代梁']},
+{ name:'南朝·陈', era:'南北朝', start:557, end:589, cap:'建康', founder:'陈霸先', last:'陈叔宝（陈后主）',
+  nat:'汉族', tag:'南朝', split:true, desc:'南朝最后一个政权，疆域最小，陈后主时期以《玉树后庭花》闻名。',
+  events:['陈霸先建陈','隋军渡江，建康陷落，陈亡']},
+{ name:'北魏', era:'南北朝', start:386, end:534, cap:'平城 → 洛阳', founder:'拓跋珪', last:'元修',
+  nat:'鲜卑族', tag:'北朝', split:true, desc:'鲜卑拓跋氏建立，统一北方，孝文帝汉化改革深刻改变北方社会。',
+  events:['拓跋珪称帝，国号魏','太武帝统一北方','孝文帝迁都洛阳、推行汉化','六镇之乱后分裂为东西魏']},
+{ name:'东魏', era:'南北朝', start:534, end:550, cap:'邺', founder:'元善见', last:'元善见',
+  nat:'鲜卑族', tag:'北朝', split:true, desc:'由高欢拥立，政权实由高氏掌控，后被北齐取代。',
+  events:['高欢拥立元善见迁都邺','高洋代魏建齐']},
+{ name:'西魏', era:'南北朝', start:535, end:557, cap:'长安', founder:'元宝炬', last:'元廓',
+  nat:'鲜卑族', tag:'北朝', split:true, desc:'由宇文泰掌控，创府兵制，为北周统一北方奠定基础。',
+  events:['宇文泰改革军制，创府兵','宇文觉代魏建周']},
+{ name:'北齐', era:'南北朝', start:550, end:577, cap:'邺', founder:'高洋', last:'高恒',
+  nat:'鲜卑化汉族', tag:'北朝', split:true, desc:'国力一度强于北周，但皇室荒暴、政治腐败，终被北周所灭。',
+  events:['高洋称帝','北周武帝攻灭北齐']},
+{ name:'北周', era:'南北朝', start:557, end:581, cap:'长安', founder:'宇文觉', last:'宇文阐',
+  nat:'鲜卑族', tag:'北朝', split:true, desc:'武帝改革后国力强盛，灭北齐统一北方，后被杨坚代周。',
+  events:['宇文觉建周','周武帝灭北齐，统一北方','杨坚代周建隋']},
+{ name:'隋', era:'隋唐五代', start:581, end:618, cap:'大兴（长安）', founder:'杨坚（隋文帝）', last:'杨侑',
+  nat:'汉族', tag:'大一统', unify:true, desc:'结束近三百年分裂，创三省六部与科举制，开凿大运河；炀帝滥用民力致亡。',
+  events:['文帝统一南北，开皇之治','创科举、定三省六部','开通大运河','三征高句丽，民变四起','江都之变，隋亡']},
+{ name:'唐', era:'隋唐五代', start:618, end:907, cap:'长安', founder:'李渊', last:'李柷（唐哀帝）',
+  nat:'汉族', tag:'盛世', unify:true, desc:'贞观之治、开元盛世，诗歌、书法、佛教与丝路贸易极盛，是当时世界最强国之一。',
+  events:['玄武门之变，李世民即位','贞观之治','开元盛世，杜甫李白等活跃','安史之乱，由盛转衰','藩镇割据、黄巢起义','朱温代唐，唐亡']},
+{ name:'五代十国', era:'隋唐五代', start:902, end:979, cap:'汴梁、江宁（南京）等', founder:'朱温、李昪等', last:'柴宗训、刘继元等',
+  nat:'汉族、沙陀等', tag:'并立', split:true, grp:'五代十国', desc:'北方梁、唐、晋、汉、周五朝相继，南方吴、南唐、吴越等十国并立，南方相对安定而经济文化发展。',
+  events:['朱温代唐建后梁，北方五代开始','南方十国并立，经济文化渐盛','后周世宗整军理财，奠定统一基础','赵匡胤代周建宋，979 年北汉降宋']},
+{ name:'五代·后梁', child:true, par:'五代十国', era:'隋唐五代', start:907, end:923, cap:'汴州（开封）', founder:'朱温', last:'朱友贞（末帝）',
+  nat:'汉族', tag:'五代', split:true, desc:'朱温代唐建梁，据中原，与河东李克用、李存勖长期争战，末帝时被后唐所灭。',
+  events:['朱温代唐称帝，都汴州','柏乡之战败于晋军','郓州失守，后唐军入汴，梁亡']},
+{ name:'五代·后唐', child:true, par:'五代十国', era:'隋唐五代', start:923, end:936, cap:'洛阳', founder:'李存勖', last:'李从珂（末帝）',
+  nat:'沙陀', tag:'五代', split:true, desc:'沙陀李克用之子李存勖灭梁称唐，疆域最广，庄宗后期内乱，明宗后权臣更迭而亡。',
+  events:['李存勖灭后梁，都洛阳','庄宗宠信伶人，兴教门之变','明宗革除弊政，稍安','石敬瑭借契丹兵灭后唐']},
+{ name:'五代·后晋', child:true, par:'五代十国', era:'隋唐五代', start:936, end:947, cap:'汴州（开封）', founder:'石敬瑭', last:'石重贵',
+  nat:'沙陀', tag:'五代', split:true, desc:'石敬瑭借契丹兵灭后唐，割燕云十六州、称儿皇帝，重贵时与契丹决裂而被灭。',
+  events:['石敬瑭割燕云十六州，称儿皇帝','出帝石重贵对契丹称孙不称臣','契丹南下，汴州陷落，晋亡']},
+{ name:'五代·后汉', child:true, par:'五代十国', era:'隋唐五代', start:947, end:950, cap:'汴州（开封）', founder:'刘知远', last:'刘承祐（隐帝）',
+  nat:'沙陀', tag:'五代', split:true, desc:'刘知远乘契丹北撤之机称帝，国祚仅四年，隐帝诛杀权臣引发郭威兵变。',
+  events:['刘知远太原称帝，入汴','隐帝杀杨邠、史弘肇','郭威兵变，后汉亡']},
+{ name:'五代·后周', child:true, par:'五代十国', era:'隋唐五代', start:951, end:960, cap:'汴州（开封）', founder:'郭威', last:'柴宗训（恭帝）',
+  nat:'汉族', tag:'五代', split:true, desc:'郭威兵变建周，世宗柴荣整军理财、南征北伐，为北宋统一奠定基础。',
+  events:['郭威兵变称帝，革除苛政','世宗柴荣北伐契丹、南征南唐','陈桥兵变，赵匡胤代周']},
+{ name:'十国·吴', child:true, par:'五代十国', era:'隋唐五代', start:902, end:937, cap:'扬州', founder:'杨行密', last:'杨溥（睿帝）',
+  nat:'汉族', tag:'十国', split:true, desc:'杨行密据淮南，保境安民，为南唐所代。',
+  events:['杨行密据扬州，封吴王','杨隆演、杨溥相继嗣位','李昪代吴建南唐']},
+{ name:'十国·南唐', child:true, par:'五代十国', era:'隋唐五代', start:937, end:975, cap:'江宁（南京）', founder:'李昪', last:'李煜（后主）',
+  nat:'汉族', tag:'十国', split:true, desc:'李昪代吴建唐，中主、后主时文风鼎盛而国势日衰，终为北宋所灭。',
+  events:['李昪代吴称帝，都金陵','中主李璟攻闽、楚失利','后主李煜词名满天下','宋军破金陵，李煜降宋']},
+{ name:'十国·吴越', child:true, par:'五代十国', era:'隋唐五代', start:907, end:978, cap:'杭州', founder:'钱镠', last:'钱俶',
+  nat:'汉族', tag:'十国', split:true, desc:'钱氏据两浙，兴修水利、通商海外，始终奉中原正朔，最后纳土归宋。',
+  events:['钱镠封吴越王，筑海塘','钱氏三世保境安民','钱俶纳土归宋']},
+{ name:'十国·前蜀', child:true, par:'五代十国', era:'隋唐五代', start:907, end:925, cap:'成都', founder:'王建', last:'王衍',
+  nat:'汉族', tag:'十国', split:true, desc:'王建据蜀称帝，文教繁盛，后主王衍荒淫，为后唐所灭。',
+  events:['王建称帝于成都','王衍奢靡，政事废弛','后唐郭崇韬伐蜀，前蜀亡']},
+{ name:'十国·后蜀', child:true, par:'五代十国', era:'隋唐五代', start:934, end:965, cap:'成都', founder:'孟知祥', last:'孟昶',
+  nat:'汉族', tag:'五代', split:true, desc:'孟知祥据蜀称帝，后主孟昶治蜀三十年，刻石经、兴文教，为北宋所灭。',
+  events:['孟知祥称帝，都成都','孟昶刻石经、兴学校','宋军入蜀，孟昶降']},
+{ name:'十国·南汉', child:true, par:'五代十国', era:'隋唐五代', start:917, end:971, cap:'广州', founder:'刘龑', last:'刘鋹',
+  nat:'汉族', tag:'十国', split:true, desc:'刘氏据岭南称帝，海上贸易兴盛，后期君主残暴，为北宋所灭。',
+  events:['刘龑称帝，国号大越后改汉','刘晟大肆诛杀宗室','宋将潘美破广州，南汉亡']},
+{ name:'十国·闽', child:true, par:'五代十国', era:'隋唐五代', start:909, end:945, cap:'福州', founder:'王审知', last:'王延政',
+  nat:'汉族', tag:'十国', split:true, desc:'王审知据福建，保境息民，后世诸子争位，为南唐所灭。',
+  events:['王审知封闽王，兴学通商','王延钧称帝','诸子相残，南唐乘机灭闽']},
+{ name:'十国·楚', child:true, par:'五代十国', era:'隋唐五代', start:907, end:951, cap:'潭州（长沙）', founder:'马殷', last:'马希崇',
+  nat:'汉族', tag:'十国', split:true, desc:'马殷据湖南，以茶马贸易致富，诸子争位，为南唐所灭。',
+  events:['马殷封楚王，通商中原','马希范大兴土木','兄弟阋墙，南唐灭楚']},
+{ name:'十国·荆南（南平）', child:true, par:'五代十国', era:'隋唐五代', start:924, end:963, cap:'江陵', founder:'高季兴', last:'高继冲',
+  nat:'汉族', tag:'十国', split:true, desc:'高氏据江陵，地小兵弱，靠通商与称臣于各方求存，后归宋。',
+  events:['高季兴据江陵，封南平王','高从诲时称臣四方以求安','宋军南下，高继冲归附']},
+{ name:'十国·北汉', child:true, par:'五代十国', era:'隋唐五代', start:951, end:979, cap:'太原', founder:'刘崇', last:'刘继元',
+  nat:'沙陀', tag:'十国', split:true, desc:'后汉宗室刘崇据河东称帝，依附契丹与后周、北宋对抗，最后被宋所灭。',
+  events:['刘崇太原称帝，依附契丹','高平之战败于后周','宋太宗亲征，刘继元降']},
+{ name:'北宋', era:'宋辽金元', start:960, end:1127, cap:'汴京（今开封）', founder:'赵匡胤', last:'赵桓（宋钦宗）',
+  nat:'汉族', tag:'大一统', unify:true, desc:'结束中原割据，商业与城市空前繁荣，活字印刷、指南针、纸币出现；重文抑武。',
+  events:['陈桥兵变，黄袍加身','杯酒释兵权，强干弱枝','澶渊之盟与辽议和','王安石变法','靖康之变，徽钦二帝被掳']},
+{ name:'辽', era:'宋辽金元', start:907, end:1125, cap:'上京临潢府', founder:'耶律阿保机', last:'耶律延禧（天祚帝）',
+  nat:'契丹族', tag:'北方政权', split:true, desc:'契丹建立，实行南北面官制，与北宋长期并立，掌控燕云与草原丝路。',
+  events:['耶律阿保机统一契丹','取燕云十六州','澶渊之盟','金灭辽，西辽延续至 1218 年']},
+{ name:'西夏', era:'宋辽金元', start:1038, end:1227, cap:'兴庆府（今银川）', founder:'李元昊', last:'李睍',
+  nat:'党项族', tag:'西北政权', split:true, desc:'党项族建立，创西夏文，控制河西走廊，与宋、辽、金长期鼎立。',
+  events:['李元昊称帝，创西夏文','三川口、好水川之战','蒙古军攻灭西夏']},
+{ name:'南宋', era:'宋辽金元', start:1127, end:1279, cap:'临安（今杭州）', founder:'赵构', last:'赵昺',
+  nat:'汉族', tag:'偏安江南', split:true, desc:'偏安江南，经济与海外贸易极盛，理学成熟，军事上长期与金、蒙对峙。',
+  events:['赵构南渡称帝','岳飞北伐与绍兴和议','海上丝绸之路与市舶司繁荣','崖山海战，陆秀夫负帝投海']},
+{ name:'金', era:'宋辽金元', start:1115, end:1234, cap:'会宁 → 中都 → 汴京', founder:'完颜阿骨打', last:'完颜承麟',
+  nat:'女真族', tag:'北方政权', split:true, desc:'女真建立，灭辽、攻宋，占据淮河以北，后期在蒙古压力下南迁。',
+  events:['完颜阿骨打起兵反辽','靖康之变，灭北宋','海陵王迁都中都','蒙古南下，蔡州之战金亡']},
+{ name:'大理国', era:'宋辽金元', start:937, end:1253, cap:'羊苴咩城（大理）', founder:'段思平', last:'段兴智',
+  nat:'白族（白人）', tag:'并立', split:true, desc:'白族段氏据云南，都羊苴咩城，历二十二主，佛教极盛，1253 年为蒙古所灭。',
+  events:['段思平建大理国，都羊苴咩城','与宋通好，茶马贸易兴盛','佛教兴盛，号称妙香之国','忽必烈革囊渡江，大理亡']},
+{ name:'元', era:'宋辽金元', start:1271, end:1368, cap:'大都（今北京）', founder:'忽必烈', last:'妥懽帖睦尔（元顺帝）',
+  nat:'蒙古族', tag:'大一统', unify:true, desc:'蒙古族建立，中国历史上疆域最辽阔的统一王朝，行省制度影响深远。',
+  events:['忽必烈定国号「大元」','灭南宋，统一全国','行省制与驿站体系','红巾军起义','明军北伐，元廷北遁']},
+{ name:'明', era:'明清', start:1368, end:1644, cap:'南京 → 北京', founder:'朱元璋（明太祖）', last:'朱由检（崇祯帝）',
+  nat:'汉族', tag:'大一统', unify:true, desc:'恢复汉制，废丞相设内阁，郑和下西洋，中后期商品经济与市镇高度发达。',
+  events:['朱元璋称帝，定都南京','永乐迁都北京、修《永乐大典》','郑和七下西洋','张居正改革','李自成入北京，崇祯自缢']},
+{ name:'南明', era:'明清', start:1644, end:1662, cap:'南京、肇庆等', founder:'朱由崧', last:'朱由榔（永历帝）',
+  nat:'汉族', tag:'残明政权', split:true, desc:'清军入关后明宗室在南方建立的多个政权，前后坚持十八年。',
+  events:['弘光政权在南京建立','隆武、绍武、永历政权相继','永历帝被吴三桂缢杀于昆明']},
+{ name:'清', era:'明清', start:1636, end:1912, cap:'盛京 → 北京', founder:'皇太极', last:'溥仪（宣统帝）',
+  nat:'满族', tag:'大一统', unify:true, desc:'满族建立，康雍乾时期疆域与人口达到高峰，晚清在列强冲击下被迫变革。',
+  events:['皇太极改国号「大清」','入关定都北京','康乾盛世，平定三藩、收台湾','鸦片战争与不平等条约','洋务运动、戊戌变法','辛亥革命，清帝退位']},
+{ name:'太平天国', era:'明清', start:1851, end:1864, cap:'天京（今南京）', founder:'洪秀全', last:'洪天贵福',
+  nat:'汉族', tag:'农民政权', split:true, desc:'晚清规模最大的农民起义政权，提出《天朝田亩制度》，一度占据江南半壁。',
+  events:['金田起义，建号太平天国','定都天京','天京事变，内部分裂','湘军攻破天京，政权覆亡']}
+];
+
+/* 各朝代主要帝王：庙号 / 姓名，在位起止，备注，主要年号（先秦无年号） */
+var REFS = {
+'三皇五帝': { war: ["阪泉之战（约前26世纪）· 黄帝败炎帝，两部族合流", "涿鹿之战（约前26世纪）· 黄帝擒杀蚩尤，华夏联盟成形"], tale: ["三皇五帝 · 上古圣王谱系的总称", "炎黄子孙 · 炎帝、黄帝两部落融合后的自称", "钻木取火 · 燧人氏钻木取火，教民熟食", "禅让 · 尧传舜、舜传禹的推举制", "绝地天通 · 颛顼整顿祭祀、分理天人"] },
+'夏': { war: ["甘之战（约前21世纪）· 启伐有扈氏，世袭制立稳", "少康复国之战 · 少康攻灭寒浞，夏室中兴"], tale: ["家天下 · 启继禹位，世袭取代禅让", "太康失国 · 太康荒逸，后羿夺政", "少康中兴 · 遗腹子复国", "孔甲乱政 · 夏室自此衰"] },
+'商': { war: ["鸣条之战（约前1600）· 商汤灭夏", "牧野之战（前1046）· 武王伐纣，商亡"], tale: ["网开一面 · 商汤去三面之网，示德于天下", "盘庚迁殷 · 迁都于殷，商势复振", "傅说举于版筑 · 武丁擢贤于工匠", "酒池肉林 · 纣王奢靡", "助纣为虐 · 喻助恶为虐"] },
+'西周': { war: ["牧野之战（前1046）· 周武王联军破商军", "周公东征（前1042起）· 平定三监与东夷", "犬戎破镐京（前771）· 幽王被杀，西周终"], tale: ["制礼作乐 · 周公定宗法与礼乐秩序", "成康之治 · 刑错四十余年不用", "烽火戏诸侯 · 幽王博褒姒一笑而失信", "周公吐哺 · 一饭三吐哺以待士"] },
+'东周·春秋': { war: ["繻葛之战（前707）· 郑庄公败周王师，王权坠地", "城濮之战（前632）· 晋文公退避三舍而胜楚", "邲之战（前597）· 楚庄王一战胜晋", "吴破郢都（前506）· 伍子胥、孙武伐楚"], tale: ["尊王攘夷 · 齐桓公称霸旗号", "退避三舍 · 晋文公践诺而骄敌", "问鼎中原 · 楚庄王观兵周疆", "卧薪尝胆 · 勾践十年生聚", "一鼓作气 · 曹刿论长勺之战", "老马识途 · 管仲随桓公伐孤竹"] },
+'东周·战国': { war: ["桂陵之战（前353）· 齐围魏救赵", "马陵之战（前341）· 孙膑伏弩杀庞涓", "长平之战（前260）· 秦白起坑赵卒四十万", "灭六国之战（前230—前221）· 秦并天下"], tale: ["三家分晋 · 韩赵魏列于诸侯", "商鞅变法 · 废井田、开阡陌", "围魏救赵 · 攻其必救", "纸上谈兵 · 赵括代廉颇而败", "完璧归赵 · 蔺相如持璧归", "毛遂自荐 · 说楚合纵"] },
+'秦': { war: ["灭六国之战（前230—前221）· 十年并天下", "秦征百越（前219起）· 屠睢、任嚣南定岭南", "巨鹿之战（前207）· 项羽破釜沉舟，秦军瓦解"], tale: ["焚书坑儒 · 钳制思想", "指鹿为马 · 赵高试群臣", "王侯将相宁有种乎 · 陈胜吴广起义", "书同文、车同轨 · 统一文字度量衡", "万里长城 · 北筑长城御匈奴"] },
+'西汉': { war: ["楚汉战争（前206—前202）· 刘邦定天下", "白登之围（前200）· 高祖被匈奴困七日", "七国之乱（前154）· 吴楚等七国反，三月而平", "漠北之战（前119）· 卫青、霍去病逐匈奴"], tale: ["约法三章 · 刘邦入关中安民", "鸿门宴 · 项庄舞剑，意在沛公", "明修栈道，暗度陈仓 · 韩信出奇", "四面楚歌 · 项羽败于垓下", "文景之治 · 与民休息，仓廪充实", "罢黜百家，独尊儒术 · 汉武帝定国策", "张骞凿空 · 通西域，开丝路"] },
+'新': { war: ["绿林赤眉起义（17—27）· 天下大乱", "昆阳之战（23）· 刘秀以少破王莽主力"], tale: ["王莽改制 · 托古变法，币制屡更", "篡汉自立 · 代汉建新", "井田复行 · 改天下田为王田"] },
+'东汉': { war: ["黄巾起义（184）· 八州并起，汉室动摇", "平定羌乱（百余年间）· 凉州三明苦战", "官渡之战（200）· 曹操破袁绍，北方易主"], tale: ["光武中兴 · 刘秀重建汉室", "投笔从戎 · 班超经营西域", "蔡伦造纸 · 改进造纸术", "党锢之祸 · 士人遭禁", "十常侍乱政 · 宦官专权"] },
+'三国': { war: ["官渡之战（200）· 曹操火烧乌巢破袁绍", "赤壁之战（208）· 孙刘联军火攻破曹", "夷陵之战（222）· 陆逊火烧连营", "街亭之战（228）· 马谡失守，诸葛亮退兵"], tale: ["三顾茅庐 · 刘备三请诸葛亮", "桃园结义 · 刘关张结为兄弟（演义）", "草船借箭 · 诸葛亮借雾取箭（演义）", "七擒孟获 · 攻心为上", "空城计 · 诸葛亮抚琴退司马（演义）", "乐不思蜀 · 刘禅降魏后之语"] },
+'西晋': { war: ["灭吴之战（280）· 王濬楼船下益州，三国归晋", "八王之乱（291—306）· 宗室相残十余年", "永嘉之乱（311）· 匈奴破洛阳，怀帝被俘"], tale: ["洛阳纸贵 · 左思《三都赋》争相传抄", "竹林七贤 · 嵇康阮籍等放达", "何不食肉糜 · 惠帝不知民饥", "太康之治 · 短暂的小康"] },
+'东晋': { war: ["祖逖北伐（313起）· 击楫中流，收复河南", "淝水之战（383）· 八万北府兵破前秦百万", "桓温北伐（354—369）· 三度出兵关中"], tale: ["闻鸡起舞 · 祖逖与刘琨励志", "中流击楫 · 祖逖渡江立誓", "东山再起 · 谢安出仕而安晋室", "王与马，共天下 · 门阀与皇权并立", "衣冠南渡 · 士族南迁"] },
+'十六国': { war: ["淝水之战（383）· 前秦溃败，北方再裂", "参合陂之战（395）· 北魏大破后燕", "前秦灭前燕（370）· 苻坚统一北方"], tale: ["五胡乱华 · 匈奴鲜卑羯氐羌入中原", "胡汉分治 · 一部落一军制并行", "投鞭断流 · 苻坚自夸兵多", "风声鹤唳 · 前秦败兵惊惧"] },
+'南朝·宋': { war: ["元嘉北伐（430、450）· 宋文帝两度用兵失利", "盱眙之战（451）· 宋军坚守退魏兵"], tale: ["元嘉之治 · 文帝三十年安民", "气吞万里如虎 · 刘裕北伐之功", "寒门掌机要 · 以寒人制士族"] },
+'南朝·齐': { war: ["北魏南征（497—498）· 孝文帝攻齐", "萧衍起兵（501）· 襄阳兵下建康，齐亡"], tale: ["永明体 · 沈约等倡声律", "竟陵八友 · 萧子良西邸文士", "短命王朝 · 二十余年七帝"] },
+'南朝·梁': { war: ["钟离之战（507）· 梁军大破北魏", "侯景之乱（548—552）· 建康陷落，梁室崩"], tale: ["菩萨皇帝 · 梁武帝三舍身同泰寺", "南朝四百八十寺 · 佛教极盛", "昭明文选 · 萧统编总集"] },
+'南朝·陈': { war: ["建康陷落（589）· 隋军渡江，陈亡"], tale: ["玉树后庭花 · 陈后主艳曲成亡国之音", "隔江犹唱后庭花 · 杜牧讥讽", "狎客之乱 · 江总等陪宴赋诗"] },
+'北魏': { war: ["参合陂之战（395）· 拓跋珪坑杀燕军", "北魏统一北方（439）· 灭北凉，十六国终", "六镇起义（523—525）· 边镇兵变，魏室分裂"], tale: ["孝文帝改革 · 迁都洛阳、改汉姓", "均田制 · 计口授田", "云冈、龙门石窟 · 佛教造像", "胡太后乱政 · 女主干政"] },
+'东魏': { war: ["邙山之战（543）· 高欢败宇文泰", "侯景叛东魏（547）· 河南之地尽失"], tale: ["高欢执政 · 晋阳霸府", "胡汉矛盾 · 六镇勋贵与汉士族相争"] },
+'西魏': { war: ["沙苑之战（537）· 宇文泰以少胜东魏", "玉壁之战（546）· 韦孝宽坚守退高欢"], tale: ["府兵制 · 八柱国十二大将军", "关陇集团 · 胡汉融合的军政集团", "六条诏书 · 苏绰定治政纲领", "宇文泰改革 · 创周礼六官"] },
+'北齐': { war: ["北周灭齐（576—577）· 晋阳、邺城相继陷"], tale: ["无愁天子 · 高纬耽乐亡国", "兰陵王入阵曲 · 高长恭面具破阵", "鲜卑化逆流 · 排斥汉制"] },
+'北周': { war: ["灭北齐之战（576—577）· 统一北方", "尉迟迥之乱（580）· 杨坚平定三方"], tale: ["周武帝灭佛 · 废寺充军国之用", "关陇集团 · 承西魏府兵", "禅位于隋 · 静帝幼弱，杨坚代周"] },
+'隋': { war: ["灭陈之战（589）· 韩擒虎、贺若弼渡江", "三征高句丽（612—614）· 百万之众尽溃", "隋末农民起义（611—618）· 瓦岗等群雄并起"], tale: ["开皇之治 · 轻徭薄赋，户口大増", "科举创立 · 以考试取士", "大运河 · 贯通南北漕运", "三省六部 · 定中央官制"] },
+'唐': { war: ["灭东突厥（630）· 李靖夜袭阴山", "安史之乱（755—763）· 范阳起兵，两京陷落", "黄巢起义（875—884）· 攻入长安，唐室崩解", "怛罗斯之战（751）· 唐军败于大食"], tale: ["贞观之治 · 纳谏省刑，四夷宾服", "开元盛世 · 户口殷盛，万国来朝", "玄武门之变 · 李世民夺嫡", "请君入瓮 · 来俊臣酷吏之典", "安史之乱 · 由盛转衰之始", "以人为镜 · 太宗悼魏征"] },
+'五代十国': { war: ["柏乡之战（910）· 晋军破梁军", "高平之战（954）· 后周世宗破北汉", "宋平十国（960—979）· 割据终归一统"], tale: ["儿皇帝 · 石敬瑭割燕云、称臣于契丹", "不倒翁冯道 · 历仕四朝十君", "十国割据 · 南方诸国偏安", "陈桥兵变 · 赵匡胤黄袍加身"] },
+'北宋': { war: ["高梁河之战（979）· 宋太宗伐辽大败", "澶州之战（1004）· 宋辽对峙而议和", "好水川之战（1041）· 宋军败于西夏", "靖康之变（1127）· 金破汴京，二帝北狩"], tale: ["陈桥兵变 · 黄袍加身代周", "杯酒释兵权 · 收藩镇之兵", "澶渊之盟 · 岁币换百年和平", "王安石变法 · 青苗、免役诸法", "活字印刷 · 毕昇创活字", "清明上河图 · 汴京繁华写照"] },
+'辽': { war: ["高梁河之战（979）· 辽军追击败宋", "澶州之战（1004）· 辽军深入，盟于澶渊", "金灭辽（1125）· 天祚帝被俘"], tale: ["契丹建国 · 耶律阿保机称帝", "南北面官 · 分治汉人与部族", "燕云十六州 · 石晋所割", "捺钵制度 · 四时巡幸听政"] },
+'西夏': { war: ["三川口之战（1040）· 西夏伏击宋军", "好水川之战（1041）· 宋军再败", "蒙古灭西夏（1227）· 中兴府降，夏亡"], tale: ["李元昊称帝 · 建大夏，创西夏文", "称臣纳贡 · 对宋辽两属", "西夏文 · 仿汉字创制", "佛塔林立 · 兴庆府佛教盛"] },
+'南宋': { war: ["郾城之战（1140）· 岳飞大破拐子马", "采石之战（1161）· 虞允文却完颜亮", "襄阳之战（1268—1273）· 六年围城而降", "崖山海战（1279）· 陆秀夫负帝蹈海"], tale: ["绍兴和议 · 称臣纳贡，岳飞冤死", "精忠报国 · 岳母刺字", "程朱理学 · 朱熹集大成", "海上丝路 · 泉州、明州通商"] },
+'金': { war: ["护步答冈之战（1114）· 完颜阿骨打破辽主力", "靖康之变（1127）· 金灭北宋", "蔡州之战（1234）· 蒙宋合击，金亡"], tale: ["猛安谋克 · 兵农合一之制", "女真文字 · 完颜希尹创制", "海陵王迁都 · 由会宁迁燕京", "大定之治 · 世宗与民休息"] },
+'大理国': { war: ["段思平建大理（937）· 逐杨干贞而立国", "蒙古灭大理（1253）· 忽必烈革囊渡江"], tale: ["佛国大理 · 二十二王多禅位为僧", "段氏与高氏共治 · 权臣世相", "羊苴咩城 · 王都所在", "妙香佛国 · 佛教密宗盛行"] },
+'元': { war: ["蒙古灭金（1234）· 蔡州城破", "襄阳之战（1268—1273）· 回回炮破樊城", "崖山海战（1279）· 南宋覆灭", "红巾军起义（1351起）· 天下响应"], tale: ["行省制 · 地方设中书省派出机构", "四等人制 · 蒙古、色目、汉人、南人", "大运河重修 · 会通河、通惠河", "马可·波罗 · 游记传述东方"] },
+'明': { war: ["鄱阳湖之战（1363）· 朱元璋火攻破陈友谅", "靖难之役（1399—1402）· 燕王入南京", "土木堡之变（1449）· 英宗被瓦剌所俘", "萨尔浒之战（1619）· 后金破明四路"], tale: ["洪武之治 · 重农抑商、整肃吏治", "郑和下西洋 · 七下西洋通诸国", "一条鞭法 · 赋役合并征银", "东厂西厂 · 厂卫特务", "崇祯自缢 · 甲申之变"] },
+'南明': { war: ["扬州之战（1645）· 史可法死守城破", "郑成功收复台湾（1662）· 逐荷兰人"], tale: ["史可法守扬州 · 城破不屈", "弘光、隆武、永历 · 三朝相继", "夔东十三家 · 川鄂抗清余部"] },
+'清': { war: ["萨尔浒之战（1619）· 后金破明四路", "平定三藩（1673—1681）· 吴三桂等败亡", "雅克萨之战（1685—1686）· 逐俄军", "鸦片战争（1840—1842）· 国门洞开"], tale: ["康乾盛世 · 疆域最广、人口大增", "闭关锁国 · 限一口通商", "摊丁入亩 · 丁银并入田赋", "剃发易服 · 强制改俗", "洋务运动 · 师夷长技"] },
+'太平天国': { war: ["金田起义（1851）· 洪秀全起兵", "北伐西征（1853—1855）· 兵锋抵天津", "天京事变（1856）· 内讧自弱", "湘军破天京（1864）· 天国覆亡"], tale: ["拜上帝会 · 借基督教立教", "天朝田亩制度 · 平分土地的纲领", "资政新篇 · 洪仁玕变法主张", "半壁江山 · 与清廷对峙十余年"] }
+};
+
+var CHILD = {
+'汉高祖 刘邦': "刘肥（母曹氏）、刘盈（母吕雉）、刘如意（母戚夫人）、刘恒（母薄姬）、刘长（母赵姬）、刘友（母不详）、刘恢（母不详）、刘建（母不详），共八子",
+'汉文帝 刘恒': "刘启（母窦漪房）、刘武（母窦漪房）、刘参（母不详）、刘揖（母不详）",
+'汉景帝 刘启': "刘荣（母栗姬）、刘德（母栗姬）、刘阏于（母栗姬）、刘余（母程姬）、刘非（母程姬）、刘端（母程姬）、刘彭祖（母贾夫人）、刘胜（母贾夫人）、刘发（母唐姬）、刘彻（母王娡）、刘越（母王儿姁）、刘寄（母王儿姁）、刘乘（母不详）、刘舜（母不详），共十四子",
+'汉武帝 刘彻': "刘据（母卫子夫）、刘闳（母王夫人）、刘旦（母李姬）、刘胥（母李姬）、刘髆（母李夫人）、刘弗陵（母钩弋夫人）",
+'汉宣帝 刘询': "刘奭（母许平君）、刘钦（母张婕妤）、刘嚣（母公孙婕妤）、刘宇（母华婕妤）、刘竟（母戎婕妤）",
+'汉元帝 刘奭': "刘骜（母王政君）、刘康（母傅昭仪）、刘兴（母冯昭仪）",
+'汉成帝 刘骜': "无子（赵飞燕、赵合德皆无出）",
+'汉光武帝 刘秀': "刘强（母郭圣通）、刘辅（母郭圣通）、刘康（母郭圣通）、刘延（母郭圣通）、刘荆（母郭圣通）、刘英（母许美人）、刘庄（母阴丽华）、刘苍（母阴丽华）、刘京（母阴丽华）、刘衡（母不详）、刘焉（母不详），共十一子",
+'汉明帝 刘庄': "刘炟（母贾贵人，马皇后抚养）、刘建、刘羡、刘恭、刘党、刘衍、刘畅、刘昞、刘长，共九子",
+'汉章帝 刘炟': "刘伉（母不详）、刘全（母不详）、刘庆（母宋贵人）、刘肇（母梁贵人，窦皇后抚养）、刘寿（母申贵人）、刘开（母申贵人）、刘淑（母不详）、刘万岁（母不详），共八子",
+'汉灵帝 刘宏': "刘辩（母何皇后）、刘协（母王美人）",
+'汉献帝 刘协': "刘冯（母不详）、刘熙（母不详），皆为曹操所害",
+'曹丕': "曹叡（母甄夫人）、曹协（母李贵人）、曹蕤（母潘淑媛）、曹鉴（母朱淑媛）、曹霖（母仇昭仪）、曹礼（母徐姬）、曹邕（母苏姬）、曹贡（母张姬）、曹俨（母宋姬），共九子",
+'魏明帝 曹叡': "曹冏、曹穆、曹殷（皆早夭，母不详）；养子曹芳、曹询",
+'刘备': "刘禅（母甘夫人）、刘永（母吴氏）、刘理（母吴氏）",
+'后主 刘禅': "刘璿（母王贵人）、刘瑶（母李昭仪）、刘瓒、刘谌（母崔夫人）、刘恂、刘虔、刘询（母不详），共七子",
+'孙权': "孙登（母不详）、孙虑（母步练师）、孙和（母王夫人）、孙霸（母王夫人）、孙奋（母仲姬）、孙休（母王夫人）、孙亮（母潘皇后）、孙鲁班（母步练师）、孙鲁育（母步练师）",
+'晋武帝 司马炎': "司马衷（母杨艳）、司马柬（母杨艳）、司马玮（母审美人）、司马允（母李夫人）、司马遐（母陈美人）、司马乂（母审美人）、司马颖（母程才人）、司马晏（母李夫人）、司马炽（母王媛姬）等，共二十六子",
+'晋惠帝 司马衷': "无亲生子；太子司马遹（母谢夫人）",
+'晋明帝 司马绍': "司马衍（母庾文君）、司马岳（母庾文君）",
+'晋孝武帝 司马曜': "司马德宗（母陈归女）、司马德文（母陈归女）",
+'隋文帝 杨坚': "杨勇（母独孤伽罗）、杨广（母独孤伽罗）、杨俊（母独孤伽罗）、杨秀（母独孤伽罗）、杨谅（母独孤伽罗），共五子",
+'隋炀帝 杨广': "杨昭（母萧皇后）、杨暕（母萧皇后）、杨杲（母萧皇后）",
+'唐高祖 李渊': "李建成（母窦皇后）、李世民（母窦皇后）、李玄霸（母窦皇后）、李元吉（母窦皇后）、李智云（母万贵妃）、李元景（母莫嫔）、李元昌（母孙嫔）、李元亨（母尹德妃）等，共二十二子",
+'唐太宗 李世民': "李承乾（母长孙皇后）、李宽（母不详）、李恪（母杨妃）、李泰（母长孙皇后）、李祐（母阴妃）、李愔（母杨妃）、李恽（母不详）、李贞（母燕妃）、李治（母长孙皇后）、李慎（母韦妃）、李嚣、李简、李福（母不详）、李明（母杨妃），共十四子",
+'唐高宗 李治': "李忠（母刘宫人）、李孝（母郑贵妃）、李上金（母杨氏）、李素节（母萧淑妃）、李弘（母武则天）、李贤（母武则天）、李显（母武则天）、李旦（母武则天）",
+'唐中宗 李显': "李重润（母韦皇后）、李重福（母不详）、李重俊（母不详）、李重茂（母不详）",
+'唐睿宗 李旦': "李成器（母刘皇后）、李成义（母柳宫人）、李隆基（母窦皇后）、李隆范（母崔孺人）、李隆业（母王德妃）、李隆悌（母不详）",
+'唐玄宗 李隆基': "李琮（母刘华妃）、李瑛（母赵丽妃）、李亨（母杨贵嫔）、李琰（母不详）、李瑶、李琬、李璲、李玢、李琦、李璬、李瑁（母武惠妃）、李玼、李瑝、李瑀、李璘、李玢等，共三十子",
+'唐肃宗 李亨': "李豫（母吴氏）、李系（母不详）、李倓（母张皇后）、李佖、李仅、李僩、李侹、李倬、李偲、李佋、李侗等，共十四子",
+'唐代宗 李豫': "李适（母沈氏）、李邈（母不详）、李遐（母不详）、李述、李逵、李乃等，共二十子",
+'唐德宗 李适': "李诵（母王皇后）、李谅（母不详）、李详（母不详）、李谌等，共十一子",
+'唐宪宗 李纯': "李恒（母郭皇后）、李恽（母不详）、李宥、李恪、李忻、李悟等，共二十子",
+'唐宣宗 李忱': "李漼（母晁皇后）、李渼、李泾、李滋、李沂、李润、李洽、李汭、李汶、李灌、李汜等，共十二子",
+'唐昭宗 李晔': "李柷（母何皇后）、李裕（母不详）、李祤、李禊等，共十七子",
+'宋太祖 赵匡胤': "赵德昭（母贺皇后）、赵德芳（母王皇后）",
+'宋太宗 赵光义': "赵元佐（母李皇后）、赵元僖（母不详）、赵恒（母李皇后）、赵元份、赵元杰、赵元偓、赵元偁、赵元俨、赵元亿，共九子",
+'宋真宗 赵恒': "赵祯（母李宸妃，刘娥抚养）；另有五子早夭",
+'宋仁宗 赵祯': "赵昉、赵昕、赵曦（三子皆早夭）；养子赵曙（即英宗）",
+'宋英宗 赵曙': "赵顼（母高滔滔）、赵颢（母高滔滔）、赵颜（母高滔滔）、赵頵（母高滔滔）",
+'宋神宗 赵顼': "赵佶（母陈美人）、赵煦（母向皇后）、赵佖（母不详）、赵似（母不详）、赵俣、赵偲等，共十四子",
+'宋徽宗 赵佶': "赵桓（母王皇后）、赵构（母韦贤妃）、赵楷（母王贵妃）、赵榛（母不详）等，共三十八子",
+'宋高宗 赵构': "赵旉（母潘贤妃，早夭）；养子赵昚（即孝宗）",
+'宋孝宗 赵昚': "赵惇（母谢皇后）、赵恺（母不详）、赵悰（母不详）",
+'宋光宗 赵惇': "赵扩（母李凤娘）、赵挺（早夭）",
+'宋宁宗 赵扩': "九子皆早夭；养子赵竑、赵昀（即理宗）",
+'宋理宗 赵昀': "无子；养子赵禥（即度宗，侄）",
+'宋度宗 赵禥': "赵㬎（母全皇后）、赵昰（母杨淑妃）、赵昺（母俞修容）",
+'辽太祖 耶律阿保机': "耶律倍（母述律平）、耶律德光（母述律平）、耶律李胡（母述律平）",
+'辽景宗 耶律贤': "耶律隆绪（母萧燕燕）等四子",
+'元世祖 忽必烈': "真金（母察必）、忙哥剌、那木罕等，共十二子",
+'明太祖 朱元璋': "朱标（母马皇后）、朱樉、朱棡、朱棣（母碽妃，一说马皇后）、朱橚、朱桢、朱榑、朱梓、朱杞、朱檀、朱椿、朱柏、朱桂、朱楧、朱植、朱栴、朱权、朱楩、朱橞、朱松、朱模、朱楹、朱桱、朱栎、朱栋、朱㰘，共二十六子",
+'明成祖 朱棣': "朱高炽（母徐皇后）、朱高煦（母徐皇后）、朱高燧（母徐皇后）",
+'明仁宗 朱高炽': "朱瞻基（母张皇后）、朱瞻埈、朱瞻墉、朱瞻垠、朱瞻墡、朱瞻堈、朱瞻墺、朱瞻垲、朱瞻垍、朱瞻蜒，共十子",
+'明宣宗 朱瞻基': "朱祁镇（母孙皇后）、朱祁钰（母吴贤妃）",
+'明英宗 朱祁镇': "朱见深（母周贵妃）、朱见潾、朱见湜、朱见淳、朱见澍、朱见泽、朱见浚、朱见治、朱见沛，共九子",
+'明宪宗 朱见深': "朱祐樘（母纪氏）、朱祐极（母不详）、朱祐杬（母邵宸妃）、朱祐棆、朱祐槟、朱祐楎、朱祐枟、朱祐榰、朱祐梈、朱祐橓、朱祐枢、朱祐楷等，共十四子",
+'明孝宗 朱祐樘': "朱厚照（母张皇后）、朱厚炜（母张皇后，早夭）",
+'明武宗 朱厚照': "无子",
+'明世宗 朱厚熜': "朱载基（母不详）、朱载壡（母王贵妃）、朱载坖（母杜康妃）、朱载圳（母卢靖妃）等，共八子",
+'明神宗 朱翊钧': "朱常洛（母王恭妃）、朱常溆（母不详）、朱常洵（母郑贵妃）、朱常治（母不详）、朱常浩、朱常润、朱常瀛、朱常溥，共八子",
+'明光宗 朱常洛': "朱由校（母王才人）、朱由检（母刘淑女）、朱由㰒、朱由楫、朱由模、朱由栩、朱由棓等，共七子",
+'明熹宗 朱由校': "朱慈燃、朱慈焴、朱慈炅，三子皆早夭",
+'明思宗 朱由检': "朱慈烺（母周皇后）、朱慈烜（母周皇后）、朱慈炯（母周皇后）、朱慈照（母田贵妃）、朱慈焕（母田贵妃）、朱慈灿（母不详），共七子",
+'清太祖 努尔哈赤': "褚英（母佟佳氏）、代善（母佟佳氏）、皇太极（母孟古哲哲）、莽古尔泰（母富察氏）、德格类、阿巴泰、阿济格（母阿巴亥）、多尔衮（母阿巴亥）、多铎（母阿巴亥）、费扬古等，共十六子",
+'清太宗 皇太极': "豪格（母不详）、洛博会（母不详）、福临（母孝庄）、叶布舒、硕塞、高塞、常舒、韬塞、博穆博果尔等，共十一子",
+'清世祖 福临': "玄烨（母佟妃）、福全（母不详）、常宁（母不详）、奇绶、隆禧、永干等，共八子",
+'清圣祖 玄烨': "胤禔（母惠妃纳喇氏）、胤礽（母赫舍里氏）、胤祉（母荣妃马佳氏）、胤禛（母德妃乌雅氏）、胤祺（母宜妃郭络罗氏）、胤祐（母成妃戴佳氏）、胤禩（母良妃卫氏）、胤禟（母宜妃郭络罗氏）、胤䄉（母温僖贵妃钮祜禄氏）、胤祥（母敬敏皇贵妃章佳氏）、胤禵（母德妃乌雅氏）等，共三十五子",
+'清世宗 胤禛': "弘晖（母乌拉那拉氏，早夭）、弘昐（母不详）、弘时（母齐妃李氏）、弘历（母熹贵妃钮祜禄氏）、弘昼（母耿氏）、弘瞻（母谦妃刘氏）等，共十子",
+'清高宗 弘历': "永璜（母哲悯皇贵妃富察氏）、永琏（母富察氏）、永璋（母纯惠皇贵妃苏氏）、永珹（母淑嘉皇贵妃金氏）、永琪（母珂里叶特氏）、永瑢（母纯惠皇贵妃）、永琮（母富察氏）、永璇（母淑嘉皇贵妃）、永瑆（母淑嘉皇贵妃）、永璘（母孝仪纯皇后魏氏）等，共十七子",
+'清仁宗 颙琰': "旻宁（母喜塔腊氏）、绵恺（母不详）、绵忻（母不详）、绵愉（母不详）等，共五子",
+'清宣宗 旻宁': "奕纬（母和妃纳喇氏）、奕纲、奕继（早夭）、奕詝（母全贵妃钮祜禄氏）、奕誴（母不详）、奕訢（母静贵妃博尔济吉特氏）、奕譞（母不详）、奕詥、奕譓，共九子",
+'清文宗 奕詝': "载淳（母懿贵妃叶赫那拉氏），仅一子",
+'清穆宗 载淳': "无嗣",
+'清德宗 载湉': "无嗣",
+'宣统 溥仪': "无嗣",
+'天王 洪秀全': "洪天贵福（母赖莲英）、洪天曾等，共五子",
+'周武王 姬发': "姬诵（母邑姜）、姬虞（母邑姜）",
+'秦始皇 嬴政': "扶苏（母不详）、胡亥（母不详），另有诸子二十余人皆被胡亥所杀",
+'大禹 姒文命': "启（母涂山氏）",
+'帝喾': "弃（母姜嫄）、契（母简狄）、尧（母庆都）、挚（母常仪）",
+'舜': "商均（母娥皇，一说女英）",
+'黄帝': "玄嚣（母嫘祖）、昌意（母嫘祖）等二十五子"
+};
+var EX = {
+'秦始皇 嬴政': {"h": "—", "sh": "无（秦废谥法）", "m": "无", "f": "秦王", "nat": "华夏族", "b": "前259年 赵国邯郸", "d": "前210年 沙丘平台", "t": "骊山陵（秦始皇陵）", "an": "十三岁即位、统一六国、书同文车同轨；晚年求仙、焚书坑儒，死于东巡途中"} ,
+'汉高祖 刘邦': {"h": "沛公、汉王", "sh": "高皇帝", "m": "太祖", "f": "汉王、沛公", "nat": "汉族", "b": "前256年 沛郡丰邑", "d": "前195年 长安长乐宫", "t": "长陵", "an": "斩白蛇起义、约法三章；鸿门宴脱身，后围项羽于垓下；晚年唱《大风歌》"} ,
+'汉文帝 刘恒': {"h": "代王", "sh": "孝文皇帝", "m": "太宗", "f": "代王", "nat": "汉族", "b": "前203年 长安", "d": "前157年 未央宫", "t": "霸陵", "an": "以代王入继大统；废除肉刑、轻徭薄赋，开「文景之治」；遗诏薄葬"} ,
+'汉武帝 刘彻': {"h": "—", "sh": "孝武皇帝", "m": "世宗", "f": "胶东王", "nat": "汉族", "b": "前156年 长安", "d": "前87年 五柞宫", "t": "茂陵", "an": "罢黜百家、独尊儒术；派张骞通西域、卫青霍去病击匈奴；晚年轮台罪己"} ,
+'汉光武帝 刘秀': {"h": "萧王", "sh": "光武皇帝", "m": "世祖", "f": "萧王", "nat": "汉族", "b": "前5年 济阳", "d": "57年 洛阳南宫", "t": "原陵", "an": "昆阳之战以少胜多；称帝后「柔道治国」，云台二十八将；「仕宦当作执金吾，娶妻当得阴丽华」"} ,
+'曹操': {"h": "—", "sh": "武皇帝（追谥）", "m": "太祖（追尊）", "f": "魏王、丞相", "nat": "汉族", "b": "155年 沛国谯县", "d": "220年 洛阳", "t": "高陵", "an": "挟天子以令诸侯、官渡破袁绍；「宁教我负天下人」；善诗文，建安风骨"} ,
+'曹丕': {"h": "—", "sh": "文皇帝", "m": "高祖", "f": "魏王、五官中郎将", "nat": "汉族", "b": "187年 沛国谯县", "d": "226年 洛阳", "t": "首阳陵", "an": "受禅代汉建魏；与曹植「七步诗」之争；著《典论·论文》"} ,
+'刘备': {"h": "—", "sh": "昭烈皇帝", "m": "烈祖", "f": "汉中王、宜城亭侯", "nat": "汉族", "b": "161年 涿郡涿县", "d": "223年 白帝城永安宫", "t": "惠陵", "an": "三顾茅庐得诸葛亮；赤壁联孙抗曹；夷陵之战大败，白帝托孤"} ,
+'孙权': {"h": "—", "sh": "大皇帝", "m": "太祖", "f": "吴王、讨虏将军", "nat": "汉族", "b": "182年 下邳", "d": "252年 建业", "t": "蒋陵", "an": "少年继兄业，赤壁破曹；晚年「二宫之争」，猜忌杀戮"} ,
+'晋武帝 司马炎': {"h": "—", "sh": "武皇帝", "m": "世祖", "f": "晋王、安昌侯", "nat": "汉族", "b": "236年 洛阳", "d": "290年 洛阳", "t": "峻阳陵", "an": "代魏建晋、灭吴统一；大封宗室、立傻太子，为八王之乱埋根"} ,
+'隋文帝 杨坚': {"h": "—", "sh": "文皇帝", "m": "高祖", "f": "隋国公、随王", "nat": "汉族", "b": "541年 冯翊般若寺", "d": "604年 仁寿宫", "t": "泰陵", "an": "代周建隋、统一南北；创三省六部与科举；惧内，与独孤皇后同辇"} ,
+'隋炀帝 杨广': {"h": "—", "sh": "炀皇帝（唐谥）", "m": "世祖（唐追）", "f": "晋王、扬州总管", "nat": "汉族", "b": "569年 长安", "d": "618年 江都", "t": "雷塘", "an": "开运河、建东都、三征高句丽；巡幸江都，终为宇文化及所杀"} ,
+'唐高祖 李渊': {"h": "—", "sh": "太武皇帝（后改神尧）", "m": "高祖", "f": "唐王、太原留守", "nat": "汉族", "b": "566年 长安", "d": "635年 大安宫", "t": "献陵", "an": "晋阳起兵、入长安建唐；晚年诸子相争，玄武门之变后退位"} ,
+'唐太宗 李世民': {"h": "—", "sh": "文皇帝（文武大圣大广孝）", "m": "太宗", "f": "秦王、天策上将", "nat": "汉族", "b": "598年 武功别馆", "d": "649年 翠微宫含风殿", "t": "昭陵", "an": "玄武门之变夺位；纳谏如流，魏征直谏；被尊「天可汗」；《贞观政要》"} ,
+'唐高宗 李治': {"h": "—", "sh": "天皇大帝", "m": "高宗", "f": "晋王、太子", "nat": "汉族", "b": "628年 长安", "d": "683年 东都洛阳贞观殿", "t": "乾陵", "an": "灭高句丽、百济，版图最盛；晚年风眩，政归武则天"} ,
+'武则天': {"h": "武曌、则天大圣", "sh": "则天顺圣皇后", "m": "无（以太后称帝）", "f": "才人→昭仪→皇后→周皇帝", "nat": "汉族", "b": "624年 利州", "d": "705年 洛阳上阳宫", "t": "乾陵（与高宗合葬）", "an": "中国唯一女皇帝；立无字碑；任用酷吏，又开殿试武举"} ,
+'唐玄宗 李隆基': {"h": "—", "sh": "至道大圣大明孝皇帝", "m": "玄宗（明皇）", "f": "临淄王、平王", "nat": "汉族", "b": "685年 洛阳", "d": "762年 长安神龙殿", "t": "泰陵", "an": "开元盛世；宠杨贵妃、用李林甫杨国忠，酿安史之乱；梨园祖师"} ,
+'宋太祖 赵匡胤': {"h": "—", "sh": "英武圣文神德皇帝", "m": "太祖", "f": "殿前都点检、宋王", "nat": "汉族", "b": "927年 洛阳夹马营", "d": "976年 开封万岁殿", "t": "永昌陵", "an": "陈桥兵变黄袍加身；杯酒释兵权；「卧榻之侧岂容他人酣睡」"} ,
+'宋太宗 赵光义': {"h": "—", "sh": "神功圣德文武皇帝", "m": "太宗", "f": "晋王、开封尹", "nat": "汉族", "b": "939年 开封", "d": "997年 开封", "t": "永熙陵", "an": "「烛影斧声」继位之谜；灭北汉、伐辽失败；扩大科举取士"} ,
+'宋仁宗 赵祯': {"h": "—", "sh": "仁皇帝", "m": "仁宗", "f": "庆国公→太子", "nat": "汉族", "b": "1010年 开封", "d": "1063年 开封福宁殿", "t": "永昭陵", "an": "「仁宗盛治」，宽厚纳谏；包拯唾溅帝面而不怒；庆历新政"} ,
+'宋徽宗 赵佶': {"h": "教主道君皇帝", "sh": "圣文仁德显孝皇帝", "m": "徽宗", "f": "端王", "nat": "汉族", "b": "1082年 开封", "d": "1135年 五国城", "t": "永祐陵（衣冠冢）", "an": "瘦金体、花石纲、艮岳；联金灭辽，靖康之变被掳北去"} ,
+'元太祖 铁木真': {"h": "成吉思汗", "sh": "圣武皇帝", "m": "太祖", "f": "蒙古大汗", "nat": "蒙古族", "b": "1162年 斡难河畔", "d": "1227年 六盘山", "t": "起辇谷（密葬）", "an": "统一蒙古诸部；西征花剌子模；「人生最大之乐在于胜敌」"} ,
+'元世祖 忽必烈': {"h": "薛禅汗", "sh": "圣德神功文武皇帝", "m": "世祖", "f": "藩王→大汗", "nat": "蒙古族", "b": "1215年 漠北", "d": "1294年 大都", "t": "起辇谷", "an": "建元称帝、定都大都；灭南宋统一全国；行省制度、发行交钞"} ,
+'明太祖 朱元璋': {"h": "洪武皇帝", "sh": "高皇帝", "m": "太祖", "f": "吴王、左副元帅", "nat": "汉族", "b": "1328年 濠州钟离", "d": "1398年 南京西宫", "t": "孝陵", "an": "放牛娃、乞丐、和尚到开国皇帝；胡惟庸蓝玉案；设锦衣卫、废丞相"} ,
+'明成祖 朱棣': {"h": "—", "sh": "文皇帝", "m": "成祖（初谥太宗）", "f": "燕王", "nat": "汉族", "b": "1360年 应天", "d": "1424年 榆木川", "t": "长陵", "an": "靖难之役夺侄位；迁都北京、修《永乐大典》；郑和七下西洋"} ,
+'明神宗 朱翊钧': {"h": "—", "sh": "显皇帝", "m": "神宗", "f": "皇太子", "nat": "汉族", "b": "1563年 北京", "d": "1620年 弘德殿", "t": "定陵", "an": "张居正改革十年；亲政后近三十年不上朝；万历三大征"} ,
+'明思宗 朱由检': {"h": "—", "sh": "庄烈愍皇帝", "m": "思宗（毅宗）", "f": "信王", "nat": "汉族", "b": "1611年 北京", "d": "1644年 北京煤山", "t": "思陵", "an": "勤政节俭而多疑；诛魏忠贤；李自成破京，自缢煤山"} ,
+'清太祖 努尔哈赤': {"h": "天命汗", "sh": "武皇帝", "m": "太祖", "f": "建州左卫都督、龙虎将军", "nat": "满族", "b": "1559年 赫图阿拉", "d": "1626年 叆鸡堡", "t": "福陵", "an": "十三副遗甲起兵；创八旗制度、满文；萨尔浒大破明军"} ,
+'清圣祖 玄烨': {"h": "—", "sh": "仁皇帝", "m": "圣祖", "f": "皇三子→皇帝", "nat": "满族", "b": "1654年 北京紫禁城", "d": "1722年 畅春园", "t": "景陵", "an": "八岁登基、擒鳌拜；平三藩、收台湾、抗沙俄；九子夺嫡"} ,
+'清高宗 弘历': {"h": "十全老人", "sh": "纯皇帝", "m": "高宗", "f": "宝亲王", "nat": "满族", "b": "1711年 雍亲王府", "d": "1799年 养心殿", "t": "裕陵", "an": "十全武功、编《四库全书》；六下江南；宠和珅，闭关锁国"} ,
+'清德宗 载湉': {"h": "—", "sh": "景皇帝", "m": "德宗", "f": "醇亲王之子", "nat": "满族", "b": "1871年 醇亲王府", "d": "1908年 中南海瀛台", "t": "崇陵", "an": "戊戌变法百日维新；被慈禧囚于瀛台；「瀛台泣血」"} ,
+'宣统 溥仪': {"h": "—", "sh": "无", "m": "无", "f": "皇帝→公民", "nat": "满族", "b": "1906年 醇亲王府", "d": "1967年 北京", "t": "华龙皇家陵园（后迁）", "an": "三岁登基、两次退位；伪满皇帝；抚顺战犯管理所改造，著《我的前半生》"} ,
+'天王 洪秀全': {"h": "天王", "sh": "无", "m": "无", "f": "天王", "nat": "汉族（客家人）", "b": "1814年 广东花县", "d": "1864年 天京", "t": "—", "an": "落第书生创拜上帝会；金田起义建太平天国；天京事变内讧"}
+};
+var LIFESPAN = {
+'秦始皇 嬴政': "前259—前210" ,
+'汉高祖 刘邦': "前256—前195" ,
+'汉文帝 刘恒': "前203—前157" ,
+'汉景帝 刘启': "前188—前141" ,
+'汉武帝 刘彻': "前156—前87" ,
+'汉光武帝 刘秀': "前5—57" ,
+'汉明帝 刘庄': "28—75" ,
+'汉章帝 刘炟': "57—88" ,
+'汉灵帝 刘宏': "156—189" ,
+'汉献帝 刘协': "181—234" ,
+'曹操': "155—220" ,
+'曹丕': "187—226" ,
+'魏明帝 曹叡': "204—239" ,
+'刘备': "161—223" ,
+'后主 刘禅': "207—271" ,
+'孙权': "182—252" ,
+'晋武帝 司马炎': "236—290" ,
+'晋惠帝 司马衷': "259—307" ,
+'晋元帝 司马睿': "276—323" ,
+'晋明帝 司马绍': "299—325" ,
+'晋孝武帝 司马曜': "362—396" ,
+'隋文帝 杨坚': "541—604" ,
+'隋炀帝 杨广': "569—618" ,
+'唐高祖 李渊': "566—635" ,
+'唐太宗 李世民': "598—649" ,
+'唐高宗 李治': "628—683" ,
+'武则天': "624—705" ,
+'唐玄宗 李隆基': "685—762" ,
+'唐肃宗 李亨': "711—762" ,
+'唐代宗 李豫': "726—779" ,
+'唐德宗 李适': "742—805" ,
+'唐顺宗 李诵': "761—806" ,
+'唐宪宗 李纯': "778—820" ,
+'唐宣宗 李忱': "810—859" ,
+'唐懿宗 李漼': "833—873" ,
+'唐僖宗 李儇': "862—888" ,
+'唐昭宗 李晔': "867—904" ,
+'唐哀帝 李柷': "892—908" ,
+'宋太祖 赵匡胤': "927—976" ,
+'宋太宗 赵光义': "939—997" ,
+'宋真宗 赵恒': "968—1022" ,
+'宋仁宗 赵祯': "1010—1063" ,
+'宋英宗 赵曙': "1032—1067" ,
+'宋神宗 赵顼': "1048—1085" ,
+'宋哲宗 赵煦': "1077—1100" ,
+'宋徽宗 赵佶': "1082—1135" ,
+'宋钦宗 赵桓': "1100—1161" ,
+'宋高宗 赵构': "1107—1187" ,
+'宋孝宗 赵昚': "1127—1194" ,
+'宋光宗 赵惇': "1147—1200" ,
+'宋宁宗 赵扩': "1168—1224" ,
+'宋理宗 赵昀': "1205—1264" ,
+'宋度宗 赵禥': "1240—1274" ,
+'辽太祖 耶律阿保机': "872—926" ,
+'辽太宗 耶律德光': "902—947" ,
+'辽圣宗 耶律隆绪': "972—1031" ,
+'金太祖 完颜阿骨打': "1068—1123" ,
+'金世宗 完颜雍': "1123—1189" ,
+'元太祖 铁木真': "1162—1227" ,
+'元世祖 忽必烈': "1215—1294" ,
+'元顺帝 妥懽帖睦尔': "1320—1370" ,
+'明太祖 朱元璋': "1328—1398" ,
+'明成祖 朱棣': "1360—1424" ,
+'明仁宗 朱高炽': "1378—1425" ,
+'明宣宗 朱瞻基': "1399—1435" ,
+'明英宗 朱祁镇': "1427—1464" ,
+'明代宗 朱祁钰': "1428—1457" ,
+'明宪宗 朱见深': "1447—1487" ,
+'明孝宗 朱祐樘': "1470—1505" ,
+'明武宗 朱厚照': "1491—1521" ,
+'明世宗 朱厚熜': "1507—1567" ,
+'明神宗 朱翊钧': "1563—1620" ,
+'明光宗 朱常洛': "1582—1620" ,
+'明熹宗 朱由校': "1605—1627" ,
+'明思宗 朱由检': "1611—1644" ,
+'清太祖 努尔哈赤': "1559—1626" ,
+'清太宗 皇太极': "1592—1643" ,
+'清世祖 福临': "1638—1661" ,
+'清圣祖 玄烨': "1654—1722" ,
+'清世宗 胤禛': "1678—1735" ,
+'清高宗 弘历': "1711—1799" ,
+'清仁宗 颙琰': "1760—1820" ,
+'清宣宗 旻宁': "1782—1850" ,
+'清文宗 奕詝': "1831—1861" ,
+'清穆宗 载淳': "1856—1875" ,
+'清德宗 载湉': "1871—1908" ,
+'宣统 溥仪': "1906—1967" ,
+'天王 洪秀全': "1814—1864"
+};
+var MOTHER = {
+'秦始皇 嬴政': "赵姬" ,
+'汉高祖 刘邦': "刘媪" ,
+'汉文帝 刘恒': "薄姬" ,
+'汉景帝 刘启': "窦漪房" ,
+'汉武帝 刘彻': "王娡" ,
+'汉宣帝 刘询': "王翁须" ,
+'汉元帝 刘奭': "许平君" ,
+'汉成帝 刘骜': "王政君" ,
+'汉光武帝 刘秀': "阴氏" ,
+'孙权': "吴夫人" ,
+'晋武帝 司马炎': "王元姬" ,
+'晋惠帝 司马衷': "杨艳" ,
+'隋文帝 杨坚': "吕苦桃" ,
+'隋炀帝 杨广': "独孤伽罗" ,
+'唐高祖 李渊': "独孤氏" ,
+'唐太宗 李世民': "窦皇后" ,
+'武则天': "杨氏" ,
+'宋太祖 赵匡胤': "杜氏" ,
+'宋太宗 赵光义': "杜氏" ,
+'宋真宗 赵恒': "李氏（元德皇后）" ,
+'元世祖 忽必烈': "唆鲁禾帖尼" ,
+'明太祖 朱元璋': "陈氏" ,
+'明成祖 朱棣': "碽妃" ,
+'明仁宗 朱高炽': "徐皇后" ,
+'明宣宗 朱瞻基': "张皇后" ,
+'清太祖 努尔哈赤': "喜塔腊氏（额穆齐）" ,
+'清太宗 皇太极': "孟古哲哲" ,
+'清世祖 福临': "孝庄" ,
+'清圣祖 玄烨': "佟妃" ,
+'清世宗 胤禛': "德妃乌雅氏" ,
+'清高宗 弘历': "熹贵妃钮祜禄氏" ,
+'清仁宗 颙琰': "令贵妃魏氏" ,
+'清宣宗 旻宁': "喜塔腊氏" ,
+'清文宗 奕詝': "全贵妃钮祜禄氏" ,
+'宣统 溥仪': "瓜尔佳氏（幼兰）" ,
+'天王 洪秀全': "？" ,
+'周武王 姬发': "太姒" ,
+'大禹 姒文命': "女志" ,
+'黄帝': "附宝" ,
+'帝喾': "？" ,
+'舜': "握登" ,
+'辽太祖 耶律阿保机': "述律平"
+};
+var CROWN = {
+'汉高祖 刘邦': ["吕雉（字娥姁）", "刘盈（惠帝）、刘如意、刘恒（文帝）、刘长等八子"],
+'汉惠帝 刘盈': ["张嫣", "无亲生，养子刘恭、刘弘"],
+'汉文帝 刘恒': ["窦漪房", "刘启（景帝）、刘武（梁孝王）"],
+'汉景帝 刘启': ["王娡", "刘彻（武帝）等十四子"],
+'汉武帝 刘彻': ["卫子夫", "刘据（戾太子）、刘弗陵（昭帝）等"],
+'汉昭帝 刘弗陵': ["上官氏", "无嗣"],
+'汉宣帝 刘询': ["许平君", "刘奭（元帝）"],
+'汉元帝 刘奭': ["王政君", "刘骜（成帝）"],
+'汉成帝 刘骜': ["赵飞燕（赵宜主）", "无嗣"],
+'汉哀帝 刘欣': ["傅氏", "无嗣"],
+'汉平帝 刘衎': ["王氏", "无嗣"],
+'王莽': ["孝睦皇后王氏", "王获、王宇等"],
+'汉光武帝 刘秀': ["阴丽华", "刘庄（明帝）、刘苍（东平王）等"],
+'汉明帝 刘庄': ["马氏（明德皇后）", "刘炟（章帝）"],
+'汉章帝 刘炟': ["窦氏（章德皇后）", "刘肇（和帝）"],
+'汉和帝 刘肇': ["邓绥（邓太后）", "刘胜、刘隆（殇帝）"],
+'汉灵帝 刘宏': ["何氏（灵思皇后）", "刘辩（少帝）、刘协（献帝）"],
+'汉献帝 刘协': ["伏寿（伏皇后）", "刘冯、刘熙，皆被害"],
+'曹丕': ["郭女王（文德皇后郭氏）", "曹叡（明帝）"],
+'魏明帝 曹叡': ["毛氏（明悼皇后）", "养子曹芳等，诸子早夭"],
+'刘备': ["吴氏（穆皇后）", "刘禅（后主）"],
+'后主 刘禅': ["张氏（张皇后）", "刘璿、刘瑶等七子"],
+'孙权': ["步练师", "孙鲁班、孙鲁育（女），太子孙登非其所生"],
+'晋武帝 司马炎': ["杨艳（武元皇后）", "司马衷（惠帝）等"],
+'晋惠帝 司马衷': ["贾南风", "无亲生，太子司马遹为谢夫人所出"],
+'晋元帝 司马睿': ["虞孟母（元敬皇后）", "无子，明帝为荀氏所生"],
+'晋明帝 司马绍': ["庾文君（明穆皇后）", "司马衍（成帝）、司马岳（康帝）"],
+'晋康帝 司马岳': ["褚蒜子（康献皇后）", "司马聃（穆帝）"],
+'晋穆帝 司马聃': ["何法倪（穆章皇后）", "无嗣"],
+'晋孝武帝 司马曜': ["王法慧（孝武定皇后）", "司马德宗（安帝）、司马德文（恭帝）"],
+'晋恭帝 司马德文': ["褚灵媛（恭思皇后）", "无子"],
+'宋武帝 刘裕': ["臧爱亲（武敬皇后）", "刘义符（少帝）"],
+'宋文帝 刘义隆': ["袁齐妫（文元皇后）", "刘劭、刘骏（孝武帝）"],
+'宋孝武帝 刘骏': ["王宪嫄（文穆皇后）", "刘子业（前废帝）等"],
+'齐高帝 萧道成': ["刘智容（高昭皇后）", "萧赜（武帝）"],
+'齐武帝 萧赜': ["裴惠昭（武穆皇后）", "萧长懋、萧子良"],
+'梁武帝 萧衍': ["郗徽（德皇后）", "无子，昭明太子等为丁令光所生"],
+'梁简文帝 萧纲': ["王灵宾（简皇后）", "萧大器等"],
+'陈后主 陈叔宝': ["张丽华（贵妃）", "陈深等"],
+'文成帝 拓跋濬': ["冯氏（文成文明皇后）", "拓跋弘（献文帝）"],
+'孝文帝 元宏': ["冯润（孝文幽皇后）", "无子，宣武帝为高氏所生"],
+'宣武帝 元恪': ["胡氏（宣武灵皇后）", "元诩（孝明帝）"],
+'孝静帝 元善见': ["高氏（高皇后）", "无子"],
+'文帝 元宝炬': ["乙弗氏（文皇后）", "元钦（废帝）"],
+'文宣帝 高洋': ["李祖娥（昭信皇后）", "高殷（废帝）"],
+'武成帝 高湛': ["胡氏（武成皇后）", "高纬（后主）"],
+'后主 高纬': ["冯小怜（左皇后）", "无子"],
+'武帝 宇文邕': ["阿史那氏（武成皇后）", "无子"],
+'宣帝 宇文赟': ["杨丽华（天元皇后）", "无子，静帝为朱满月所生"],
+'隋文帝 杨坚': ["独孤伽罗（文献皇后）", "杨勇、杨广（炀帝）、杨俊、杨秀、杨谅"],
+'隋炀帝 杨广': ["萧皇后", "杨昭（元德太子）、杨暕"],
+'唐高祖 李渊': ["窦氏（太穆皇后）", "李建成、李世民、李玄霸、李元吉"],
+'唐太宗 李世民': ["长孙氏（小字观音婢）", "李承乾、李泰、李治（高宗）、李恪等"],
+'唐高宗 李治': ["武则天（武曌）", "李弘、李贤、李显（中宗）、李旦（睿宗）"],
+'武则天 武曌': ["无（以皇太后称帝）", "李弘、李贤、李显、李旦"],
+'唐中宗 李显': ["韦氏（韦皇后）", "李重润（懿德太子）"],
+'唐睿宗 李旦': ["窦氏（昭成皇后）", "李成器、李隆基（玄宗）"],
+'唐玄宗 李隆基': ["王皇后；贵妃杨玉环（杨太真）", "李亨（肃宗）、李瑛等"],
+'唐肃宗 李亨': ["张氏（张皇后）", "李豫（代宗）"],
+'唐代宗 李豫': ["独孤氏（贞懿皇后）", "李适（德宗）"],
+'唐德宗 李适': ["王氏（昭德皇后）", "李诵（顺宗）"],
+'唐宪宗 李纯': ["郭氏（懿安皇后）", "李恒（穆宗）"],
+'唐宣宗 李忱': ["晁氏（元昭皇后）", "李漼（懿宗）"],
+'唐昭宗 李晔': ["何氏（积善皇后）", "李柷（哀帝）"],
+'宋太祖 赵匡胤': ["王氏（孝明皇后）", "赵德昭、赵德芳"],
+'宋太宗 赵光义': ["李氏（明德皇后）", "赵恒（真宗）"],
+'宋真宗 赵恒': ["刘娥（章献明肃皇后）", "赵祯（仁宗，李宸妃所生）"],
+'宋仁宗 赵祯': ["曹氏（慈圣光献皇后）", "三子早夭，以赵曙为养子"],
+'宋英宗 赵曙': ["高氏（宣仁圣烈皇后高滔滔）", "赵顼（神宗）"],
+'宋神宗 赵顼': ["向氏（钦圣宪肃皇后）", "赵煦（哲宗）、赵佶（徽宗）"],
+'宋哲宗 赵煦': ["孟氏（昭慈圣献皇后）", "无嗣"],
+'宋徽宗 赵佶': ["郑氏（显肃皇后）", "赵桓（钦宗）等三十余子"],
+'宋钦宗 赵桓': ["朱氏（仁怀皇后）", "赵谌"],
+'宋高宗 赵构': ["吴氏（宪圣慈烈皇后）", "无嗣，养子赵昚（孝宗）"],
+'宋孝宗 赵昚': ["谢氏（成肃皇后）", "赵惇（光宗）"],
+'宋光宗 赵惇': ["李凤娘（慈懿皇后）", "赵扩（宁宗）"],
+'宋宁宗 赵扩': ["韩氏（恭淑皇后）", "无嗣，养子赵昀（理宗）"],
+'宋理宗 赵昀': ["谢道清（谢太后）", "无嗣，养子赵禥（度宗）"],
+'宋度宗 赵禥': ["全氏（全皇后）", "赵㬎（恭帝）"],
+'辽太祖 耶律阿保机': ["述律平（淳钦皇后）", "耶律倍、耶律德光（太宗）、耶律李胡"],
+'辽太宗 耶律德光': ["萧温（靖安皇后）", "耶律璟（穆宗）"],
+'辽景宗 耶律贤': ["萧燕燕（萧绰，承天太后）", "耶律隆绪（圣宗）"],
+'景宗 李元昊': ["野利氏（宪成皇后）", "李谅祚（毅宗）"],
+'金世宗 完颜雍': ["乌林答氏（昭德皇后）", "完颜允恭（显宗，章宗之父）"],
+'元世祖 忽必烈': ["弘吉剌·察必（昭睿顺圣皇后）", "真金（裕宗）"],
+'元顺帝 妥懽帖睦尔': ["奇氏（奇完者忽都，完者忽都皇后）", "爱猷识理达腊（昭宗）"],
+'明太祖 朱元璋': ["马皇后（马秀英，孝慈高皇后）", "朱标、朱樉、朱棡、朱棣（成祖）等"],
+'明惠帝 朱允炆': ["马氏（孝愍让皇后）", "朱文奎、朱文圭"],
+'明成祖 朱棣': ["徐皇后（徐妙云?，仁孝文皇后）", "朱高炽（仁宗）、朱高煦、朱高燧"],
+'明仁宗 朱高炽': ["张皇后（诚孝昭皇后）", "朱瞻基（宣宗）"],
+'明宣宗 朱瞻基': ["孙氏（孝恭章皇后）", "朱祁镇（英宗）"],
+'明英宗 朱祁镇': ["钱皇后（孝庄钱皇后）", "无子，宪宗为周贵妃所生"],
+'明代宗 朱祁钰': ["汪氏（孝渊景皇后）", "朱见济（怀献太子）"],
+'明宪宗 朱见深': ["万贵妃（万贞儿）", "无子，孝宗为纪氏所生"],
+'明孝宗 朱祐樘': ["张皇后（孝康敬皇后）", "朱厚照（武宗）"],
+'明武宗 朱厚照': ["夏皇后（孝静毅皇后）", "无嗣"],
+'明世宗 朱厚熜': ["陈氏（孝洁肃皇后）", "无子，穆宗为杜氏所生"],
+'明神宗 朱翊钧': ["王皇后（孝端显皇后）", "无子，光宗为恭妃王氏所生"],
+'明光宗 朱常洛': ["郭氏（孝元贞皇后）", "无子，熹宗为王氏所生"],
+'明熹宗 朱由校': ["张氏（懿安皇后）", "三子早夭，无嗣"],
+'明思宗 朱由检': ["周皇后（庄烈愍皇后）", "朱慈烺、朱慈炯、朱慈炤"],
+'清太祖 努尔哈赤': ["孟古哲哲（孝慈高皇后）", "皇太极（太宗）"],
+'清太宗 皇太极': ["博尔济吉特·哲哲（孝端正敬皇后）", "无子，世祖为孝庄所生"],
+'清世祖 福临': ["博尔济吉特氏（孝惠章皇后）", "无子，圣祖为佟妃所生"],
+'清圣祖 玄烨': ["赫舍里氏（孝诚仁皇后）", "胤礽（理密亲王）"],
+'清世宗 胤禛': ["乌拉那拉氏（孝敬宪皇后）", "无子，高宗为熹贵妃所生"],
+'清高宗 弘历': ["富察氏（孝贤纯皇后）", "永琏、永琮"],
+'清仁宗 颙琰': ["喜塔腊氏（孝淑睿皇后）", "旻宁（宣宗）"],
+'清宣宗 旻宁': ["佟佳氏（孝慎成皇后）", "无子，文宗为全贵妃所生"],
+'清文宗 奕詝': ["钮祜禄氏（慈安，孝贞显皇后）", "无子，穆宗为懿贵妃所生"],
+'清穆宗 载淳': ["阿鲁特氏（孝哲毅皇后）", "无嗣"],
+'清德宗 载湉': ["叶赫那拉氏（隆裕，孝定景皇后）", "无嗣"],
+'宣统 溥仪': ["郭布罗·婉容", "无嗣"],
+'天王 洪秀全': ["赖莲英（又赖氏「王娘」）", "洪天贵福（幼主）"],
+'周武王 姬发': ["邑姜（姜太公之女）", "姬诵（成王）、姬虞（唐叔虞）"],
+'周成王 姬诵': ["王姒", "姬钊（康王）"],
+'周宣王 姬静': ["姜后（齐姜）", "姬宫湦（幽王）"],
+'周幽王 姬宫湦': ["申后；褒姒", "姬宜臼（平王，申后生）、伯服（褒姒生）"],
+'秦始皇 嬴政': ["未立皇后", "扶苏、胡亥等二十余子"],
+'商汤 子履': ["有莘氏", "外丙、仲壬，太子太丁早卒"],
+'帝辛 子受': ["妲己", "武庚（禄父）等"],
+'桀 姒履癸': ["妺喜（末喜）", "无嗣可考"],
+'大禹 姒文命': ["涂山氏（女娇）", "启"],
+'黄帝': ["嫘祖；次妃嫫母", "玄嚣、昌意等二十五子"],
+'舜': ["娥皇、女英", "商均"],
+'帝喾': ["姜嫄、简狄、庆都、常仪", "弃（后稷）、契、尧、挚"],
+'伏羲': ["女娲（传说，兄妹而为夫妇）", "传说无考"]
+};
+var INTRO = {
+'秦始皇 嬴政': '前221 年称皇帝，废分封、行郡县，统一文字度量衡，北筑长城、南征百越；晚年严刑厚役，为秦亡埋下伏笔。',
+'秦二世 胡亥': '沙丘之变后继位，委政赵高，诛戮宗室大臣，天下大乱；前207 年为赵高所逼自尽。',
+'汉高祖 刘邦': '起于亭长，楚汉相争五年而胜，定都长安；轻徭薄赋、约法三章，开汉家四百年基业。',
+'汉文帝 刘恒': '以代王入继大统，节俭宽刑，废肉刑、免田租，与景帝并称「文景之治」。',
+'汉景帝 刘启': '承文帝之政，平七国之乱、收诸侯之权，仓廪充实，为武帝用兵积下家底。',
+'汉武帝 刘彻': '罢黜百家、独尊儒术，北击匈奴、通西域、开丝路；晚年下轮台诏悔过，国力亦耗。',
+'汉宣帝 刘询': '起于民间，知吏治得失；昭宣中兴之主，设西域都护，匈奴呼韩邪来朝。',
+'汉光武帝 刘秀': '昆阳破莽军，重建汉室，定都洛阳；柔道治国、释放奴婢、裁并郡县，号为「光武中兴」。',
+'汉献帝 刘协': '九岁登基，终身傀儡；先受制于董卓、李傕，后为曹操挟持，220 年禅位曹丕，汉室告终。',
+'王莽': '以外戚篡汉建新，托古改制、屡更币制，天下汹汹；绿林军破长安，身死国灭。',
+'曹丕': '代汉称帝，定九品中正制；善诗文，与父操、弟植并称「三曹」。',
+'刘备': '织席贩履而起，三顾茅庐得诸葛亮，赤壁联孙抗曹，取益州称帝；夷陵大败后病逝白帝城。',
+'孙权': '承父兄之业据江东，赤壁拒曹、夷陵拒蜀，229 年称帝建吴；晚年猜忌，嫡庶相争。',
+'晋武帝 司马炎': '代魏灭吴，结束三国分裂；大封宗室、纵容奢靡，为八王之乱埋祸。',
+'晋惠帝 司马衷': '性愚，闻饥荒问「何不食肉糜」；在位逢八王之乱，终为东海王所毒。',
+'隋文帝 杨坚': '代周建隋，589 年灭陈一统；创三省六部与科举，轻徭薄赋，史称「开皇之治」。',
+'隋炀帝 杨广': '营洛阳、开运河、三征高句丽，民力耗尽；江都之变中被弑，隋随之亡。',
+'唐高祖 李渊': '太原起兵入长安，建唐；在位平定群雄，晚年玄武门之变后退为太上皇。',
+'唐太宗 李世民': '玄武门夺位，贞观之治纳谏省刑、四夷宾服，被尊「天可汗」；《贞观政要》为后世治世范本。',
+'唐高宗 李治': '承贞观之治，灭西突厥、百济、高句丽，版图最盛；晚年武后预政，二圣并称。',
+'武则天 武曌': '由才人、皇后至皇帝，改国号「周」，中国史上唯一女帝；创殿试、重寒门，晚年还政李唐。',
+'唐玄宗 李隆基': '开元盛世之主，晚年宠杨贵妃、任李林甫杨国忠，安史之乱起，盛世崩解。',
+'唐肃宗 李亨': '灵武即位，借回纥兵平乱，收复两京；重用宦官，开中晚唐宦官干政之端。',
+'唐德宗 李适': '削藩引发四镇之乱与泾原兵变，出奔奉天；后用两税法，财政稍苏。',
+'唐宪宗 李纯': '元和削藩，淮西、淄青相继归服，史称「元和中兴」；晚年好仙药，为宦官所弑。',
+'唐宣宗 李忱': '装傻多年而即位，勤政纳谏、抑制宦官，人称「小太宗」，大中年间为晚唐最安之日。',
+'唐哀帝 李柷': '十三岁即位，完全受制朱温，907 年禅位，唐亡。',
+'宋太祖 赵匡胤': '陈桥兵变黄袍加身，杯酒释兵权、重文抑武，定「不杀士大夫」之誓，开三百年文治。',
+'宋太宗 赵光义': '完成南方统一，两次伐辽失利；扩大科举，编《太平御览》诸书。',
+'宋真宗 赵恒': '澶渊之盟以岁币换和平，此后封禅崇道、粉饰太平。',
+'宋仁宗 赵祯': '在位四十二年，宽仁纳谏，庆历新政与《武经总要》并出；士大夫称「仁宗盛治」。',
+'宋神宗 赵顼': '锐意变法，用王安石行青苗、免役、保甲诸法；五路伐夏败于永乐城，郁郁而终。',
+'宋徽宗 赵佶': '书画大家，创瘦金体；任用蔡京、童贯，联金灭辽而引狼入室，靖康被俘。',
+'宋钦宗 赵桓': '临危受命，战和不定，1127 年汴京陷落，与父同被北掳，北宋亡。',
+'辽太祖 耶律阿保机': '统一契丹八部，创契丹文字，建元神册，为辽朝开国之主。',
+'金太祖 完颜阿骨打': '起兵反辽，护步答冈一役破辽主力，建金称帝；创猛安谋克。',
+'金世宗 完颜雍': '大定之治，与南宋议和、轻徭薄赋，号称「小尧舜」。',
+'元世祖 忽必烈': '建元中统，定都大都，灭南宋一统天下；行省制、开通运河，亦四征海外而多败。',
+'元顺帝 妥懽帖睦尔': '在位后期黄河泛滥、红巾并起；1368 年弃大都北遁，元廷退居漠北。',
+'明太祖 朱元璋': '布衣起兵，驱逐元廷，废丞相、设锦衣卫，重典治吏；洪武之治与严酷并存。',
+'明成祖 朱棣': '靖难夺位，迁都北京、五征漠北、郑和下西洋、修《永乐大典》。',
+'明英宗 朱祁镇': '宠王振而致土木之变被俘；复辟后杀于谦，天顺年间朝政反复。',
+'明神宗 朱翊钧': '前十年张居正改革，国势中兴；后三十年怠政，辽东边患渐起。',
+'明思宗 朱由检': '勤政而多疑，诛魏忠贤、杀袁崇焕；内忧外患交迫，1644 年自缢煤山。',
+'清圣祖 玄烨': '平三藩、收台湾、拒沙俄、征噶尔丹；编《康熙字典》，开康乾盛世之局。',
+'清世宗 胤禛': '雍正勤政，摊丁入亩、设军机处、改土归流；严酷整肃，为乾隆积财。',
+'清高宗 弘历': '在位六十年，十全武功、修《四库全书》；晚年和珅专权，盛世见顶而衰。',
+'清宣宗 旻宁': '鸦片战争败于英国，《南京条约》开五口，中国近代史由此始。',
+'清文宗 奕詝': '内逢太平天国、外遭英法联军，圆明园被焚，避走热河而崩。',
+'清德宗 载湉': '戊戌变法百日而败，被慈禧幽禁瀛台；庚子后推行新政而未及见。',
+'宣统 溥仪': '三岁登基，1912 年退位；后为伪满傀儡，新中国改造为普通公民。',
+'天王 洪秀全': '落第书生创拜上帝会，金田起义建太平天国，定都天京；后期猜忌，天京事变后势衰。',
+'周武王 姬发': '牧野一战灭商，分封诸侯、制礼作乐之基；克商二年而崩。',
+'周幽王 姬宫湦': '宠褒姒、废申后与太子，烽火戏诸侯；犬戎破镐京，西周亡。',
+'商汤 子履': '鸣条灭夏，宽仁「网开一面」，建立商朝。',
+'帝辛 子受': '即商纣王，材力过人而酒池肉林、拒谏诛贤；牧野倒戈，自焚于鹿台。',
+'桀 姒履癸': '夏末暴君，宠妺喜、虐百姓，鸣条败于商汤，夏亡。',
+'大禹 姒文命': '治水十三年三过家门不入，受舜禅建夏，划九州、铸九鼎。'
+};
+var QUEEN = {
+'伏羲': '女娲（传说）',
+'神农（炎帝）': '听訞',
+'黄帝': '嫘祖',
+'帝喾': '姜嫄、简狄',
+'尧': '女皇',
+'舜': '娥皇、女英',
+'大禹 姒文命': '涂山氏（女娇）',
+'桀 姒履癸': '妺喜',
+'商汤 子履': '有莘氏',
+'武丁 子昭': '妇好',
+'帝辛 子受': '妲己',
+'周武王 姬发': '邑姜',
+'周成王 姬诵': '王姒',
+'周宣王 姬静': '姜后（齐姜）',
+'周幽王 姬宫湦': '申后、褒姒',
+'周襄王 姬郑': '隗后（狄后）',
+'秦始皇 嬴政': '未立皇后',
+'汉高祖 刘邦': '吕雉',
+'汉惠帝 刘盈': '张嫣',
+'汉文帝 刘恒': '窦漪房',
+'汉景帝 刘启': '王娡',
+'汉武帝 刘彻': '卫子夫',
+'汉昭帝 刘弗陵': '上官氏',
+'汉宣帝 刘询': '许平君',
+'汉元帝 刘奭': '王政君',
+'汉成帝 刘骜': '赵飞燕',
+'汉哀帝 刘欣': '傅氏',
+'汉平帝 刘衎': '王氏',
+'王莽': '孝睦皇后王氏',
+'汉光武帝 刘秀': '阴丽华',
+'汉明帝 刘庄': '马氏',
+'汉章帝 刘炟': '窦氏',
+'汉和帝 刘肇': '邓绥',
+'汉安帝 刘祜': '阎氏',
+'汉顺帝 刘保': '梁妠',
+'汉桓帝 刘志': '邓猛女',
+'汉灵帝 刘宏': '何氏',
+'汉献帝 刘协': '伏寿',
+'曹丕': '郭女王',
+'刘备': '吴氏（穆皇后）',
+'孙权': '步练师',
+'魏明帝 曹叡': '毛氏',
+'后主 刘禅': '张氏',
+'晋武帝 司马炎': '杨艳',
+'晋惠帝 司马衷': '贾南风',
+'晋怀帝 司马炽': '梁兰璧',
+'晋元帝 司马睿': '虞孟母',
+'晋明帝 司马绍': '庾文君',
+'晋成帝 司马衍': '杜氏',
+'晋康帝 司马岳': '褚蒜子',
+'晋穆帝 司马聃': '何法倪',
+'晋孝武帝 司马曜': '王法慧',
+'晋安帝 司马德宗': '王神爱',
+'晋恭帝 司马德文': '褚灵媛',
+'宋武帝 刘裕': '臧爱亲',
+'宋文帝 刘义隆': '袁齐妫',
+'宋孝武帝 刘骏': '王宪嫄',
+'宋明帝 刘彧': '王贞风',
+'齐高帝 萧道成': '刘智容',
+'齐武帝 萧赜': '裴惠昭',
+'东昏侯 萧宝卷': '潘玉儿',
+'梁武帝 萧衍': '郗徽',
+'梁简文帝 萧纲': '王灵宾',
+'陈后主 陈叔宝': '张丽华（贵妃）',
+'文成帝 拓跋濬': '冯氏（文明太后）',
+'孝文帝 元宏': '冯润',
+'宣武帝 元恪': '胡氏（胡太后）',
+'孝静帝 元善见': '高氏',
+'文帝 元宝炬': '乙弗氏',
+'废帝 元钦': '宇文氏',
+'文宣帝 高洋': '李祖娥',
+'武成帝 高湛': '胡氏',
+'后主 高纬': '冯小怜',
+'武帝 宇文邕': '阿史那氏',
+'宣帝 宇文赟': '杨丽华',
+'隋文帝 杨坚': '独孤伽罗',
+'隋炀帝 杨广': '萧皇后',
+'唐高祖 李渊': '窦氏',
+'唐太宗 李世民': '长孙氏',
+'唐高宗 李治': '武则天',
+'唐中宗 李显': '韦氏',
+'唐睿宗 李旦': '窦氏',
+'唐玄宗 李隆基': '杨玉环（贵妃）',
+'唐肃宗 李亨': '张氏',
+'唐代宗 李豫': '独孤氏',
+'唐德宗 李适': '王氏',
+'唐宪宗 李纯': '郭氏',
+'唐宣宗 李忱': '晁氏',
+'唐昭宗 李晔': '何氏',
+'宋太祖 赵匡胤': '王皇后',
+'宋太宗 赵光义': '李皇后',
+'宋真宗 赵恒': '刘娥',
+'宋仁宗 赵祯': '曹氏',
+'宋英宗 赵曙': '高氏',
+'宋神宗 赵顼': '向氏',
+'宋哲宗 赵煦': '孟氏',
+'宋徽宗 赵佶': '郑氏',
+'宋钦宗 赵桓': '朱氏',
+'辽太祖 耶律阿保机': '述律平',
+'辽太宗 耶律德光': '萧温',
+'辽世宗 耶律阮': '萧撒葛只',
+'辽景宗 耶律贤': '萧燕燕',
+'辽圣宗 耶律隆绪': '萧菩萨哥',
+'辽兴宗 耶律宗真': '萧挞里',
+'辽道宗 耶律洪基': '萧观音',
+'辽天祚帝 耶律延禧': '萧瑟瑟',
+'景宗 李元昊': '野利氏',
+'毅宗 李谅祚': '没藏氏',
+'惠宗 李秉常': '梁氏',
+'仁宗 李仁孝': '罔氏',
+'宋高宗 赵构': '吴氏',
+'宋孝宗 赵昚': '谢氏',
+'宋光宗 赵惇': '李凤娘',
+'宋宁宗 赵扩': '韩氏',
+'宋理宗 赵昀': '谢道清',
+'宋度宗 赵禥': '全氏',
+'海陵王 完颜亮': '徒单氏',
+'金世宗 完颜雍': '乌林答氏',
+'金章宗 完颜璟': '李师儿（元妃）',
+'金哀宗 完颜守绪': '徒单氏',
+'元世祖 忽必烈': '察必',
+'元成宗 铁穆耳': '卜鲁罕',
+'元仁宗 爱育黎拔力八达': '阿纳失失里',
+'元英宗 硕德八剌': '速哥八剌',
+'元文宗 图帖睦尔': '卜答失里',
+'元顺帝 妥懽帖睦尔': '奇氏',
+'明太祖 朱元璋': '马皇后',
+'明惠帝 朱允炆': '马氏',
+'明成祖 朱棣': '徐皇后',
+'明仁宗 朱高炽': '张皇后',
+'明宣宗 朱瞻基': '孙氏',
+'明英宗 朱祁镇': '钱皇后',
+'明代宗 朱祁钰': '汪氏',
+'明宪宗 朱见深': '万贵妃',
+'明孝宗 朱祐樘': '张皇后',
+'明武宗 朱厚照': '夏皇后',
+'明世宗 朱厚熜': '陈氏',
+'明神宗 朱翊钧': '王皇后',
+'明光宗 朱常洛': '郭氏',
+'明熹宗 朱由校': '张氏',
+'明思宗 朱由检': '周皇后',
+'隆武帝 朱聿键': '曾氏',
+'清太祖 努尔哈赤': '孟古哲哲',
+'清太宗 皇太极': '哲哲',
+'清世祖 福临': '孝惠章皇后',
+'清圣祖 玄烨': '赫舍里氏',
+'清世宗 胤禛': '乌拉那拉氏',
+'清高宗 弘历': '富察氏',
+'清仁宗 颙琰': '喜塔腊氏',
+'清宣宗 旻宁': '佟佳氏',
+'清文宗 奕詝': '慈安（钮祜禄氏）',
+'清穆宗 载淳': '阿鲁特氏',
+'清德宗 载湉': '隆裕（叶赫那拉氏）',
+'宣统 溥仪': '婉容',
+'天王 洪秀全': '赖莲英',
+'刘渊': '呼延氏',
+'石勒': '刘氏',
+'苻坚': '苟氏',
+'慕容垂': '段氏'
+};
+var RULERS = {
+'三皇五帝':[['燧人',-2852,-2790,'传说，三皇之首，钻木取火',''],['伏羲',-2790,-2737,'传说，三皇之一，画八卦',''],['神农（炎帝）',-2737,-2737,'传说，尝百草、教耕稼',''],['黄帝',-2697,-2597,'传说，败炎帝、诛蚩尤',''],['颛顼',-2597,-2514,'传说，五帝之一',''],['帝喾',-2514,-2437,'传说，五帝之一',''],['尧',-2377,-2259,'传说，禅让于舜',''],['舜',-2259,-2208,'传说，禅让于禹','']],
+'夏':[['大禹 姒文命',-2070,-2061,'约，建立夏后氏',''],['启 姒启',-2061,-2052,'确立世袭',''],['太康 姒太康',-2049,-2038,'失国',''],['少康 姒少康',-1972,-1955,'少康中兴',''],['桀 姒履癸',-1652,-1600,'末代，商汤灭夏','']],
+'商':[['商汤 子履',-1600,-1588,'灭夏建商',''],['太甲 子至',-1580,-1570,'伊尹辅政',''],['盘庚 子旬',-1300,-1277,'迁都于殷',''],['武丁 子昭',-1250,-1192,'武丁中兴',''],['武乙 子瞿',-1147,-1113,'',''],['帝辛 子受',-1075,-1046,'即商纣王，牧野之战后自焚','']],
+'西周':[['周武王 姬发',-1046,-1043,'灭商建周',''],['周成王 姬诵',-1042,-1021,'成康之治',''],['周康王 姬钊',-1020,-996,'成康之治',''],['周穆王 姬满',-976,-922,'西征犬戎',''],['周厉王 姬胡',-877,-841,'国人暴动，出奔',''],['周宣王 姬静',-827,-782,'宣王中兴',''],['周幽王 姬宫湦',-781,-771,'犬戎破镐京','']],
+'东周·春秋':[['周平王 姬宜臼',-770,-720,'东迁洛邑',''],['周桓王 姬林',-719,-697,'繻葛之战',''],['周庄王 姬佗',-696,-682,'',''],['周惠王 姬阆',-676,-652,'王子颓之乱',''],['周襄王 姬郑',-651,-619,'葵丘之会',''],['周敬王 姬匄',-519,-476,'春秋末期','']],
+'东周·战国':[['周元王 姬仁',-475,-469,'',''],['周贞定王 姬介',-468,-441,'',''],['周威烈王 姬午',-425,-402,'三家分晋',''],['周显王 姬扁',-368,-321,'诸侯相继称王',''],['周慎靓王 姬定',-320,-315,'',''],['周赧王 姬延',-314,-256,'周王室灭亡','']],
+'秦':[['秦始皇 嬴政',-221,-210,'统一六国，称皇帝',''],['秦二世 胡亥',-210,-207,'赵高专权',''],['子婴',-207,-207,'降刘邦，秦亡','']],
+'西汉':[['汉高祖 刘邦',-202,-195,'',''],['汉惠帝 刘盈',-195,-188,'',''],['汉文帝 刘恒',-180,-157,'文景之治',''],['汉景帝 刘启',-157,-141,'文景之治',''],['汉武帝 刘彻',-141,-87,'北击匈奴、通西域','建元、元狩、太初'],['汉昭帝 刘弗陵',-87,-74,'','始元、元凤'],['汉宣帝 刘询',-74,-49,'昭宣中兴','本始、地节、神爵、甘露'],['汉元帝 刘奭',-49,-33,'','初元、永光'],['汉成帝 刘骜',-33,-7,'','建始、河平、永始'],['汉哀帝 刘欣',-7,-1,'','建平、元寿'],['汉平帝 刘衎',-1,5,'','元始'],['孺子婴 刘婴',6,8,'王莽摄政','居摄、初始']],
+'新':[['王莽',9,23,'托古改制，绿林破长安','始建国、天凤、地皇']],
+'东汉':[['汉光武帝 刘秀',25,57,'光武中兴','建武、中元'],['汉明帝 刘庄',57,75,'明章之治','永平'],['汉章帝 刘炟',75,88,'明章之治','建初、元和、章和'],['汉和帝 刘肇',88,106,'','永元、元兴'],['汉安帝 刘祜',106,125,'','永初、元初、延光'],['汉顺帝 刘保',125,144,'','永建、阳嘉、永和'],['汉桓帝 刘志',146,168,'党锢之祸','建和、永寿、延熹'],['汉灵帝 刘宏',168,189,'黄巾起义','建宁、熹平、中平'],['汉献帝 刘协',189,220,'禅位曹丕','初平、兴平、建安']],
+'三国':[['曹丕',220,226,'魏，代汉称帝','黄初'],['刘备',221,223,'蜀汉，称帝于成都','章武'],['孙权',229,252,'东吴，称帝于建业','黄龙、嘉禾、赤乌']],
+'三国·曹魏':[['魏文帝 曹丕',220,226,'代汉称帝','黄初'],['魏明帝 曹叡',226,239,'','太和、青龙、景初'],['齐王 曹芳',239,254,'','正始、嘉平'],['高贵乡公 曹髦',254,260,'','正元、甘露'],['魏元帝 曹奂',260,266,'禅位司马炎','景元、咸熙']],
+'三国·蜀汉':[['昭烈帝 刘备',221,223,'成都称帝','章武'],['后主 刘禅',223,263,'出降','建兴、延熙、景耀、炎兴']],
+'三国·东吴':[['吴大帝 孙权',229,252,'称帝','黄龙、嘉禾、赤乌'],['会稽王 孙亮',252,258,'','建兴、五凤、太平'],['吴景帝 孙休',258,264,'','永安'],['吴末帝 孙皓',264,280,'降晋','元兴、甘露、天纪']],
+'西晋':[['晋武帝 司马炎',266,290,'代魏灭吴','泰始、咸宁、太康'],['晋惠帝 司马衷',290,306,'八王之乱','永熙、元康、永康'],['晋怀帝 司马炽',306,313,'永嘉之乱','永嘉'],['晋愍帝 司马邺',313,316,'长安陷落','建兴']],
+'东晋':[['晋元帝 司马睿',317,323,'南渡建康','建武、太兴、永昌'],['晋明帝 司马绍',323,325,'','太宁'],['晋成帝 司马衍',325,342,'','咸和、咸康'],['晋康帝 司马岳',342,344,'','建元'],['晋穆帝 司马聃',344,361,'','永和、升平'],['晋简文帝 司马昱',371,372,'','咸安'],['晋孝武帝 司马曜',372,396,'淝水之战','宁康、太元'],['晋安帝 司马德宗',396,418,'','隆安、元兴、义熙'],['晋恭帝 司马德文',418,420,'禅位刘裕','元熙']],
+'南朝·宋':[['宋武帝 刘裕',420,422,'代晋建宋','永初'],['宋少帝 刘义符',422,424,'','景平'],['宋文帝 刘义隆',424,453,'元嘉之治','元嘉'],['宋孝武帝 刘骏',453,464,'','孝建、大明'],['宋明帝 刘彧',465,472,'','泰始、泰豫'],['宋后废帝 刘昱',472,477,'','元徽'],['宋顺帝 刘准',477,479,'禅位萧道成','昇明']],
+'南朝·齐':[['齐高帝 萧道成',479,482,'','建元'],['齐武帝 萧赜',482,493,'永明之治','永明'],['齐明帝 萧鸾',494,498,'','建武、永泰'],['东昏侯 萧宝卷',498,501,'','永元'],['齐和帝 萧宝融',501,502,'禅位萧衍','中兴']],
+'南朝·梁':[['梁武帝 萧衍',502,549,'崇佛，侯景之乱','天监、普通、大通、太清'],['梁简文帝 萧纲',549,551,'','大宝'],['梁元帝 萧绎',552,555,'','承圣'],['梁敬帝 萧方智',555,557,'禅位陈霸先','绍泰、太平']],
+'南朝·陈':[['陈武帝 陈霸先',557,559,'','永定'],['陈文帝 陈蒨',559,566,'天嘉之治','天嘉、天康'],['陈宣帝 陈顼',569,582,'','太建'],['陈后主 陈叔宝',582,589,'隋军破建康','至德、祯明']],
+'北魏':[['道武帝 拓跋珪',386,409,'称帝','登国、皇始、天兴'],['太武帝 拓跋焘',423,452,'统一北方','始光、太平真君、正平'],['文成帝 拓跋濬',452,465,'','兴安、太安、和平'],['献文帝 拓跋弘',466,471,'','天安、皇兴'],['孝文帝 元宏',471,499,'迁洛、汉化改革','延兴、太和'],['宣武帝 元恪',499,515,'','景明、正始、永平'],['孝明帝 元诩',515,528,'六镇之乱','熙平、正光、孝昌'],['孝武帝 元修',532,534,'西奔关中','太昌、永熙']],
+'东魏':[['孝静帝 元善见',534,550,'高氏拥立，禅位北齐','天平、元象、兴和、武定']],
+'西魏':[['文帝 元宝炬',535,551,'宇文泰掌权','大统'],['废帝 元钦',551,554,'',''],['恭帝 元廓',554,557,'禅位北周','']],
+'北齐':[['文宣帝 高洋',550,559,'代魏建齐','天保'],['孝昭帝 高演',560,561,'','皇建'],['武成帝 高湛',561,565,'','太宁、河清'],['后主 高纬',565,577,'','天统、武平、隆化'],['幼主 高恒',577,577,'北周灭齐','承光']],
+'北周':[['孝闵帝 宇文觉',557,557,'',''],['明帝 宇文毓',557,560,'','武成'],['武帝 宇文邕',560,578,'灭北齐，统一北方','保定、天和、建德、宣政'],['宣帝 宇文赟',578,579,'','大成、大象'],['静帝 宇文阐',579,581,'禅位杨坚','大定']],
+'隋':[['隋文帝 杨坚',581,604,'开皇之治，创科举','开皇、仁寿'],['隋炀帝 杨广',604,618,'开大运河、三征高句丽','大业'],['隋恭帝 杨侑',617,618,'禅位李渊','义宁']],
+'唐':[['唐高祖 李渊',618,626,'','武德'],['唐太宗 李世民',626,649,'贞观之治','贞观'],['唐高宗 李治',649,683,'','永徽、显庆、乾封、上元'],['唐中宗 李显',684,710,'','嗣圣、神龙、景龙'],['武则天 武曌',690,705,'改国号「周」','天授、长寿、圣历、长安'],['唐睿宗 李旦',710,712,'','景云、太极、延和'],['唐玄宗 李隆基',712,756,'开元盛世、安史之乱','先天、开元、天宝'],['唐肃宗 李亨',756,762,'','至德、乾元、上元'],['唐代宗 李豫',762,779,'','广德、永泰、大历'],['唐德宗 李适',779,805,'','建中、兴元、贞元'],['唐宪宗 李纯',805,820,'元和中兴','元和'],['唐文宗 李昂',826,840,'甘露之变','太和、开成'],['唐武宗 李炎',840,846,'会昌灭佛','会昌'],['唐宣宗 李忱',846,859,'','大中'],['唐懿宗 李漼',859,873,'','咸通'],['唐僖宗 李儇',873,888,'黄巢起义','乾符、广明、中和、光启'],['唐昭宗 李晔',888,904,'','龙纪、大顺、乾宁、天祐'],['唐哀帝 李柷',904,907,'禅位朱温','天祐']],
+'北宋':[['宋太祖 赵匡胤',960,976,'陈桥兵变','建隆、乾德、开宝'],['宋太宗 赵光义',976,997,'','太平兴国、雍熙、淳化、至道'],['宋真宗 赵恒',997,1022,'澶渊之盟','咸平、景德、大中祥符'],['宋仁宗 赵祯',1022,1063,'庆历新政','天圣、庆历、皇祐、嘉祐'],['宋英宗 赵曙',1063,1067,'','治平'],['宋神宗 赵顼',1067,1085,'王安石变法','熙宁、元丰'],['宋哲宗 赵煦',1085,1100,'','元祐、绍圣、元符'],['宋徽宗 赵佶',1100,1125,'','崇宁、大观、政和、宣和'],['宋钦宗 赵桓',1125,1127,'靖康之变','靖康']],
+'辽':[['辽太祖 耶律阿保机',907,926,'统一契丹','神册、天赞、天显'],['辽太宗 耶律德光',927,947,'取燕云十六州','天显、会同、大同'],['辽世宗 耶律阮',947,951,'','天禄'],['辽景宗 耶律贤',969,982,'','保宁、乾亨'],['辽圣宗 耶律隆绪',982,1031,'澶渊之盟','统和、开泰、太平'],['辽兴宗 耶律宗真',1031,1055,'','景福、重熙'],['辽道宗 耶律洪基',1055,1101,'','清宁、大康、大安、寿昌'],['辽天祚帝 耶律延禧',1101,1125,'金灭辽','乾统、天庆、保大']],
+'西夏':[['景宗 李元昊',1038,1048,'称帝，创西夏文','显道、广运、天授礼法延祚'],['毅宗 李谅祚',1048,1067,'','天祐垂圣、奲都、拱化'],['惠宗 李秉常',1067,1086,'','乾道、大安、天安礼定'],['崇宗 李乾顺',1086,1139,'','天祐民安、贞观、正德'],['仁宗 李仁孝',1139,1193,'','大庆、人庆、天盛、乾祐'],['桓宗 李纯祐',1193,1206,'','天庆'],['襄宗 李安全',1206,1211,'','应天、皇建'],['神宗 李遵顼',1211,1223,'','光定'],['献宗 李德旺',1223,1226,'','乾定'],['末帝 李睍',1226,1227,'蒙古灭夏','宝义']],
+'南宋':[['宋高宗 赵构',1127,1162,'南渡称帝','建炎、绍兴'],['宋孝宗 赵昚',1162,1189,'乾淳之治','隆兴、乾道、淳熙'],['宋光宗 赵惇',1189,1194,'','绍熙'],['宋宁宗 赵扩',1194,1224,'','庆元、嘉泰、开禧、嘉定'],['宋理宗 赵昀',1224,1264,'','宝庆、端平、淳祐、景定'],['宋度宗 赵禥',1264,1274,'','咸淳'],['宋恭帝 赵㬎',1274,1276,'','德祐'],['宋端宗 赵昰',1276,1278,'','景炎'],['宋帝昺 赵昺',1278,1279,'崖山海战','祥兴']],
+'金':[['金太祖 完颜阿骨打',1115,1123,'起兵反辽','收国、天辅'],['金太宗 完颜吴乞买',1123,1135,'灭辽、灭北宋','天会'],['金熙宗 完颜亶',1135,1149,'','天眷、皇统'],['海陵王 完颜亮',1149,1161,'南侵，被弑','天德、贞元、正隆'],['金世宗 完颜雍',1161,1189,'大定之治','大定'],['金章宗 完颜璟',1189,1208,'','明昌、承安、泰和'],['卫绍王 完颜永济',1208,1213,'','大安、崇庆、至宁'],['金宣宗 完颜珣',1213,1223,'南迁汴京','贞祐、兴定、元光'],['金哀宗 完颜守绪',1223,1234,'蔡州之战','正大、开兴、天兴'],['末帝 完颜承麟',1234,1234,'金亡','']],
+'元':[['元世祖 忽必烈',1260,1294,'建元，灭南宋','中统、至元'],['元成宗 铁穆耳',1294,1307,'','元贞、大德'],['元武宗 海山',1307,1311,'','至大'],['元仁宗 爱育黎拔力八达',1311,1320,'恢复科举','皇庆、延祐'],['元英宗 硕德八剌',1320,1323,'南坡之变','至治'],['泰定帝 也孙铁木儿',1323,1328,'','泰定、致和'],['元文宗 图帖睦尔',1328,1332,'','天历、至顺'],['元顺帝 妥懽帖睦尔',1333,1368,'北遁','元统、至元、至正']],
+'明':[['明太祖 朱元璋',1368,1398,'开国，废丞相','洪武'],['明惠帝 朱允炆',1398,1402,'靖难之役','建文'],['明成祖 朱棣',1402,1424,'迁都北京、下西洋','永乐'],['明仁宗 朱高炽',1424,1425,'','洪熙'],['明宣宗 朱瞻基',1425,1435,'仁宣之治','宣德'],['明英宗 朱祁镇',1435,1449,'土木之变','正统、天顺'],['明代宗 朱祁钰',1449,1457,'','景泰'],['明宪宗 朱见深',1464,1487,'','成化'],['明孝宗 朱祐樘',1487,1505,'弘治中兴','弘治'],['明武宗 朱厚照',1505,1521,'','正德'],['明世宗 朱厚熜',1521,1566,'','嘉靖'],['明穆宗 朱载坖',1566,1572,'','隆庆'],['明神宗 朱翊钧',1572,1620,'张居正改革','万历'],['明光宗 朱常洛',1620,1620,'','泰昌'],['明熹宗 朱由校',1620,1627,'','天启'],['明思宗 朱由检',1627,1644,'自缢煤山','崇祯']],
+'南明':[['弘光帝 朱由崧',1644,1645,'南京',''],['隆武帝 朱聿键',1645,1646,'','隆武'],['绍武帝 朱聿鐭',1646,1646,'','绍武'],['永历帝 朱由榔',1646,1662,'被吴三桂缢杀','永历']],
+'清':[['清太祖 努尔哈赤',1616,1626,'建后金','天命'],['清太宗 皇太极',1626,1643,'改国号「大清」','天聪、崇德'],['清世祖 福临',1643,1661,'入关定都北京','顺治'],['清圣祖 玄烨',1661,1722,'平三藩、收台湾','康熙'],['清世宗 胤禛',1722,1735,'','雍正'],['清高宗 弘历',1735,1796,'','乾隆'],['清仁宗 颙琰',1796,1820,'','嘉庆'],['清宣宗 旻宁',1820,1850,'鸦片战争','道光'],['清文宗 奕詝',1850,1861,'','咸丰'],['清穆宗 载淳',1861,1875,'','同治'],['清德宗 载湉',1874,1908,'戊戌变法','光绪'],['宣统 溥仪',1908,1912,'退位，清亡','宣统']],
+'十六国':[['刘渊',304,310,'汉赵，称汉王','元熙、永凤、河瑞'],['石勒',319,333,'后赵，称赵王','太和、建平'],['苻坚',357,385,'前秦，淝水之败','永兴、甘露、建元'],['慕容垂',384,396,'后燕，复国称帝','燕元、建兴']],
+'十六国·成汉':[['李雄',304,334,'即位于成都','建兴、晏平、玉衡'],['李寿',338,343,'改国号汉','汉兴'],['李势',343,347,'降东晋','太和、嘉宁']],
+'十六国·前赵（汉赵）':[['刘渊',304,310,'称汉王、称帝','元熙、永凤、河瑞'],['刘聪',310,318,'攻灭西晋','嘉平、建元、麟嘉'],['刘曜',318,329,'改国号赵','光初']],
+'十六国·后赵':[['石勒',319,333,'称赵王、称帝','太和、建平'],['石虎',334,349,'迁都邺','建武、太宁'],['石祗',350,351,'襄国称帝，国亡','永宁']],
+'十六国·前凉':[['张轨',301,314,'凉州刺史，奠基',''],['张骏',324,346,'称凉王','建初、太元'],['张天锡',363,376,'降前秦','升平']],
+'十六国·前燕':[['慕容皝',337,348,'称燕王',''],['慕容儁',348,360,'称帝，迁都邺','元玺、光寿'],['慕容暐',360,370,'降前秦','建熙']],
+'十六国·后燕':[['慕容垂',384,396,'复国称帝','燕元、建兴'],['慕容宝',396,398,'参合陂之败','永康'],['慕容熙',401,407,'被杀，国亡','光始、建始']],
+'十六国·南燕':[['慕容德',400,405,'称帝于广固','建平'],['慕容超',405,410,'刘裕破广固','太上']],
+'十六国·北燕':[['高云（慕容云）',407,409,'被拥立为天王','正始'],['冯跋',409,430,'继位，政尚宽简','太平'],['冯弘',430,436,'奔高句丽，国亡','太兴']],
+'十六国·前秦':[['苻健',351,355,'称帝于长安','皇始'],['苻坚',357,385,'统一北方，淝水之败','永兴、甘露、建元'],['苻登',386,394,'与后秦相攻，败亡','太初']],
+'十六国·后秦':[['姚苌',384,393,'称帝于长安','白雀、建初'],['姚兴',394,416,'崇佛兴学','皇初、弘始'],['姚泓',416,417,'降东晋','永和']],
+'十六国·西秦':[['乞伏国仁',385,388,'称大都督、大单于','建义'],['乞伏乾归',388,412,'迁都金城','太初、更始'],['乞伏暮末',428,431,'为胡夏所灭','永弘']],
+'十六国·后凉':[['吕光',386,399,'称凉王','太安、麟嘉、龙飞'],['吕绍',399,399,'在位数月',''],['吕隆',401,403,'降后秦','神鼎']],
+'十六国·南凉':[['秃发乌孤',397,399,'称西平王','太初'],['秃发利鹿孤',399,402,'迁都西平','建和'],['秃发傉檀',402,414,'为西秦所灭','弘昌、嘉平']],
+'十六国·北凉':[['沮渠蒙逊',401,433,'据张掖、姑臧','永安、玄始、承玄、义和'],['沮渠牧犍',433,439,'降北魏','承和']],
+'十六国·西凉':[['李暠',400,417,'称凉公，都敦煌','庚子、建初'],['李歆',417,420,'与北凉战，败死','嘉兴'],['李恂',420,421,'敦煌城破，自尽','永建']],
+'十六国·胡夏':[['赫连勃勃',407,425,'称天王，筑统万城','龙升、凤翔、昌武、真兴'],['赫连昌',425,428,'统万城失守','承光'],['赫连定',428,431,'被北魏所擒','胜光']],
+'五代十国':[['朱温',907,912,'后梁，代唐称帝','开平、乾化'],['李存勖',923,926,'后唐，灭后梁','同光'],['柴荣',954,959,'后周世宗，北伐','显德'],['李煜',961,975,'南唐后主，降宋','乾德、开宝']],
+'五代·后梁':[['朱温',907,912,'称帝，都汴','开平、乾化'],['朱友珪',912,913,'弑父自立','凤历'],['朱友贞',913,923,'末帝，国亡','乾化、贞明、龙德']],
+'五代·后唐':[['李存勖',923,926,'灭梁称帝','同光'],['李嗣源',926,933,'明宗，革弊','天成、长兴'],['李从厚',933,934,'被废','应顺'],['李从珂',934,936,'末帝，自焚','清泰']],
+'五代·后晋':[['石敬瑭',936,942,'割燕云，称儿皇帝','天福'],['石重贵',942,947,'与契丹决裂，国亡','天福、开运']],
+'五代·后汉':[['刘知远',947,948,'称帝，都汴','天福、乾祐'],['刘承祐',948,950,'隐帝，被杀','乾祐']],
+'五代·后周':[['郭威',951,954,'太祖，建周','广顺、显德'],['柴荣',954,959,'世宗，北伐','显德'],['柴宗训',959,960,'恭帝，禅位赵匡胤','显德']],
+'十国·吴':[['杨行密',902,905,'吴王，据淮南','天祐'],['杨隆演',908,920,'嗣吴王','天祐、武义'],['杨溥',921,937,'称帝，禅位李昪','顺义、乾贞、大和、天祚']],
+'十国·南唐':[['李昪',937,943,'代吴建唐','升元'],['李璟',943,961,'中主，国势渐衰','保大、中兴、交泰'],['李煜',961,975,'后主，降宋','乾德、开宝（奉宋正朔）']],
+'十国·吴越':[['钱镠',907,932,'吴越王','天宝、宝大、宝正'],['钱元瓘',932,941,'嗣位',''],['钱弘俶',948,978,'纳土归宋','']],
+'十国·前蜀':[['王建',907,918,'称帝，都成都','武成、永平、通正、天汉、光天'],['王衍',918,925,'降后唐','乾德、咸康']],
+'十国·后蜀':[['孟知祥',934,934,'称帝','明德'],['孟昶',934,965,'降宋','明德、广政']],
+'十国·南汉':[['刘龑',917,942,'称帝，都广州','乾亨、白龙、大有'],['刘晟',943,958,'诛杀宗室','应乾、乾和'],['刘鋹',958,971,'降宋','大宝']],
+'十国·闽':[['王审知',909,925,'闽王',''],['王延钧',926,935,'称帝','龙启、永和'],['王延政',943,945,'称帝，国亡','天德']],
+'十国·楚':[['马殷',907,930,'楚王',''],['马希范',932,947,'嗣位',''],['马希崇',951,951,'国亡','']],
+'十国·荆南（南平）':[['高季兴',924,929,'南平王',''],['高从诲',929,948,'嗣位',''],['高继冲',962,963,'归宋','']],
+'十国·北汉':[['刘崇',951,954,'称帝，都太原','乾祐'],['刘承钧',954,968,'嗣位','乾祐、天会'],['刘继元',968,979,'降宋','天会、广运']],
+'大理国':[['段思平',937,944,'建国，都羊苴咩城','文德'],['段正淳',1096,1108,'后大理国时期',''],['段正严',1108,1147,'段和誉，在位最久',''],['段兴智',1251,1253,'降蒙古，大理亡','']],
+'太平天国':[['天王 洪秀全',1851,1864,'金田起义','太平天国'],['幼主 洪天贵福',1864,1864,'天京陷落','']]
+};
+
+var ERAS = ['全部','先秦','秦汉','三国两晋','南北朝','隋唐五代','宋辽金元','明清'];
+var ERA_COLOR = {
+  '先秦':'#8a5a2b','秦汉':'#a83a2c','三国两晋':'#7a4a3a','南北朝':'#6b5b8a',
+  '隋唐五代':'#2f5d4f','宋辽金元':'#3f5d7a','明清':'#4a4a44'
+};
+
+var state = { era:'全部', q:'' };
+var expanded = {};
+var subOpen = {};
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function yearText(y){
+  if (y < 0) return '前 ' + Math.abs(y) + ' 年';
+  return y + ' 年';
+}
+function rangeText(d){
+  return yearText(d.start) + ' — ' + yearText(d.end);
+}
+function years(d){ return d.end - d.start; }
+function match(d){
+  if (state.era !== '全部' && d.era !== state.era) return false;
+  if (!state.q) return true;
+  var q = state.q.trim().toLowerCase();
+  if (!q) return true;
+  var rs = RULERS[d.name] || [];
+  var hay = [d.name, d.era, d.cap, d.founder, d.last, d.desc, d.tag, d.nat || '',
+    d.events.join(' '), rs.map(function(r){ return r[0] + ' ' + r[3] + ' ' + r[4]; }).join(' '),
+    String(d.start), String(Math.abs(d.start)), String(d.end)].join(' ').toLowerCase();
+  if (hay.indexOf(q) >= 0) return true;
+  if (d.grp){
+    var kids = childrenOf(d);
+    for (var i = 0; i < kids.length; i++){ if (matchPlain(kids[i], q)) return true; }
+  }
+  return false;
+}
+function matchPlain(d, q){
+  if (state.era !== '全部' && d.era !== state.era) return false;
+  var rs = RULERS[d.name] || [];
+  var hay = [d.name, d.era, d.cap, d.founder, d.last, d.desc, d.tag, d.nat || '',
+    d.events.join(' '), rs.map(function(r){ return r[0] + ' ' + r[3] + ' ' + r[4]; }).join(' '),
+    (REFS[d.name] ? REFS[d.name].war.join(' ') + ' ' + REFS[d.name].tale.join(' ') : ''),
+    String(d.start), String(Math.abs(d.start)), String(d.end)].join(' ').toLowerCase();
+  return hay.indexOf(q) >= 0;
+}
+
+/* ---------- 统计 ---------- */
+function paintStats(){
+  var main = DYNASTIES.filter(function(d){ return !d.child; });
+  document.getElementById('statCount').textContent = main.length;
+  var min = Math.min.apply(null, main.map(function(d){ return d.start; }));
+  var max = Math.max.apply(null, main.map(function(d){ return d.end; }));
+  document.getElementById('statSpan').textContent = (max - min).toLocaleString('zh-CN');
+  var longest = main.filter(function(d){ return d.tag !== '传说时代'; }).sort(function(a,b){ return years(b) - years(a); })[0];
+  document.getElementById('statLong').style.fontSize = '15px';
+  document.getElementById('statLong').textContent = longest.name + '（' + years(longest) + ' 年）';
+  var splits = main.filter(function(d){ return d.split; }).length;
+  document.getElementById('statSplit').textContent = splits + ' 个';
+}
+
+/* ---------- 时间尺 ---------- */
+function paintRuler(){
+  var track = document.getElementById('track');
+  var isAll = state.era === '全部';
+  var pool = (isAll ? DYNASTIES : DYNASTIES.filter(function(d){ return d.era === state.era; })).filter(function(d){ return !d.child; });
+  if (!pool.length){ pool = DYNASTIES; }
+  var min = Math.min.apply(null, pool.map(function(d){ return d.start; }));
+  var max = Math.max.apply(null, pool.map(function(d){ return d.end; }));
+  var total = Math.max(1, max - min);
+  var TRACK_PX = 1150;
+  var laneH = 24, barH = 17;
+  var maxLane = isAll ? 2 : 99;   // 总览最多三层，选时期后按需展开
+
+  // 分层：按起始年放进最早空出来的泳道，顺序相接的朝代自然共用第一层
+  var lanes = [];
+  var laneOf = {};
+  pool.slice().sort(function(a, b){
+    return a.start - b.start || years(a) - years(b);
+  }).forEach(function(d){
+    var k = 0;
+    for (; k < lanes.length; k++){ if (lanes[k] <= d.start){ break; } }
+    if (k > maxLane){ k = maxLane; }
+    if (k >= lanes.length){ lanes.push(d.end); } else { lanes[k] = Math.max(lanes[k], d.end); }
+    laneOf[d.name] = k;
+  });
+  var bodyH = Math.max(1, lanes.length) * laneH;
+  track.style.height = (bodyH + 32) + 'px';
+
+  var html = '';
+  pool.forEach(function(d){
+    var i = DYNASTIES.indexOf(d);
+    var left = (d.start - min) / total * 100;
+    var width = Math.max(0.5, years(d) / total * 100);
+    var color = ERA_COLOR[d.era] || '#6c665c';
+    html += '<div class="seg" data-i="' + i + '" data-n="' + esc(d.name) + '" title="' + esc(d.name + ' ' + rangeText(d)) + '"'
+      + ' style="left:' + left.toFixed(3) + '%;width:' + width.toFixed(3) + '%;top:' + (2 + laneOf[d.name] * laneH) + 'px;height:' + barH + 'px;background:' + color
+      + (d.split ? ';opacity:.74' : '') + '"></div>';
+  });
+
+  // 年代刻度：按时段跨度自动换步长
+  var ticks = '';
+  var step = total > 2000 ? 500 : total > 800 ? 200 : total > 300 ? 100 : 50;
+  var first = Math.ceil(min / step) * step;
+  for (var y = first; y <= max; y += step){
+    var pos = (y - min) / total * 100;
+    if (pos < 1.5 || pos > 98.5){ continue; }
+    ticks += '<div class="tick" style="left:' + pos.toFixed(2) + '%">' + (y < 0 ? '前' + Math.abs(y) : y) + '</div>';
+  }
+  track.innerHTML = html + '<div class="ruler-axis"></div>' + ticks;
+
+  // 刻度竖线：给每个刻度一条淡竖线，便于对齐读年
+  track.querySelectorAll('.tick').forEach(function(t){
+    var line = document.createElement('div');
+    line.className = 'tickline';
+    line.style.left = t.style.left;
+    track.insertBefore(line, track.firstChild);
+  });
+
+  // 二次校正：条带内放得下就写全名/短名，放不下就放到条带右侧；都挤不下则只留悬停提示
+  var meas = document.createElement('canvas').getContext('2d');
+  meas.font = '600 10.5px "Songti SC", "Noto Serif SC", serif';
+  var pRuler = track;
+  var segs = [].slice.call(track.querySelectorAll('.seg')).map(function(seg){
+    var r = seg.getBoundingClientRect();
+    return { seg: seg, left: r.left, right: r.right, w: r.width };
+  });
+  segs.forEach(function(o, idx){
+    var name = o.seg.dataset.n;
+    var short = name.indexOf('·') >= 0 ? name.split('·').pop() : name;
+    var wName = meas.measureText(name).width + 14;
+    var wShort = meas.measureText(short).width + 12;
+    var txt = '', inside = false;
+    if (o.w >= wName){ txt = name; inside = true; }
+    else if (o.w >= wShort){ txt = short; inside = true; }
+    if (!txt) return;
+    var sp = document.createElement('span');
+    sp.textContent = txt;
+    if (inside){
+      sp.className = 'sl';
+      o.seg.appendChild(sp);
+      return;
+    }
+    sp.className = 'sl sl-out';
+    var room = (idx + 1 < segs.length) ? segs[idx + 1].left - o.right : (track.clientWidth - o.right);
+    if (room < meas.measureText(txt).width + 8) return;
+    sp.style.left = (o.right + 5) + 'px';
+    sp.style.top = o.seg.style.top;
+    pRuler.appendChild(sp);
+  });  var legend = document.getElementById('legend');
+  legend.innerHTML = ERAS.filter(function(e){ return e !== '全部'; }).map(function(e){
+    return '<span><i style="background:' + ERA_COLOR[e] + '"></i>' + e + '</span>';
+  }).join('');
+
+  track.querySelectorAll('.seg').forEach(function(seg){
+    seg.addEventListener('click', function(){
+      var d = DYNASTIES[parseInt(seg.dataset.i, 10)];
+      if (!d){ return; }
+      state.q = '';
+      document.getElementById('q').value = '';
+      document.getElementById('qClear').hidden = true;
+      if (state.era !== '全部' && state.era !== d.era){ state.era = '全部'; paintChips(); paintRuler(); }
+      expanded = {};
+      expanded[d.name] = true;
+      paintList();
+      var card = document.querySelector('[data-name="' + d.name + '"]');
+      if (card){
+        card.scrollIntoView({ behavior:'smooth', block:'center' });
+        toast('已定位到 ' + d.name);
+      }
+    });
+  });
+}
+
+/* ---------- 筛选 chips ---------- */
+function paintChips(){
+  document.getElementById('chips').innerHTML = ERAS.map(function(e){
+    return '<button type="button" data-era="' + e + '" aria-pressed="' + (state.era === e) + '">' + e + '</button>';
+  }).join('');
+  document.querySelectorAll('#chips button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      state.era = btn.dataset.era;
+      paintChips();
+      paintRuler();
+      paintList();
+    });
+  });
+}
+
+/* ---------- 帝王列表 ---------- */
+function reignText(y1, y2){
+  function y(v){ return v < 0 ? '前 ' + Math.abs(v) : '' + v; }
+  if (y1 === y2) return y(y1) + ' 年';
+  return y(y1) + ' — ' + y(y2);
+}
+function reignTL(y1, y2){
+  function y(v){ return (v < 0 ? '前' + Math.abs(v) : '' + v) + '年'; }
+  return y1 === y2 ? y(y1) : y(y1) + '—' + y(y2);
+}
+function isChildOf(x, d){
+  if (!x.child) return false;
+  if (x.par) return x.par === d.grp;
+  return x.name.indexOf(d.grp + '·') === 0;
+}
+function childrenOf(d){
+  return DYNASTIES.filter(function(x){ return isChildOf(x, d); });
+}
+
+function groupHTML(d){
+  if (!d.grp) return '';
+  var members = childrenOf(d);
+  if (!members.length) return '';
+  var q = (state.q || '').trim().toLowerCase();
+  var grpHit = !!(d.grp && q && d.grp.toLowerCase().indexOf(q) >= 0);
+  var rows = members.map(function(m){
+    var short = m.name.split('·').pop();
+    var open = (subOpen[m.name] || (q && !grpHit && matchPlain(m, q))) ? true : false;
+    var body = open
+      ? '<div class="sub-body">'
+        + '<div class="sub-kv">'
+        + '<div><span>起止</span>' + rangeText(m) + '</div>'
+        + '<div><span>都城</span>' + esc(m.cap) + '</div>'
+        + '<div><span>建立民族</span>' + esc(m.nat || '—') + '</div>'
+        + (m.person ? '' : '<div><span>开国君主</span>' + esc(m.founder) + '</div>')
+        + (m.person ? '' : '<div><span>末代君主</span>' + esc(m.last) + '</div>')
+        + '<div><span>存续</span>' + years(m) + ' 年</div>'
+        + '</div>'
+        + '<div class="dyn-desc">' + esc(m.desc) + '</div>'
+        + rulersHTML(m)
+        + '<ul class="events">' + m.events.map(function(e){ return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>'
+        + '</div>'
+      : '';
+    var pre = m.name.indexOf('·') >= 0 ? m.name.split('·')[0] : '';
+    var preTxt = (pre && pre !== d.grp) ? pre + ' · ' : '';
+    return '<div class="sub">'
+      + '<button type="button" class="sub-btn" data-sub="' + esc(m.name) + '" aria-expanded="' + (open ? 'true' : 'false') + '">'
+      + '<span class="sub-name">' + esc(short) + '</span>'
+      + '<span class="gm">' + esc(preTxt) + esc(m.cap) + (m.person ? ' · ' + esc(m.founder) : ' · ' + esc(m.founder)) + (RULERS[m.name] ? ' · ' + RULERS[m.name].length + ' 帝' : '') + '</span>'
+      + '<span class="gy">' + rangeText(m) + '</span>'
+      + '</button>' + body + '</div>';
+  }).join('');
+  return '<div class="grp"><div class="grp-head"><b>' + esc(d.grpLabel || d.grp + '政权') + '</b><span>' + members.length + ' 个 · 点击展开</span></div>'
+    + rows + '</div>';
+}
+
+function refsHTML(d){
+  var r = REFS[d.name];
+  if (!r) return '';
+  function lst(arr){
+    return arr.map(function(t){
+      var parts = t.split(' · ');
+      return '<li><span class="rk">' + esc(parts[0]) + '</span>'
+        + (parts.length > 1 ? ' · ' + esc(parts.slice(1).join(' · ')) : '') + '</li>';
+    }).join('');
+  }
+  return '<div class="refs">'
+    + '<div class="ref-col"><div class="ref-head"><b>经典战争</b><span>' + r.war.length + ' 场</span></div>'
+    + '<ul class="ref-list">' + lst(r.war) + '</ul></div>'
+    + '<div class="ref-col"><div class="ref-head"><b>典故成语</b><span>' + r.tale.length + ' 则</span></div>'
+    + '<ul class="ref-list">' + lst(r.tale) + '</ul></div>'
+    + '</div>';
+}
+
+function rulersHTML(d){
+  if (d.grp) return '';
+  var rs = RULERS[d.name];
+  if (!rs || !rs.length) return '';
+  var rows = rs.map(function(r){
+    return '<li>'
+      + '<span class="rt-year">' + reignTL(r[1], r[2]) + '</span>'
+      + '<span class="rt-node" aria-hidden="true"></span>'
+      + '<span class="rt-body">'
+        + '<span class="rt-name" data-d="' + esc(d.name) + '" data-r="' + esc(r[0]) + '">' + esc(r[0]) + '</span>'
+        + (r[4] ? '<em class="rt-era">' + esc(r[4]) + '</em>' : '')
+        + (r[3] ? '<span class="rt-note">' + esc(r[3]) + '</span>' : '')
+        + (QUEEN[r[0]] ? '<span class="rt-queen">后 · ' + esc(QUEEN[r[0]]) + '</span>' : '')
+      + '</span>'
+      + '</li>';
+  }).join('');
+  return '<div class="rulers"><div class="rulers-head"><b>帝王列表</b><span>主要 ' + rs.length + ' 位 · 自上而下为在位先后</span></div>'
+    + '<ol class="ruler-tl">' + rows + '</ol></div>';
+}
+
+/* ---------- 帝王弹层 ---------- */
+function empHTML(dynName, rName){
+  var rs = RULERS[dynName] || [];
+  var idx = -1, row = null;
+  rs.forEach(function(r, i){ if (r[0] === rName) { idx = i; row = r; } });
+  if (!row) return '';
+  var d = DYNASTIES.filter(function(x){ return x.name === dynName; })[0] || {};
+  var span = row[2] - row[1];
+  var cd = ['零','一','二','三','四','五','六','七','八','九'];
+  var cn = function (n) {
+    if (n < 10) return cd[n];
+    if (n < 20) return '十' + (n % 10 ? cd[n % 10] : '');
+    return cd[Math.floor(n / 10)] + '十' + (n % 10 ? cd[n % 10] : '');
+  };
+  var ord = (idx + 1 === rs.length) ? '最后一位' : '第' + cn(idx + 1) + '位';
+  var intro = INTRO[rName];
+  if (!intro) {
+    intro = esc(rName) + ' 为' + esc(dynName || '') + '第' + cn(idx + 1) + '位君主，在位 ' + span + ' 年'
+      + (row[4] ? '，年号 ' + esc(row[4]) : '') + (row[3] ? '；' + esc(row[3]) : '') + '。';
+  }
+  var facts = [];
+  if (row[4]) facts.push('<div><label>年号</label>' + esc(row[4]) + '</div>');
+  if (LIFESPAN[rName]) facts.push('<div><label>生卒</label>' + esc(LIFESPAN[rName]) + '</div>');
+  var ex = EX[rName] || {};
+  if (ex.h) facts.push('<div><label>号</label>' + esc(ex.h) + '</div>');
+  if (ex.sh) facts.push('<div><label>谥号</label>' + esc(ex.sh) + '</div>');
+  if (ex.m) facts.push('<div><label>庙号</label>' + esc(ex.m) + '</div>');
+  if (ex.f) facts.push('<div><label>封号</label>' + esc(ex.f) + '</div>');
+  var nat = ex.nat || d.nat || '';
+  if (nat) facts.push('<div><label>民族</label>' + esc(nat) + '</div>');
+  facts.push('<div><label>性别</label>' + (rName === '武则天' ? '女' : '男') + '</div>');
+  if (ex.b) facts.push('<div><label>生于</label>' + esc(ex.b) + '</div>');
+  if (ex.d) facts.push('<div><label>卒于</label>' + esc(ex.d) + '</div>');
+  if (ex.t) facts.push('<div><label>陵墓</label>' + esc(ex.t) + '</div>');
+  facts.push('<div><label>在位</label>' + reignTL(row[1], row[2]) + '，共 ' + span + ' 年</div>');
+  if (ex.an) facts.push('<div class="wide"><label>轶事典故</label>' + esc(ex.an) + '</div>');
+  var cw = CROWN[rName];
+  var qName = cw ? cw[0] : (QUEEN[rName] || '');
+  if (qName) facts.push('<div><label>皇后</label>' + esc(qName) + '</div>');
+  var mom = MOTHER[rName] || '';
+  if (!mom) {
+    var pn = rName.indexOf(' ') > 0 ? rName.split(' ')[1] : rName;
+    for (var ck in CHILD) {
+      var cv = CHILD[ck], ci = cv.indexOf(pn + '（母');
+      if (ci >= 0) {
+        var ce = cv.indexOf('）', ci);
+        if (ce > ci) { mom = cv.slice(ci + pn.length + 2, ce); }
+        break;
+      }
+    }
+  }
+  if (mom) facts.push('<div><label>生母</label>' + esc(mom) + '</div>');
+  var kids = CHILD[rName] || (cw ? cw[1] : '');
+  if (kids) {
+    var ksum = '';
+    var ix = kids.indexOf('，共');
+    if (ix >= 0) { ksum = kids.slice(ix + 1); kids = kids.slice(0, ix); }
+    var arr = kids.split('、');
+    var kh = '';
+    for (var ki = 0; ki < arr.length; ki += 2) {
+      var b = arr[ki + 1];
+      kh += '<div class="kid-row"><span>' + esc(arr[ki]) + '</span>'
+          + (b !== undefined ? '<em class="sep">｜</em><span>' + esc(b) + '</span>' : '')
+          + '</div>';
+    }
+    facts.push('<div class="wide"><label>子嗣</label><div class="kid-grid">' + kh + '</div>' + (ksum ? '<div class="kid-sum">' + esc(ksum) + '</div>' : '') + '</div>');
+  }
+  else if (QUEEN[rName]) facts.push('<div><label>子嗣</label>史载不详</div>');
+  if (row[3]) facts.push('<div><label>史事</label>' + esc(row[3]) + '</div>');
+  if (d.events && d.events.length) facts.push('<div><label>本朝要事</label>' + esc(d.events[0]) + '</div>');
+  return '<h3 class="emp-title">' + esc(rName) + '</h3>'
+    + '<div class="emp-sub">' + esc(dynName) + ' · ' + ord + ' · ' + reignTL(row[1], row[2]) + ' · 在位 ' + span + ' 年</div>'
+    + (facts.length ? '<div class="emp-kv">' + facts.join('') + '</div>' : '')
+    + '<div class="emp-text">' + intro + '</div>'
+    + '<div class="emp-foot">简介据通行史传概述，具体年月以各家年表为参。</div>';
+}
+var empLastFocus = null;
+document.addEventListener('click', function(e){
+  var el = e.target.closest ? e.target.closest('.rt-name') : null;
+  if (!el) return;
+  e.preventDefault(); e.stopPropagation();
+  empLastFocus = el;
+  document.getElementById('empBody').innerHTML = empHTML(el.dataset.d, el.dataset.r);
+  document.getElementById('empMask').hidden = false;
+  document.getElementById('empClose').focus();
+});
+function closeEmp(){
+  var mask = document.getElementById('empMask');
+  if (mask.hidden) return;
+  mask.hidden = true;
+  if (empLastFocus) empLastFocus.focus();
+}
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeEmp(); });
+document.getElementById('empClose').addEventListener('click', closeEmp);
+document.getElementById('empMask').addEventListener('click', function(e){ if (e.target === this) closeEmp(); });
+
+/* ---------- 列表 ---------- */
+function paintList(){
+  var rows = DYNASTIES.filter(function(d){ return !d.child; }).filter(match);
+  document.getElementById('listCount').textContent = '共 ' + rows.length + ' 个';
+  document.getElementById('empty').hidden = rows.length > 0;
+
+  var html = rows.map(function(d){
+    var i = DYNASTIES.indexOf(d);
+    var open = expanded[d.name] ? ' open' : '';
+    return '<article class="dyn' + open + '" data-name="' + esc(d.name) + '" data-i="' + i + '">'
+      + '<button class="dyn-btn" type="button" aria-expanded="' + (expanded[d.name] ? 'true' : 'false') + '">'
+      + '<div class="dyn-top">'
+      + '<span class="dyn-name">' + esc(d.name) + '</span>'
+      + '<span class="dyn-years">' + rangeText(d) + '</span>'
+      + (d.unify ? '<span class="badge seal">大一统</span>' : '')
+      + (d.split ? '<span class="badge">并立 / 分裂</span>' : '')
+      + '<span class="badge">' + esc(d.era) + '</span>'
+      + '</div>'
+      + '<div class="dyn-meta">'
+      + '<span>都城 <b>' + esc(d.cap) + '</b></span>'
+      + '<span>开国 <b>' + esc(d.founder) + '</b></span>'
+      + '<span>民族 <b>' + esc(d.nat || '—') + '</b></span>'
+      + '<span>存续 <b>' + years(d) + ' 年</b></span>'
+      + '</div>'
+      + '<div class="dyn-desc">' + esc(d.desc) + '</div>'
+      + '</button>'
+      + '<div class="dyn-body">'
+      + '<div class="kv">'
+      + '<div><span>起止</span>' + rangeText(d) + '</div>'
+      + '<div><span>都城</span>' + esc(d.cap) + '</div>'
+      + '<div><span>开国君主</span>' + esc(d.founder) + '</div>'
+      + '<div><span>末代君主</span>' + esc(d.last) + '</div>'
+      + '<div><span>存续年数</span>' + years(d) + ' 年</div>'
+      + '<div><span>类型</span>' + esc(d.tag) + '</div>'
+      + '<div><span>建立民族</span>' + esc(d.nat || '—') + '</div>'
+      + '<div><span>' + (d.grp ? '下属政权' : '帝王数') + '</span>' + (d.grp
+        ? childrenOf(d).length + ' 个'
+        : ((RULERS[d.name] || []).length ? '主要 ' + (RULERS[d.name] || []).length + ' 位' : '—')) + '</div>'
+      + '</div>'
+      + groupHTML(d)
+      + rulersHTML(d)
+      + '<ul class="events">' + d.events.map(function(e){ return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>'
+      + refsHTML(d)
+      + '</div></article>';
+  }).join('');
+
+  document.getElementById('list').innerHTML = html;
+
+  document.querySelectorAll('.sub-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var key = btn.dataset.sub;
+      subOpen[key] = !subOpen[key];
+      paintList();
+    });
+  });
+
+  document.querySelectorAll('.dyn-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var art = btn.closest('.dyn');
+      var name = art.dataset.name;
+      var wasOpen = expanded[name];
+      expanded = {};
+      if (!wasOpen) expanded[name] = true;
+      paintList();
+    });
+  });
+}
+
+/* ---------- 交互 ---------- */
+var qTimer;
+document.getElementById('q').addEventListener('input', function(){
+  var v = this.value;
+  document.getElementById('qClear').hidden = !v;
+  clearTimeout(qTimer);
+  qTimer = setTimeout(function(){
+    state.q = v;
+    paintList();
+  }, 140);
+});
+document.getElementById('qClear').addEventListener('click', function(){
+  document.getElementById('q').value = '';
+  this.hidden = true;
+  state.q = '';
+  paintList();
+});
+document.getElementById('resetAll').addEventListener('click', function(){
+  state.era = '全部'; state.q = '';
+  document.getElementById('q').value = '';
+  document.getElementById('qClear').hidden = true;
+  paintChips(); paintList();
+});
+
+var toastTimer;
+function toast(msg){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('on'); }, 1600);
+}
+
+paintStats();
+paintChips();
+paintRuler();
+paintList();
+</script>
+</body>
+</html>

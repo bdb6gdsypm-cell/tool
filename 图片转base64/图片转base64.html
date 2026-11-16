@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图片转 Base64 · 本地处理</title>
+<style>
+  :root{
+    --bg:#eef1ef;
+    --paper:#fbf9f4;
+    --paper-2:#f4f1e9;
+    --ink:#1c2624;
+    --jade:#2f5a52;
+    --seal:#9c3b2e;
+    --line:#d9d6cb;
+    --line-soft:#e7e4d9;
+    --muted:#6f7772;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;min-height:100vh;padding:20px 16px 30px;
+  }
+  .wrap{max-width:1140px;margin:0 auto;}
+  header{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline;padding-bottom:14px;border-bottom:1px solid var(--line);}
+  header h1{margin:0;font-family:"Songti SC","STSong","SimSun",serif;font-size:24px;font-weight:600;letter-spacing:.06em;}
+  header .sub{font-size:13px;color:var(--muted);}
+  header .badge{margin-left:auto;font-size:12px;color:var(--jade);border:1px solid rgba(47,90,82,.32);border-radius:999px;padding:3px 10px;background:var(--paper);}
+  .grid{margin-top:18px;display:grid;gap:16px;grid-template-columns:1fr;}
+  @media (min-width:920px){.grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;}}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:14px;min-width:0;}
+  .card h2{
+    margin:0 0 12px;font-size:12px;letter-spacing:.1em;color:var(--muted);font-weight:500;
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+  }
+  .card h2 .tag{color:var(--seal);letter-spacing:0;}
+  .drop{
+    border:1px dashed #c8c2b3;border-radius:3px;min-height:260px;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:26px 18px;
+    cursor:pointer;background:
+      linear-gradient(0deg,rgba(255,255,255,.6),rgba(255,255,255,.6)),
+      repeating-linear-gradient(-45deg,#f1ede2 0 9px,#f7f4ea 9px 18px);
+    transition:border-color .16s;
+  }
+  .drop:hover,.drop.over{border-color:var(--seal);}
+  .drop input{display:none;}
+  .drop .hint{max-width:320px;}
+  .drop .glyph{
+    width:50px;height:50px;margin:0 auto 12px;border:1px solid var(--line);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;background:var(--paper);
+  }
+  .drop .glyph svg{width:22px;height:22px;stroke:var(--jade);fill:none;stroke-width:1.6;}
+  .drop strong{display:block;font-size:15px;margin-bottom:6px;}
+  .drop p{margin:0;font-size:13px;color:var(--muted);line-height:1.7;}
+  .preview{display:none;}
+  .preview.on{display:block;}
+  .thumb{
+    border:1px solid var(--line-soft);border-radius:3px;background:#eae6da;
+    padding:10px;display:flex;align-items:center;justify-content:center;min-height:150px;
+  }
+  .thumb img{max-width:100%;max-height:340px;display:block;border-radius:2px;}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--muted);}
+  .meta b{color:var(--ink);font-weight:500;}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+  .btn{
+    appearance:none;border:1px solid var(--line);background:var(--paper-2);color:var(--ink);
+    font:inherit;font-size:13px;padding:9px 16px;border-radius:3px;cursor:pointer;min-height:40px;
+    transition:background .16s,border-color .16s;
+  }
+  .btn:hover{background:#eee9db;border-color:#c8c2b3;}
+  .btn.primary{background:var(--jade);border-color:var(--jade);color:#f4f7f3;font-weight:600;}
+  .btn.primary:hover{background:#386a61;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  /* 右侧输出 */
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .tab{
+    appearance:none;border:1px solid var(--line);background:var(--paper);color:var(--muted);
+    font:inherit;font-size:12px;padding:7px 12px;border-radius:999px;cursor:pointer;min-height:34px;
+  }
+  .tab.active{border-color:var(--seal);color:var(--seal);background:#fbf3f0;}
+  textarea{
+    width:100%;min-height:300px;resize:vertical;border:1px solid var(--line);border-radius:3px;
+    background:#fffef9;color:#33403c;font-family:"SFMono-Regular",Menlo,Consolas,monospace;
+    font-size:12px;line-height:1.6;padding:12px;outline:none;
+    word-break:break-all;
+  }
+  textarea:focus{border-color:var(--seal);box-shadow:0 0 0 2px rgba(156,59,46,.08);}
+  .out-foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;}
+  .out-foot .len{font-size:12px;color:var(--muted);margin-left:auto;}
+  .copy-ok{color:var(--jade);}
+  .note{font-size:12px;color:var(--muted);line-height:1.8;margin:10px 0 0;}
+  footer{margin-top:22px;font-size:12px;color:#8b918c;text-align:center;line-height:1.8;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>图片转 Base64</h1>
+    <span class="sub">转成可直接嵌网页的字符串</span>
+    <span class="badge">本地处理 · 不上传</span>
+  </header>
+
+  <div class="grid">
+    <!-- 左：图片 -->
+    <section class="card">
+      <h2><span>原图</span><span class="tag" id="stateTag">未选择</span></h2>
+
+      <div class="drop" id="drop">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="hint">
+          <div class="glyph">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4 4 3 3-2 4 3"/></svg>
+          </div>
+          <strong>点击选择，或把图片拖进来</strong>
+          <p>支持 JPG / PNG / GIF / WEBP / SVG，也可直接粘贴截图。<br>小于 100KB 的图最适合转成 Base64 内嵌。</p>
+        </div>
+      </div>
+
+      <div class="preview" id="preview">
+        <div class="thumb"><img id="thumbImg" alt="预览"></div>
+        <div class="meta">
+          <span>文件：<b id="mName">—</b></span>
+          <span>原大小：<b id="mSize">—</b></span>
+          <span>尺寸：<b id="mDim">—</b></span>
+          <span>类型：<b id="mType">—</b></span>
+        </div>
+        <div class="actions">
+          <button class="btn" id="resetBtn">重新选图</button>
+          <button class="btn" id="copyAllBtn" disabled>复制当前结果</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右：结果 -->
+    <section class="card">
+      <h2><span>转换结果</span><span class="tag" id="growthTag">—</span></h2>
+
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-mode="datauri">Data URI</button>
+        <button class="tab" data-mode="raw">纯 Base64</button>
+        <button class="tab" data-mode="css">CSS</button>
+        <button class="tab" data-mode="html">HTML img</button>
+      </div>
+
+      <textarea id="output" readonly spellcheck="false" placeholder="选一张图片后，这里会显示 Base64 字符串。"></textarea>
+
+      <div class="out-foot">
+        <button class="btn primary" id="copyBtn" disabled>复制</button>
+        <button class="btn" id="downloadBtn" disabled>存成 .txt</button>
+        <span class="len" id="outLen">0 字符</span>
+      </div>
+
+      <p class="note" id="tip">提示：Base64 会把体积放大约 1/3，大图建议先压缩；内嵌过多会拖慢网页加载。</p>
+    </section>
+  </div>
+
+  <footer>单一 HTML 文件 · 双击即可用 · 全程浏览器本地处理，不联网</footer>
+</div>
+
+<script>
+(function(){
+  var state = { file: null, dataURL: '', base64: '', mode: 'datauri' };
+
+  var drop = document.getElementById('drop');
+  var fileInput = document.getElementById('fileInput');
+  var preview = document.getElementById('preview');
+  var thumbImg = document.getElementById('thumbImg');
+  var mName = document.getElementById('mName');
+  var mSize = document.getElementById('mSize');
+  var mDim = document.getElementById('mDim');
+  var mType = document.getElementById('mType');
+  var stateTag = document.getElementById('stateTag');
+  var growthTag = document.getElementById('growthTag');
+  var tabs = document.getElementById('tabs');
+  var output = document.getElementById('output');
+  var outLen = document.getElementById('outLen');
+  var copyBtn = document.getElementById('copyBtn');
+  var copyAllBtn = document.getElementById('copyAllBtn');
+  var downloadBtn = document.getElementById('downloadBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var tip = document.getElementById('tip');
+
+  function fmtBytes(n){
+    if (!n && n !== 0) return '—';
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1024 / 1024).toFixed(2) + ' MB';
+  }
+
+  function buildText(){
+    if (!state.dataURL) return '';
+    if (state.mode === 'raw') return state.base64;
+    if (state.mode === 'css') return 'background-image: url("' + state.dataURL + '");';
+    if (state.mode === 'html') return '<img src="' + state.dataURL + '" alt="' + (state.file ? state.file.name : 'image') + '">';
+    return state.dataURL;
+  }
+
+  function refresh(){
+    var txt = buildText();
+    output.value = txt;
+    outLen.textContent = txt.length.toLocaleString() + ' 字符';
+    copyBtn.disabled = !txt;
+    copyAllBtn.disabled = !txt;
+    downloadBtn.disabled = !txt;
+    if (state.file && state.dataURL){
+      var ratio = state.dataURL.length / Math.max(1, state.file.size);
+      growthTag.textContent = '约为原图 ' + ratio.toFixed(1) + ' 倍';
+    } else {
+      growthTag.textContent = '—';
+    }
+    if (state.file && state.file.size > 200 * 1024){
+      tip.textContent = '提示：当前图 ' + fmtBytes(state.file.size) + '，转成 Base64 后网页内嵌会明显变重，建议先压缩或改用文件引用。';
+    } else {
+      tip.textContent = '提示：Base64 会把体积放大约 1/3，大图建议先压缩；内嵌过多会拖慢网页加载。';
+    }
+  }
+
+  function loadFile(file){
+    if (!file || !/^image\//.test(file.type)) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      state.file = file;
+      state.dataURL = String(reader.result || '');
+      var comma = state.dataURL.indexOf(',');
+      state.base64 = comma >= 0 ? state.dataURL.slice(comma + 1) : '';
+
+      thumbImg.src = state.dataURL;
+      mName.textContent = file.name || 'image';
+      mSize.textContent = fmtBytes(file.size);
+      mType.textContent = (file.type || '').replace('image/', '').toUpperCase();
+      stateTag.textContent = '已载入';
+      drop.style.display = 'none';
+      preview.classList.add('on');
+
+      if (thumbImg.complete && thumbImg.naturalWidth){
+        mDim.textContent = thumbImg.naturalWidth + ' × ' + thumbImg.naturalHeight;
+      } else {
+        thumbImg.onload = function(){
+          mDim.textContent = thumbImg.naturalWidth + ' × ' + thumbImg.naturalHeight;
+        };
+        mDim.textContent = '读取中…';
+      }
+      refresh();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  drop.addEventListener('click', function(){ fileInput.click(); });
+  fileInput.addEventListener('change', function(e){
+    loadFile(e.target.files && e.target.files[0]);
+    fileInput.value = '';
+  });
+  ['dragenter','dragover'].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function(e){
+    loadFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
+  });
+  window.addEventListener('paste', function(e){
+    var items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++){
+      if (items[i].type.indexOf('image') === 0){
+        loadFile(items[i].getAsFile());
+        break;
+      }
+    }
+  });
+
+  tabs.addEventListener('click', function(e){
+    var b = e.target.closest('.tab');
+    if (!b) return;
+    state.mode = b.dataset.mode;
+    Array.prototype.forEach.call(tabs.children, function(t){ t.classList.toggle('active', t === b); });
+    refresh();
+  });
+
+  function copyText(txt, btn){
+    if (!txt) return;
+    var done = function(){
+      var old = btn.textContent;
+      btn.textContent = '已复制';
+      btn.classList.add('copy-ok');
+      setTimeout(function(){
+        btn.textContent = old;
+        btn.classList.remove('copy-ok');
+      }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done, function(){ fallbackCopy(txt, done); });
+    } else {
+      fallbackCopy(txt, done);
+    }
+  }
+  function fallbackCopy(txt, done){
+    output.focus();
+    output.select();
+    try {
+      document.execCommand('copy');
+      done();
+    } catch (err){}
+  }
+
+  copyBtn.addEventListener('click', function(){ copyText(buildText(), copyBtn); });
+  copyAllBtn.addEventListener('click', function(){ copyText(buildText(), copyAllBtn); });
+
+  downloadBtn.addEventListener('click', function(){
+    var txt = buildText();
+    if (!txt) return;
+    var name = (state.file ? state.file.name.replace(/\.[^.]+$/, '') : 'image') + '-' + state.mode + '.txt';
+    var blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  });
+
+  resetBtn.addEventListener('click', function(){
+    state.file = null; state.dataURL = ''; state.base64 = '';
+    thumbImg.removeAttribute('src');
+    drop.style.display = 'flex';
+    preview.classList.remove('on');
+    stateTag.textContent = '未选择';
+    output.value = '';
+    outLen.textContent = '0 字符';
+    copyBtn.disabled = true;
+    copyAllBtn.disabled = true;
+    downloadBtn.disabled = true;
+    growthTag.textContent = '—';
+    tip.textContent = '提示：Base64 会把体积放大约 1/3，大图建议先压缩；内嵌过多会拖慢网页加载。';
+  });
+})();
+</script>
+</body>
+</html>
