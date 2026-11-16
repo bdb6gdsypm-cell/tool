@@ -61,7 +61,7 @@ overflow:hidden;
 <!-- 顶部标题+头像 -->
 <div class="flex justify-between items-center mb-5">
 <h1 class="text-[26px] font-bold text-gray-800">实用工具汇总</h1>
-<div class="w-10 h-10 rounded-full overflow-hidden border">
+<div id="topAvatar" role="button" tabindex="0" aria-label="查看个人信息" class="w-10 h-10 rounded-full overflow-hidden border cursor-pointer active:opacity-70">
 <img src="https://picsum.photos/id/1005/100/100" alt="头像" class="w-full h-full object-cover">
 </div>
 </div>
@@ -69,20 +69,24 @@ overflow:hidden;
 <div class="bg-grad rounded-2xl p-5 text-white relative overflow-hidden mb-5">
 <div>
 <h2 class="text-[32px] font-bold">今日效率</h2>
-<p class="text-xl mt-1">已整理 17个工具</p>
-<p class="text-xl mt-1">常用 17 个入口</p>
+<p class="text-xl mt-1">已整理 26 个工具</p>
+<p class="text-xl mt-1">常用 24 个入口</p>
 </div>
 <div class="absolute right-6 top-1/2 -translate-y-1/2">
-<div class="text-[70px] font-bold opacity-90">17</div>
+<div class="text-[54px] font-bold opacity-90">26</div>
 </div>
 </div>
 <!-- 搜索框 -->
-<div class="bg-white rounded-full px-5 py-4 flex items-center gap-3 shadow-sm mb-5">
-<i class="fa fa-search text-gray-400"></i>
-<input type="text" placeholder="搜索工具、文件、功能" class="flex-1 outline-none text-gray-600">
+<div class="bg-white rounded-full px-5 py-3.5 flex items-center gap-3 shadow-sm mb-5">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9aa3ad" stroke-width="2" stroke-linecap="round" class="shrink-0"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+<input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" placeholder="搜索工具、功能" class="flex-1 min-w-0 outline-none text-gray-700 bg-transparent text-[15px]">
+<button type="button" id="searchClear" class="hidden shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center" aria-label="清空搜索">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+</button>
 </div>
+<div id="searchPanel" class="bg-white rounded-2xl shadow-sm overflow-hidden mb-5" hidden></div>
 <!-- 常用工具宫格 -->
-<div class="bg-white rounded-2xl p-5 shadow-sm mb-7">
+<div id="commonToolsCard" class="bg-white rounded-2xl p-5 shadow-sm mb-7">
 <div class="flex justify-between items-center mb-4">
 <h3 class="text-xl font-semibold text-gray-800">常用工具</h3>
 <i id="moreToolsBtn" role="button" tabindex="0" aria-label="查看全部工具" class="fa fa-chevron-right text-gray-400 cursor-pointer p-1 -m-1"></i>
@@ -205,14 +209,57 @@ overflow:hidden;
 </div><!-- /page2 -->
 <div class="tools-page" aria-hidden="true">
 <div class="grid grid-cols-4 gap-y-5 gap-x-2">
+<a href="../中国历史朝代/中国历史朝代.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/中国历史朝代.png" alt="中国历史朝代" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
+</div>
+<span class="mt-2 text-sm text-gray-700">中国历史朝代</span>
+</a>
 <a href="../全球孔院查询/全球孔院查询.html" class="flex flex-col items-center">
 <div class="icon-box bg-white">
 <img src="logo/全球孔院查询.png" alt="全球孔院查询" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
 </div>
 <span class="mt-2 text-sm text-gray-700">全球孔院查询</span>
 </a>
+<a href="../个税计算器/个税计算器.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/个税计算器.png" alt="个税计算器" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
 </div>
-<p class="mt-5 text-xs text-gray-400 text-center">更多工具还在整理中</p>
+<span class="mt-2 text-sm text-gray-700">个税计算器</span>
+</a>
+<a href="../化学元素周期/化学元素周期.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/化学元素周期.png" alt="化学元素周期" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
+</div>
+<span class="mt-2 text-sm text-gray-700">化学元素周期</span>
+</a>
+<a href="../证件照裁剪/证件照裁剪.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/证件照裁剪.png" alt="证件照裁剪" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
+</div>
+<span class="mt-2 text-sm text-gray-700">证件照裁剪</span>
+</a>
+<a href="../亲戚关系计算器/亲戚关系计算器.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/亲戚关系计算器.png" alt="亲戚关系计算器" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
+</div>
+<span class="mt-2 text-sm text-gray-700">亲戚关系计算器</span>
+</a>
+<a href="../图片加水印/图片加水印.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/图片加水印.png" alt="图片加水印" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
+</div>
+<span class="mt-2 text-sm text-gray-700">图片加水印</span>
+</a>
+<a href="../图片转Base64/图片转base64.html" class="flex flex-col items-center">
+<div class="icon-box bg-white">
+<img src="logo/图片转base64.png" alt="图片转Base64" class="w-full h-full object-contain" style="padding:3px;border-radius:12px;">
+</div>
+<span class="mt-2 text-sm text-gray-700">图片转Base64</span>
+</a>
+
+
+</div>
 </div><!-- /page3 -->
 </div>
 </div>
@@ -223,53 +270,72 @@ overflow:hidden;
 <button class="dot-btn" id="dot2" type="button" aria-label="第 3 页"></button>
 </div>
 </div>
-<!-- 工具分类 -->
-<h3 class="text-[24px] font-bold text-gray-800 mb-4">工具分类</h3>
-<div class="grid grid-cols-3 gap-4">
-<div class="bg-white rounded-2xl p-5 shadow-sm min-h-[160px] flex flex-col">
-<h4 class="text-xl font-semibold mb-3">办公效率</h4>
-<div class="flex-1 flex items-center justify-center">
-<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.7">
-<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-<polyline points="14 2 14 8 20 8"/>
-<path d="M9 13h6"/>
-<path d="M9 17h4"/>
-</svg>
+<!-- 工具分类：与「工具箱」页分组一致 -->
+<h3 id="catTitle" class="text-[24px] font-bold text-gray-800 mb-4">工具分类</h3>
+<div id="catGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<button type="button" data-cat="office" class="cat-card text-left bg-white rounded-2xl p-5 shadow-sm transition active:scale-[0.99] hover:shadow-md">
+<div class="flex items-center gap-3">
+<div class="shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3f6b8f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6"/><path d="M9 17h4"/></svg></div>
+<div class="min-w-0">
+<h4 class="text-lg font-semibold text-gray-800">办公效率</h4>
+<p class="text-xs text-gray-400 mt-1">二维码 / OCR / 单位与进制换算</p>
 </div>
 </div>
-<div class="bg-white rounded-2xl p-5 shadow-sm min-h-[160px] flex flex-col">
-<h4 class="text-xl font-semibold mb-3">生活助手</h4>
-<div class="flex-1 flex items-center justify-center">
-<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.7">
-<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-</svg>
+<div class="mt-4 flex items-center justify-between text-sm text-gray-500"><span>6 个工具</span><i class="fa fa-chevron-right text-gray-300"></i></div>
+</button>
+<button type="button" data-cat="info" class="cat-card text-left bg-white rounded-2xl p-5 shadow-sm transition active:scale-[0.99] hover:shadow-md">
+<div class="flex items-center gap-3">
+<div class="shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4b6bb5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg></div>
+<div class="min-w-0">
+<h4 class="text-lg font-semibold text-gray-800">信息查询</h4>
+<p class="text-xs text-gray-400 mt-1">高校 / 国家地区 / 时区邮编区号</p>
 </div>
 </div>
-<div class="bg-white rounded-2xl p-5 shadow-sm min-h-[160px] flex flex-col">
-<h4 class="text-xl font-semibold mb-3">数据处理</h4>
-<div class="flex-1 flex items-center justify-center">
-<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.7">
-<line x1="18" y1="20" x2="18" y2="10"/>
-<line x1="12" y1="20" x2="12" y2="4"/>
-<line x1="6" y1="20" x2="6" y2="14"/>
-</svg>
+<div class="mt-4 flex items-center justify-between text-sm text-gray-500"><span>7 个工具</span><i class="fa fa-chevron-right text-gray-300"></i></div>
+</button>
+<button type="button" data-cat="study" class="cat-card text-left bg-white rounded-2xl p-5 shadow-sm transition active:scale-[0.99] hover:shadow-md">
+<div class="flex items-center gap-3">
+<div class="shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a07a3c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5A2.5 2.5 0 0 1 4.5 4H11v16H4.5A2.5 2.5 0 0 0 2 22z"/><path d="M22 6.5A2.5 2.5 0 0 0 19.5 4H13v16h6.5A2.5 2.5 0 0 1 22 22z"/></svg></div>
+<div class="min-w-0">
+<h4 class="text-lg font-semibold text-gray-800">知学赋能</h4>
+<p class="text-xs text-gray-400 mt-1">历史朝代 / 元素周期 / 拼音</p>
 </div>
 </div>
+<div class="mt-4 flex items-center justify-between text-sm text-gray-500"><span>3 个工具</span><i class="fa fa-chevron-right text-gray-300"></i></div>
+</button>
+<button type="button" data-cat="image" class="cat-card text-left bg-white rounded-2xl p-5 shadow-sm transition active:scale-[0.99] hover:shadow-md">
+<div class="flex items-center gap-3">
+<div class="shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2f7a6f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+<div class="min-w-0">
+<h4 class="text-lg font-semibold text-gray-800">图片处理</h4>
+<p class="text-xs text-gray-400 mt-1">压缩 / 加水印 / 转 Base64</p>
 </div>
+</div>
+<div class="mt-4 flex items-center justify-between text-sm text-gray-500"><span>3 个工具</span><i class="fa fa-chevron-right text-gray-300"></i></div>
+</button>
+<button type="button" data-cat="life" class="cat-card text-left bg-white rounded-2xl p-5 shadow-sm transition active:scale-[0.99] hover:shadow-md">
+<div class="flex items-center gap-3">
+<div class="shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a24a5c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+<div class="min-w-0">
+<h4 class="text-lg font-semibold text-gray-800">生活助手</h4>
+<p class="text-xs text-gray-400 mt-1">计算器 / 日历 / 个税 / 房贷</p>
+</div>
+</div>
+<div class="mt-4 flex items-center justify-between text-sm text-gray-500"><span>7 个工具</span><i class="fa fa-chevron-right text-gray-300"></i></div>
+</button>
 </div>
 </section>
 
-<!-- 工具箱视图 -->
 <section id="view-tools" class="hidden px-5 pt-6">
 <div class="flex justify-between items-end mb-5">
 <div>
 <h1 class="text-[26px] font-bold text-gray-800">工具箱</h1>
 <p class="text-sm text-gray-400 mt-1">全部工具，按分类整理</p>
 </div>
-<span class="text-sm text-gray-500">共 17 个</span>
+<span class="text-sm text-gray-500">共 26 个</span>
 </div>
 
-<div class="bg-white rounded-2xl p-5 shadow-sm mb-5">
+<div id="cat-office" class="bg-white rounded-2xl p-5 shadow-sm mb-5 scroll-mt-6">
 <h3 class="text-lg font-semibold text-gray-800 mb-1">办公效率</h3>
 <div class="divide-y divide-gray-100">
 <a href="../二维码解析/二维码解析.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
@@ -305,7 +371,7 @@ overflow:hidden;
 </div>
 </div>
 
-<div class="bg-white rounded-2xl p-5 shadow-sm mb-5">
+<div id="cat-info" class="bg-white rounded-2xl p-5 shadow-sm mb-5 scroll-mt-6">
 <h3 class="text-lg font-semibold text-gray-800 mb-1">信息查询</h3>
 <div class="divide-y divide-gray-100">
 <a href="../全国高校查询/全国高校查询.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
@@ -346,7 +412,49 @@ overflow:hidden;
 </div>
 </div>
 
-<div class="bg-white rounded-2xl p-5 shadow-sm mb-5">
+<div id="cat-study" class="bg-white rounded-2xl p-5 shadow-sm mb-5 scroll-mt-6">
+<h3 class="text-lg font-semibold text-gray-800 mb-1">知学赋能</h3>
+<div class="divide-y divide-gray-100">
+<a href="../中国历史朝代/中国历史朝代.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/中国历史朝代.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">中国历史朝代</p><p class="text-xs text-gray-400 mt-0.5">37 个政权 · 帝王时间线 / 后妃子嗣 / 战争典故</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../化学元素周期/化学元素周期.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/化学元素周期.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">化学元素周期</p><p class="text-xs text-gray-400 mt-0.5">118 种元素 · 搜索 / 分类 / 详情查看</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../拼音生成/拼音生成.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/拼音生成.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">拼音转换</p><p class="text-xs text-gray-400 mt-0.5">汉字转拼音，带声调可选</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+</div>
+</div>
+
+<div id="cat-image" class="bg-white rounded-2xl p-5 shadow-sm mb-5 scroll-mt-6">
+<h3 class="text-lg font-semibold text-gray-800 mb-1">图片处理</h3>
+<div class="divide-y divide-gray-100">
+<a href="../图片加水印/图片加水印.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/图片加水印.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">图片加水印</p><p class="text-xs text-gray-400 mt-0.5">文字水印 · 平铺间隔 · 透明度可调</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../图片转Base64/图片转base64.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/图片转base64.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">图片转 Base64</p><p class="text-xs text-gray-400 mt-0.5">图片编码转换，多种输出格式</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../图片压缩/图片压缩.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/图片压缩.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">图片压缩</p><p class="text-xs text-gray-400 mt-0.5">多种质量档位，体积画质平衡</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+</div>
+</div>
+
+<div id="cat-life" class="bg-white rounded-2xl p-5 shadow-sm mb-5 scroll-mt-6">
 <h3 class="text-lg font-semibold text-gray-800 mb-1">生活助手</h3>
 <div class="divide-y divide-gray-100">
 <a href="../计算器/计算器.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
@@ -359,14 +467,30 @@ overflow:hidden;
 <div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">汇率换算</p><p class="text-xs text-gray-400 mt-0.5">多币种实时汇率对照</p></div>
 <i class="fa fa-chevron-right text-gray-300"></i>
 </a>
-<a href="../拼音生成/拼音生成.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
-<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/拼音生成.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
-<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">拼音转换</p><p class="text-xs text-gray-400 mt-0.5">汉字转拼音，带声调可选</p></div>
-<i class="fa fa-chevron-right text-gray-300"></i>
-</a>
 <a href="../日历/日历.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
 <div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/日历.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
 <div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">日历</p><p class="text-xs text-gray-400 mt-0.5">日程查看与提醒</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../个税计算器/个税计算器.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/个税计算器.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">个税计算器</p><p class="text-xs text-gray-400 mt-0.5">月度预扣、年度汇算、专项附加扣除</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../证件照裁剪/证件照裁剪.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/证件照裁剪.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">证件照裁剪</p><p class="text-xs text-gray-400 mt-0.5">968 种规格 · 换底色 / 6 寸相纸拼版</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+<a href="../亲戚关系计算器/亲戚关系计算器.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/亲戚关系计算器.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">亲戚关系计算器</p><p class="text-xs text-gray-400 mt-0.5">输入称呼关系链，换算成该怎么叫</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</a>
+
+<a href="../房贷计算器/房贷计算器.html" class="flex items-center gap-3 py-3 active:bg-gray-50">
+<div class="icon-box bg-white !w-11 !h-11 !rounded-xl"><img src="logo/房贷计算器.png" alt="" class="w-full h-full object-contain" style="padding:2px;"></div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">房贷计算器</p><p class="text-xs text-gray-400 mt-0.5">商业 / 公积金 / 组合贷 · 提前还款测算</p></div>
 <i class="fa fa-chevron-right text-gray-300"></i>
 </a>
 </div>
@@ -375,6 +499,78 @@ overflow:hidden;
 <div class="bg-white rounded-2xl p-4 shadow-sm">
 <p class="text-xs text-gray-400 leading-relaxed">更多工具正在整理中，入口会持续补充到这里。</p>
 </div>
+</section>
+
+
+<!-- 收藏视图 -->
+<section id="view-fav" class="hidden px-5 pt-6">
+<div class="flex justify-between items-end mb-5">
+<div>
+<h1 class="text-[26px] font-bold text-gray-800">我的收藏</h1>
+<p class="text-sm text-gray-400 mt-1">在工具箱里点星标收藏的工具</p>
+</div>
+<span class="text-sm text-gray-500" id="favCount"></span>
+</div>
+<div id="favList" class="bg-white rounded-2xl shadow-sm overflow-hidden" hidden></div>
+<div id="favEmpty" class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center" hidden>
+<div class="text-gray-300 mb-3"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" class="mx-auto"><polygon points="12 2.6 14.9 8.5 21.4 9.4 16.7 14 17.8 20.5 12 17.4 6.2 20.5 7.3 14 2.6 9.4 9.1 8.5"/></svg></div>
+<p class="text-[15px] font-semibold text-gray-700">还没有收藏工具</p>
+<p class="text-xs text-gray-400 mt-2 leading-relaxed">打开「工具箱」，点击工具右侧的星标即可加入收藏。</p>
+<button type="button" id="favGoTools" class="mt-4 px-5 py-2.5 rounded-xl bg-primaryBlue text-white text-sm">去工具箱看看</button>
+</div>
+</section>
+
+
+<!-- 我的视图 -->
+<section id="view-mine" class="hidden px-5 pt-6">
+<h1 class="text-[26px] font-bold text-gray-800 mb-5">个人信息</h1>
+
+<div class="bg-white rounded-2xl p-5 shadow-sm mb-4">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-2xl bg-primaryBlue text-white flex items-center justify-center text-xl font-semibold shrink-0">我</div>
+<div class="min-w-0">
+<p class="text-[17px] font-semibold text-gray-800">本地用户</p>
+<p class="text-xs text-gray-400 mt-1">所有数据仅保存在本机浏览器</p>
+</div>
+</div>
+</div>
+
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div class="bg-white rounded-2xl p-4 shadow-sm">
+<p class="text-xs text-gray-400">工具箱工具</p>
+<p class="text-2xl font-bold text-gray-800 mt-1">26</p>
+</div>
+<div class="bg-white rounded-2xl p-4 shadow-sm">
+<p class="text-xs text-gray-400">已收藏</p>
+<p class="text-2xl font-bold text-gray-800 mt-1" id="mineFavCount">0</p>
+</div>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
+<button type="button" id="mineGoFav" class="w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 text-left">
+<div style="width:36px;height:36px;border-radius:12px;background:#f5f6f8;display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="#d9a33c" stroke="#d9a33c" stroke-width="1.2" stroke-linejoin="round"><polygon points="12 2.6 14.9 8.5 21.4 9.4 16.7 14 17.8 20.5 12 17.4 6.2 20.5 7.3 14 2.6 9.4 9.1 8.5"/></svg>
+</div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">我的收藏</p><p class="text-xs text-gray-400 mt-0.5">查看已收藏的工具</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</button>
+<button type="button" id="mineGoTools" class="w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 text-left border-t border-gray-100">
+<div style="width:36px;height:36px;border-radius:12px;background:#f5f6f8;display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#4f6bd8" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+</div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">全部工具</p><p class="text-xs text-gray-400 mt-0.5">按分类浏览 26 个工具</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</button>
+<button type="button" id="mineClearFav" class="w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 text-left border-t border-gray-100">
+<div style="width:36px;height:36px;border-radius:12px;background:#f5f6f8;display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8b939e" stroke-width="1.8" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+</div>
+<div class="flex-1 min-w-0"><p class="text-[15px] text-gray-800">清空收藏</p><p class="text-xs text-gray-400 mt-0.5">仅清除本机收藏记录</p></div>
+<i class="fa fa-chevron-right text-gray-300"></i>
+</button>
+</div>
+
+<p class="text-xs text-gray-400 leading-relaxed">当前版本无需登录，收藏等偏好保存在本机浏览器，换设备或清除浏览器数据后会丢失。</p>
 </section>
 
 <!-- 底部Tab栏 -->
@@ -392,13 +588,13 @@ overflow:hidden;
 </svg>
 <span class="text-sm mt-1">工具</span>
 </div>
-<div class="flex-1 flex flex-col items-center justify-center text-gray-600">
+<div id="navFav" role="button" tabindex="0" class="nav-item flex-1 flex flex-col items-center justify-center cursor-pointer text-gray-600">
 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
 </svg>
 <span class="text-sm mt-1">收藏</span>
 </div>
-<div class="flex-1 flex flex-col items-center justify-center text-gray-600">
+<div id="navMine" role="button" tabindex="0" class="nav-item flex-1 flex flex-col items-center justify-center cursor-pointer text-gray-600">
 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
 <circle cx="12" cy="7" r="4"/>
@@ -412,6 +608,10 @@ overflow:hidden;
   var tools = document.getElementById('view-tools');
   var navHome = document.getElementById('navHome');
   var navTools = document.getElementById('navTools');
+  var navFav = document.getElementById('navFav');
+  var navMine = document.getElementById('navMine');
+  var favView = document.getElementById('view-fav');
+  var mineView = document.getElementById('view-mine');
   var activeCls = ['text-white','bg-primaryBlue','rounded-tl-2xl','rounded-tr-2xl'];
   var idleCls = ['text-gray-600'];
 
@@ -420,15 +620,30 @@ overflow:hidden;
     idleCls.forEach(function(c){ el.classList.toggle(c, !on); });
   }
   function showTab(name){
-    var isHome = name === 'home';
-    home.classList.toggle('hidden', !isHome);
-    tools.classList.toggle('hidden', isHome);
-    setActive(navHome, isHome);
-    setActive(navTools, !isHome);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    home.classList.toggle('hidden', name !== 'home');
+    tools.classList.toggle('hidden', name !== 'tools');
+    if (favView) favView.classList.toggle('hidden', name !== 'fav');
+    if (mineView) mineView.classList.toggle('hidden', name !== 'mine');
+    setActive(navHome, name === 'home');
+    setActive(navTools, name === 'tools');
+    if (navFav) setActive(navFav, name === 'fav');
+    if (navMine) setActive(navMine, name === 'mine');
+    if (name === 'fav' && typeof window.__renderFav === 'function') window.__renderFav();
+    if (name === 'mine' && typeof window.__renderMine === 'function') window.__renderMine();
+    if (!window.__skipTopScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   navHome.addEventListener('click', function(){ showTab('home'); });
   navTools.addEventListener('click', function(){ showTab('tools'); });
+  if (navFav) navFav.addEventListener('click', function(){ showTab('fav'); });
+  if (navMine) navMine.addEventListener('click', function(){ showTab('mine'); });
+  var topAvatar = document.getElementById('topAvatar');
+  if (topAvatar) topAvatar.addEventListener('click', function(){ showTab('mine'); });
+  var mineFavBtn = document.getElementById('mineGoFav');
+  if (mineFavBtn) mineFavBtn.addEventListener('click', function(){ showTab('fav'); });
+  var mineToolsBtn = document.getElementById('mineGoTools');
+  if (mineToolsBtn) mineToolsBtn.addEventListener('click', function(){ showTab('tools'); });
+  var favGo = document.getElementById('favGoTools');
+  if (favGo) favGo.addEventListener('click', function(){ showTab('tools'); });
   var moreBtn = document.getElementById('moreToolsBtn');
   if (moreBtn){
     moreBtn.addEventListener('click', function(){ showTab('tools'); });
@@ -436,7 +651,7 @@ overflow:hidden;
       if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); showTab('tools'); }
     });
   }
-  [navHome, navTools].forEach(function(el){
+  [navHome, navTools, navFav, navMine].filter(Boolean).forEach(function(el){
     el.addEventListener('keydown', function(e){
       if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); el.click(); }
     });
@@ -518,6 +733,267 @@ overflow:hidden;
     var anchor = items[LIMIT - 1];
     box.insertBefore(btn, anchor.nextSibling);
   });
+})();
+</script>
+
+<script>
+/* 工具分类卡片 → 跳到工具箱对应分组 */
+(function(){
+  document.querySelectorAll('.cat-card').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      window.__skipTopScroll = true;
+      var navTools = document.getElementById('navTools');
+      if (navTools) navTools.click();
+      window.__skipTopScroll = false;
+      var group = document.getElementById('cat-' + btn.getAttribute('data-cat'));
+      if (!group) return;
+      var more = group.querySelector('.more-btn[aria-expanded="false"]');
+      if (more) more.click();
+      setTimeout(function(){ group.scrollIntoView({ behavior: 'auto', block: 'start' }); }, 120);
+    });
+  });
+})();
+</script>
+
+<script>
+/* 收藏页（页内标签）：工具箱星标收藏 + 收藏列表渲染 */
+(function(){
+  var KEY = 'favTools.v1';
+  var SVG_OFF = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><polygon points="12 2.6 14.9 8.5 21.4 9.4 16.7 14 17.8 20.5 12 17.4 6.2 20.5 7.3 14 2.6 9.4 9.1 8.5"/></svg>';
+  var SVG_ON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><polygon points="12 2.6 14.9 8.5 21.4 9.4 16.7 14 17.8 20.5 12 17.4 6.2 20.5 7.3 14 2.6 9.4 9.1 8.5"/></svg>';
+
+  function read(){
+    try{
+      var arr = JSON.parse(localStorage.getItem(KEY) || '[]');
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){ return []; }
+  }
+  function write(arr){
+    try{ localStorage.setItem(KEY, JSON.stringify(arr)); }catch(e){}
+  }
+  function esc(v){
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  var favList = document.getElementById('favList');
+  var favEmpty = document.getElementById('favEmpty');
+  var favCount = document.getElementById('favCount');
+
+  function iconFallback(f){
+    var name = (f.fallback || (f.icon || '').split('/').pop() || '').split('/').pop();
+    return name ? ('logo/' + name) : '';
+  }
+  window.__iconFallbackDbg = iconFallback;
+  function renderFav(){
+    if (!favList || !favEmpty) return;
+    var list = read();
+    if (favCount) favCount.textContent = list.length ? ('共 ' + list.length + ' 个') : '';
+    if (!list.length){
+      favList.hidden = true;
+      favList.innerHTML = '';
+      favEmpty.hidden = false;
+      return;
+    }
+    favEmpty.hidden = true;
+    favList.hidden = false;
+    favList.innerHTML = list.map(function(f, i){
+      var icon = f.icon
+        ? '<img src="' + esc(f.icon) + '" alt="" class="w-full h-full object-contain" style="padding:2px" onerror="this.onerror=null;this.src=\'' + esc(iconFallback(f)) + '\'">'
+        : '';
+      return '<a href="' + esc(f.href) + '" class="flex items-center gap-3 px-4 py-3 ' + (i ? 'border-t border-gray-100 ' : '') + 'active:bg-gray-50">'
+        + '<span class="icon-box bg-white !w-11 !h-11 !rounded-xl shrink-0">' + icon + '</span>'
+        + '<span class="flex-1 min-w-0"><span class="block text-[15px] text-gray-800 truncate">' + esc(f.name) + '</span>'
+        + '<span class="block text-xs text-gray-400 mt-0.5 truncate">' + esc(f.desc || '') + '</span></span>'
+        + '<button type="button" class="fav-remove shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-amber-500 hover:bg-gray-50" data-i="' + i + '" aria-label="取消收藏" title="取消收藏">' + SVG_ON + '</button>'
+        + '</a>';
+    }).join('');
+  }
+  window.__renderFav = renderFav;
+
+  var mineFavCount = document.getElementById('mineFavCount');
+  function renderMine(){
+    if (mineFavCount) mineFavCount.textContent = read().length;
+  }
+  window.__renderMine = renderMine;
+  var mineClear = document.getElementById('mineClearFav');
+  if (mineClear){
+    mineClear.addEventListener('click', function(){
+      if (!read().length) return;
+      if (window.confirm('确定清空本机所有收藏吗？')) {
+        write([]);
+        renderFav();
+        renderMine();
+        syncStars();
+      }
+    });
+  }
+  renderMine();
+
+  if (favList){
+    favList.addEventListener('click', function(e){
+      var btn = e.target.closest ? e.target.closest('.fav-remove') : null;
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var list = read();
+      list.splice(parseInt(btn.getAttribute('data-i'), 10), 1);
+      write(list);
+      renderFav();
+      syncStars();
+    });
+  }
+
+  var toolsView = document.getElementById('view-tools');
+  var starEls = [];
+  if (toolsView){
+    var rows = toolsView.querySelectorAll('.divide-y a');
+    Array.prototype.forEach.call(rows, function(row){
+      var nameEl = row.querySelector('p');
+      var descEl = row.querySelectorAll('p')[1];
+      var img = row.querySelector('img');
+      var name = nameEl ? nameEl.textContent.trim() : '';
+      var desc = descEl ? descEl.textContent.trim() : '';
+      var icon = img ? img.getAttribute('src') : '';
+      var href = row.getAttribute('href') || '';
+
+      var star = document.createElement('button');
+      star.type = 'button';
+      star.className = 'fav-star shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-50 transition';
+      star.setAttribute('aria-label', '收藏 ' + name);
+      star.innerHTML = SVG_OFF;
+      row.appendChild(star);
+
+      function paint(){
+        var on = read().some(function(f){ return f.href === href; });
+        star.innerHTML = on ? SVG_ON : SVG_OFF;
+        star.classList.toggle('text-amber-500', on);
+        star.setAttribute('aria-pressed', on ? 'true' : 'false');
+        star.title = on ? '取消收藏' : '加入收藏';
+      }
+      star.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var list = read();
+        var idx = list.findIndex(function(f){ return f.href === href; });
+        // 图标优先转成 dataURL，避免收藏视图里相对路径失效
+        var snapshot = '';
+        if (img && img.naturalWidth){
+          try{
+            var cv = document.createElement('canvas');
+            cv.width = 96; cv.height = 96;
+            var cx = cv.getContext('2d');
+            cx.drawImage(img, 0, 0, 96, 96);
+            snapshot = cv.toDataURL('image/png');
+          }catch(err){ snapshot = ''; }
+        }
+        if (idx >= 0) list.splice(idx, 1);
+        else list.unshift({
+          href: href,
+          name: name,
+          desc: desc,
+          icon: snapshot || (icon.indexOf('../') === 0 ? icon : 'logo/' + icon.replace(/^logo\//, '')),
+          fallback: icon
+        });
+        write(list);
+        paint();
+        renderFav();
+      });
+      star._paint = paint;
+      starEls.push(star);
+    });
+  }
+  function syncStars(){
+    starEls.forEach(function(el){ if (el._paint) el._paint(); });
+  }
+
+  renderFav();
+})();
+</script>
+
+<script>
+/* 首页搜索：在工具箱工具里按名称 / 说明筛选 */
+(function(){
+  var input = document.getElementById('searchInput');
+  var panel = document.getElementById('searchPanel');
+  var clearBtn = document.getElementById('searchClear');
+  var card = document.getElementById('commonToolsCard');
+  var catTitle = document.getElementById('catTitle');
+  var catGrid = document.getElementById('catGrid');
+  if (!input || !panel) return;
+
+  var index = [];
+  var rows = document.querySelectorAll('#view-tools .divide-y a');
+  Array.prototype.forEach.call(rows, function(row){
+    var ps = row.querySelectorAll('p');
+    var img = row.querySelector('img');
+    index.push({
+      name: ps[0] ? ps[0].textContent.trim() : '',
+      desc: ps[1] ? ps[1].textContent.trim() : '',
+      href: row.getAttribute('href') || '#',
+      icon: img ? img.getAttribute('src') : ''
+    });
+  });
+
+  function esc(v){
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function toggleChrome(show){
+    if (card) card.classList.toggle('hidden', !show);
+    if (catTitle) catTitle.classList.toggle('hidden', !show);
+    if (catGrid) catGrid.classList.toggle('hidden', !show);
+  }
+
+  function render(q){
+    q = q.trim();
+    if (clearBtn) clearBtn.classList.toggle('hidden', !q);
+    if (!q){
+      panel.hidden = true;
+      panel.innerHTML = '';
+      toggleChrome(true);
+      return;
+    }
+    var key = q.toLowerCase();
+    var hits = index.filter(function(t){
+      return (t.name + ' ' + t.desc).toLowerCase().indexOf(key) > -1;
+    });
+    toggleChrome(false);
+    panel.hidden = false;
+    if (!hits.length){
+      panel.innerHTML = '<div class="px-5 py-8 text-center">'
+        + '<p class="text-[15px] text-gray-700 font-medium">没有找到「' + esc(q) + '」</p>'
+        + '<p class="text-xs text-gray-400 mt-2">试试搜索「二维码」「计算」「图片」等关键词</p></div>';
+      return;
+    }
+    panel.innerHTML = '<div class="px-4 py-2.5 border-b border-gray-100 text-xs text-gray-400">找到 ' + hits.length + ' 个工具</div>'
+      + hits.map(function(t){
+          var icon = t.icon ? '<img src="' + esc(t.icon) + '" alt="" class="w-full h-full object-contain" style="padding:2px">' : '';
+          return '<a href="' + esc(t.href) + '" class="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0 active:bg-gray-50">'
+            + '<span class="icon-box bg-white !w-11 !h-11 !rounded-xl shrink-0">' + icon + '</span>'
+            + '<span class="flex-1 min-w-0"><span class="block text-[15px] text-gray-800 truncate">' + esc(t.name) + '</span>'
+            + '<span class="block text-xs text-gray-400 mt-0.5 truncate">' + esc(t.desc) + '</span></span>'
+            + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c7ccd4" stroke-width="2" stroke-linecap="round" class="shrink-0"><polyline points="9 18 15 12 9 6"/></svg>'
+            + '</a>';
+        }).join('');
+  }
+
+  input.addEventListener('input', function(){ render(input.value); });
+  input.addEventListener('search', function(){ render(input.value); });
+  input.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){ input.value = ''; render(''); }
+  });
+  if (clearBtn){
+    clearBtn.addEventListener('click', function(){
+      input.value = '';
+      render('');
+      input.focus();
+    });
+  }
+  render('');
 })();
 </script>
 </body>
